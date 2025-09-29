@@ -1,9 +1,5 @@
 # NOTES
 # - Enable debug mode in CMake with `-D CMAKE_BUILD_TYPE=Debug`
-#
-# DEPENDENCIES
-# - CPR (C++ Requests: Curl for People)
-# - abseil-cpp (open-source collection of C++ library code)
 cmake_minimum_required(VERSION 3.14)
 
 include(cmake/prelude.cmake)
@@ -13,7 +9,7 @@ project(
     srb2dbot
     VERSION 0.1
     DESCRIPTION "Control SRB2 servers via Discord."
-    HOMEPAGE_URL ""
+    HOMEPAGE_URL "https://github.com/gm3k4g/srb2dbot"
     LANGUAGES CXX
 )
 
