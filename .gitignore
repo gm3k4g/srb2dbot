@@ -9,6 +9,15 @@ prefix/
 CMakeLists.txt.user
 CMakeUserPresets.json
 compile_commands.json
+.zed/
+
+# Dev env
+dev_env.sh
+run_release
+run
+
+# Source header: Ignored because we used version.h.cmake
+source/version.h
 
 # Secret
 secret.json
