@@ -7,8 +7,8 @@ A discord bot to primarily control SRB2 servers along with other features.
 # PREREQUISITES
 
 ### DEPENDENCIES
- ~~- CPR (C++ Requests: Curl for People)~~
- - abseil-cpp (open-source collection of C++ library code)
+  - dpp
+  - nlohmann/json
 
 # [WIP] GUIDE
 

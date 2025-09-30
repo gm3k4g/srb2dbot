@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 
 include(cmake/prelude.cmake)
 
+set(CMAKE_CXX_STANDARD 26)
 set(PROJECT_AUTHOR "gm3k4g")
 project(
     srb2dbot

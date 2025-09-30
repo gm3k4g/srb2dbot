@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 
-#include <absl/strings/match.h>
+//#include <absl/strings/match.h>
 //#include <cpr/cpr.h>
 
 #include "version.h"
@@ -153,8 +153,8 @@ namespace {
         input_buffer << script_file.rdbuf();
 
         while(std::getline(input_buffer, line)) {
-            if (absl::StrContains(line, "password")) {
-            //if (line.find("password") == std::string::npos) {
+            //if (absl::StrContains(line, "password")) {
+            if (line.find("password") != std::string::npos) {
                 output_buffer << "[REDACTED]\n";
             } else {
                 output_buffer << line << "\n";
@@ -654,6 +654,8 @@ int main() {
             // move these comments to their respective functions.
             //
             dpp::slashcommand   get_script(CMD_GET_SCRIPT, "Gets the entire srb2 script and uploads it to the user.", bot.me.id);
+            get_script
+                .set_default_permissions(PERMS);
             dpp::slashcommand   inspect_line(CMD_INSPECTLINE, "Inspects lines at a given line number from the server script, and shows them.", bot.me.id);
             inspect_line
                 .add_option(dpp::command_option(dpp::co_integer, "line_num", "Line number to inspect.", true))
@@ -668,7 +670,11 @@ int main() {
                 .add_option(dpp::command_option(dpp::co_integer, "line_num", "The line to remove.", true))
                 .set_default_permissions(PERMS);
             dpp::slashcommand   restart_server(CMD_RESTART_SERVER, "Restarts the SRB2 server.", bot.me.id);
+            restart_server
+                .set_default_permissions(PERMS);
             dpp::slashcommand   stop_server(CMD_STOP_SERVER, "Stops the SRB2 server.", bot.me.id);
+            stop_server
+                .set_default_permissions(PERMS);
             dpp::slashcommand   move_line(CMD_MOVELINE, "Moves a line from a given old line number to a new line number.", bot.me.id);
             move_line
                 .add_option(dpp::command_option(dpp::co_integer, "old_line_num", "The line to be moved.", true))
