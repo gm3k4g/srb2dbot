@@ -68,55 +68,55 @@ namespace {
 
     auto zellij_is_srb2_alive() -> bool {
         std::string cmd = "zellij list-sessions | grep srb2b";
-        bool success = system(cmd.c_str());
+        bool success = system(cmd.c_str()) == EXIT_SUCCESS;
         return success;
     }
 
     auto zellij_srb2_server_say(std::string msg) -> bool {
-        bool success = false;
-        if (zellij_is_srb2_alive() == EXIT_FAILURE) {
+        bool success = zellij_is_srb2_alive();
+        if (!success) {
             return false;
         }
         std::stringstream cmd;
 
         cmd << "zellij -s srb2b action write-chars \"say " << msg << "\"";
-        success = system(cmd.str().c_str());
+        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
         cmd.str(std::string());
 
         cmd << "zellij -s srb2b action write 13";
-        success = system(cmd.str().c_str());
+        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
         return success;
     }
 
     auto zellij_srb2_kick_player(std::string &player) -> bool {
         bool success = zellij_is_srb2_alive();
-        if (success == EXIT_FAILURE) {
+        if (!success) {
             return false;
         }
         std::stringstream cmd;
 
         cmd << "zellij -s srb2b action write-chars " << "\"kick " << player << "\"";
-        success = system(cmd.str().c_str());
+        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
         cmd.str(std::string());
 
         cmd << "zellij -s srb2b action write 13";
-        success = system(cmd.str().c_str());
+        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
         return success;
     }
 
     auto zellij_srb2_ban_player(std::string &player) -> bool {
         bool success = zellij_is_srb2_alive();
-        if (success == EXIT_FAILURE) {
+        if (!success) {
             return false;
         }
         std::stringstream cmd;
 
         cmd << "zellij -s srb2b action write-chars " << "\"ban " << player << "\"";
-        success = system(cmd.str().c_str());
+        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
         cmd.str(std::string());
 
         cmd << "zellij -s srb2b action write 13";
-        success = system(cmd.str().c_str());
+        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
         return success;
     }
 
@@ -586,10 +586,10 @@ int main() {
            std::string player = std::get<std::string>(event.get_parameter("player"));
            bool kicked_player = zellij_srb2_kick_player(player);
            std::stringstream result;
-           if (kicked_player) {
-               result << "```Attempted to kick player " << player << " .```\n";
-           } else {
+           if (!kicked_player) {
                result << "```Failed to kick player " << player << " .```\n";
+           } else {
+               result << "```Attempted to kick player " << player << " .```\n";
            }
            dpp::message msg(event.command.channel_id, result.str());
            event.reply(msg.set_flags(dpp::m_ephemeral));
