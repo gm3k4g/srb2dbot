@@ -567,12 +567,16 @@ int main() {
 
        // Says something as the server.
        else if (event.command.get_command_name() == CMD_SERVER_SAY) {
-           std::string msg = std::get<std::string>(event.get_parameter("server_message"));
-           bool success = zellij_srb2_server_say(msg);
+           std::string serv_msg = std::get<std::string>(event.get_parameter("server_message"));
+           bool success = zellij_srb2_server_say(serv_msg);
+           std::string result;
            if (!success) {
-               dpp::message msg(event.command.channel_id, "```Failed to send command```");
-               event.reply(msg.set_flags(dpp::m_ephemeral));
+               result = "```Failed to say message.```";
+           } else {
+               result = "```Success```";
            }
+           dpp::message msg(event.command.channel_id, result);
+           event.reply(msg.set_flags(dpp::m_ephemeral));
        }
 
        // TODO: find a more concrete way of knowing
