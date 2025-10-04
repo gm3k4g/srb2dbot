@@ -335,7 +335,7 @@ namespace {
 } // namespace
 
 // Permissions
-const auto PERMS = dpp::p_administrator;
+const auto PERMS = dpp::p_ban_members; //dpp::p_administrator
 
 int main() {
     // Read secret
@@ -641,13 +641,23 @@ int main() {
 
     bot.on_ready([&bot, guild_id](const dpp::ready_t& event) {
 
+        // Iterates over all commands on the server and deletes them (guild-specific)
+        bot.guild_commands_get(bot.me.id, [&bot, guild_id](const dpp::confirmation_callback_t& cb){
+            auto commands = std::get<dpp::slashcommand_map>(cb.value);
+            for (auto& [id, cmd] : commands) {
+                bot.guild_command_delete(bot.me.id, guild_id);
+            }
+        });
+
         // Used to delete the old global commands
+        /*
         if (dpp::run_once<struct clear_bot_commands>()) {
-            /* Now, we're going to wipe our commands */
+            // Deletes global commands
             bot.global_bulk_command_delete();
-            /* This one requires a guild id, otherwise it won't know what guild's commands it needs to wipe! */
-            //bot.guild_bulk_command_delete(guild_id);
+            // Deletes guild-specifc commands
+            bot.guild_bulk_command_delete(guild_id);
         }
+        */
 
         /* Because the run_once above uses a 'clear_bot_commands' struct, you can continue to register commands below! */
 
