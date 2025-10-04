@@ -125,9 +125,12 @@ namespace {
         std::string script_path = dir_srb2_str();
 
         // TODO: Look at -c parameter (to look at a different script file name)
-        std::string script_name = "srb2b.sh";
+        std::string subscript_dir   = "/srb2b.d";
+        std::string script_name     = "/srb2b.sh";
 
-        script_path.append("/srb2_servers.d/").append(script_name);
+        script_path.append("/srb2_servers.d")
+            .append(subscript_dir)
+            .append(script_name);
         std::ifstream file(script_path);
         if (!file.is_open()) {
             return INVALID_ARRAY;
