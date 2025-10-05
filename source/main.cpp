@@ -230,7 +230,7 @@ namespace {
         while(std::getline(input_buffer, line)) {
             // Ignore password
             if (line.find("password") != std::string::npos) {
-                continue;
+                // do nothing lol
             } else if (line.find(target_string) != std::string::npos) {
                 output_buffer << i << ": " << line << "\n";
             }
