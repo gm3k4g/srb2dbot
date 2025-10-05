@@ -124,6 +124,10 @@ namespace {
         return true;
     }
 
+    auto pipe_srb2_server_do(const std::string &cmd) -> bool {
+        return pipe_write(cmd);
+    }
+
     auto pipe_srb2_server_say(const std::string &msg) -> bool {
         std::string cmd = "say " + msg;
         bool success = pipe_write(cmd);
@@ -189,6 +193,10 @@ namespace {
 
         std::array<std::string, 2> script = {script_content[0], output_buffer.str()};
         return script;
+    }
+
+    auto script_find(std::string &script_content) -> std::string {
+        std::string result;
     }
 
     auto script_validate() -> bool {
@@ -600,8 +608,22 @@ int main() {
             event.reply(msg.set_flags(dpp::m_ephemeral));
        }
 
+       // Do something as server.
+       else if (event.command.get_command_name() == CMD_SERVER_DO) {
+           std::string serv_command = std::get<std::string>(event.get_parameter("server_command"));
+           bool success = pipe_srb2_server_do(serv_command);
+           std::string result;
+           if (!success) {
+               result = "```Failed to execute command```";
+           } else {
+               result = "```Success```";
+           }
+           dpp::message msg(event.command.channel_id, result);
+           event.reply(msg.set_flags(dpp::m_ephemeral));
+       }
+
        // Says something as the server.
-       else if (event.command.get_command_name() == CMD_SERVER_SAY) {
+        else if (event.command.get_command_name() == CMD_SERVER_SAY) {
            std::string serv_msg = std::get<std::string>(event.get_parameter("server_message"));
            bool success = pipe_srb2_server_say(serv_msg);
            std::string result;
@@ -617,7 +639,7 @@ int main() {
        // TODO: find a more concrete way of knowing
        // whether command succeeded or not
        // (we're currently using system())
-       else if (event.command.get_command_name() == CMD_KICK_PLAYER) {
+        else if (event.command.get_command_name() == CMD_KICK_PLAYER) {
            std::string player = std::get<std::string>(event.get_parameter("player"));
            bool kicked_player = pipe_srb2_kick_player(player);
            std::stringstream result;
@@ -631,7 +653,7 @@ int main() {
 
        }
 
-       else if (event.command.get_command_name() == CMD_BAN_PLAYER) {
+        else if (event.command.get_command_name() == CMD_BAN_PLAYER) {
            std::string player = std::get<std::string>(event.get_parameter("player"));
            bool banned_player = pipe_srb2_ban_player(player);
            std::stringstream result;
@@ -645,7 +667,7 @@ int main() {
 
        }
 
-       else if (event.command.get_command_name() == CMD_RESTART_SERVER) {
+        else if (event.command.get_command_name() == CMD_RESTART_SERVER) {
             int ret = system("systemctl restart srb2@srb2b --user");
             std::string return_status;
             if (ret == 0) {
@@ -749,6 +771,10 @@ int main() {
             dpp::slashcommand   ban_player(CMD_BAN_PLAYER, "Bans a player off the server", bot.me.id);
             ban_player
                 .add_option(dpp::command_option(dpp::co_string, "player", "Player to ban from the server.", true))
+                .set_default_permissions(PERMS);
+            dpp::slashcommand   server_do(CMD_SERVER_DO, "Do something as the server.", bot.me.id);
+            server_do
+                .add_option(dpp::command_option(dpp::co_string, "server_command", "Server command to execute", true))
                 .set_default_permissions(PERMS);
             dpp::slashcommand   server_say(CMD_SERVER_SAY, "Say something as the server", bot.me.id);
             server_say

@@ -125,6 +125,7 @@ PROJECT_NAME " v" PROJECT_VERSION_MAJOR "." PROJECT_VERSION_MINOR "\n"\
 #define CMD_RESTART_SERVER "restart_server"
 #define CMD_STOP_SERVER "stop_server"
 
+#define CMD_SERVER_DO "server_do"
 #define CMD_SERVER_SAY "server_say"
 #define CMD_KICK_PLAYER "kick_player"
 #define CMD_BAN_PLAYER "ban_player"
