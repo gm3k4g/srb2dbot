@@ -51,7 +51,7 @@ namespace {
         return script_path;
     }
 
-    auto wads_get() -> std::string {
+    auto wads_get_str() -> std::string {
         std::string wads_dir = dir_srb2_str();
         wads_dir.append("/addons");
 
@@ -66,57 +66,58 @@ namespace {
         return wads_list.str();
     }
 
-    auto zellij_is_srb2_alive() -> bool {
-        std::string cmd = "zellij list-sessions | grep srb2b";
-        bool success = system(cmd.c_str()) == EXIT_SUCCESS;
+    // TODO: Pipe name will be taken by config name
+    // e.g. "srb2b" -- "srb2b.fifo"
+    auto pipe_get() -> std::string {
+        std::string srb2_dir = dir_srb2_str();
+
+        // TODO: Get srb2 config dir based on -c argument -- e.g. "srb2_custom.d"
+        std::string subscript_dir   = "/srb2b.d";
+        // TODO: Get srb2 pipe name based on -c argument -- e.g. "srb2_custom.fifo"
+        std::string srb2_fifo       = "/srb2b.fifo";
+
+        std::string pipe_dir = srb2_dir
+            .append("/srb2_servers.d")
+            .append(subscript_dir)
+            .append(srb2_fifo);
+        return std::string(pipe_dir);
+    }
+
+    auto pipe_write(const std::string& data) -> bool {
+        std::string fifo = pipe_get();
+        int fd = open(fifo.c_str(), O_WRONLY|O_NONBLOCK);
+        if (fd == -1) {
+            perror("open");
+            return false;
+        }
+
+        std::string cmd = "say " + data;
+        ssize_t bytes_written = write(fd, data.c_str(), strlen(cmd.c_str()));
+        if (bytes_written == -1) {
+            perror("write");
+            close(fd);
+            return false;
+        }
+
+        close(fd);
+        return true;
+    }
+
+    auto pipe_srb2_server_say(const std::string &msg) -> bool {
+        std::string cmd = "say " + msg;
+        bool success = pipe_write(cmd);
         return success;
     }
 
-    auto zellij_srb2_server_say(std::string msg) -> bool {
-        bool success = zellij_is_srb2_alive();
-        if (!success) {
-            return false;
-        }
-        std::stringstream cmd;
-
-        cmd << "zellij -s srb2b action write-chars \"say " << msg << "\"";
-        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
-        cmd.str(std::string());
-
-        cmd << "zellij -s srb2b action write 13";
-        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
+    auto pipe_srb2_kick_player(const std::string &player) -> bool {
+        std::string cmd = "kick " + player;
+        bool success = pipe_write(cmd);
         return success;
     }
 
-    auto zellij_srb2_kick_player(std::string &player) -> bool {
-        bool success = zellij_is_srb2_alive();
-        if (!success) {
-            return false;
-        }
-        std::stringstream cmd;
-
-        cmd << "zellij -s srb2b action write-chars " << "\"kick " << player << "\"";
-        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
-        cmd.str(std::string());
-
-        cmd << "zellij -s srb2b action write 13";
-        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
-        return success;
-    }
-
-    auto zellij_srb2_ban_player(std::string &player) -> bool {
-        bool success = zellij_is_srb2_alive();
-        if (!success) {
-            return false;
-        }
-        std::stringstream cmd;
-
-        cmd << "zellij -s srb2b action write-chars " << "\"ban " << player << "\"";
-        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
-        cmd.str(std::string());
-
-        cmd << "zellij -s srb2b action write 13";
-        success = system(cmd.str().c_str()) == EXIT_SUCCESS;
+    auto pipe_srb2_ban_player(const std::string &player) -> bool {
+        std::string cmd = "ban " + player;
+        bool success = pipe_write(cmd);
         return success;
     }
 
@@ -167,6 +168,16 @@ namespace {
 
         std::array<std::string, 2> script = {script_content[0], output_buffer.str()};
         return script;
+    }
+
+    auto script_validate() -> bool {
+        std::ifstream script_buf;
+        auto script_content = script_get(script_buf);
+
+        std::string script_path = script_content[1];
+        std::string bash_validate = "bash -n " + script_path;
+        bool success = system(bash_validate.c_str()) == EXIT_SUCCESS;
+        return success;
     }
 
     auto script_write(std::string script_name, std::string script_contents) -> bool {
@@ -390,7 +401,7 @@ int main() {
         }
 
         else if (event.command.get_command_name() == CMD_LISTFILES) {
-            std::string wad_list = wads_get();
+            std::string wad_list = wads_get_str();
             dpp::message msg(event.command.channel_id, "");
             msg.add_file("wads_list.txt", wad_list);
             event.reply(msg.set_flags(dpp::m_ephemeral));
@@ -571,7 +582,7 @@ int main() {
        // Says something as the server.
        else if (event.command.get_command_name() == CMD_SERVER_SAY) {
            std::string serv_msg = std::get<std::string>(event.get_parameter("server_message"));
-           bool success = zellij_srb2_server_say(serv_msg);
+           bool success = pipe_srb2_server_say(serv_msg);
            std::string result;
            if (!success) {
                result = "```Failed to say message.```";
@@ -587,7 +598,7 @@ int main() {
        // (we're currently using system())
        else if (event.command.get_command_name() == CMD_KICK_PLAYER) {
            std::string player = std::get<std::string>(event.get_parameter("player"));
-           bool kicked_player = zellij_srb2_kick_player(player);
+           bool kicked_player = pipe_srb2_kick_player(player);
            std::stringstream result;
            if (!kicked_player) {
                result << "```Failed to kick player " << player << " .```\n";
@@ -601,7 +612,7 @@ int main() {
 
        else if (event.command.get_command_name() == CMD_BAN_PLAYER) {
            std::string player = std::get<std::string>(event.get_parameter("player"));
-           bool banned_player = zellij_srb2_ban_player(player);
+           bool banned_player = pipe_srb2_ban_player(player);
            std::stringstream result;
            if (banned_player) {
                result << "```Attempted to ban player " << player << " .```\n";
