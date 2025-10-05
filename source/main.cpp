@@ -512,21 +512,23 @@ int main() {
                             std::ofstream buffer(wad_dir);
                             buffer << content;
 
+                            std::string msg_str = "```Successfully uploaded attached file " + filename + " to the server.```\n";
                             bot.interaction_response_create(
                                 event.command.id,
                                 event.command.token,
                                 dpp::interaction_response(
                                     dpp::ir_channel_message_with_source,
-                                    dpp::message("```Successfully uploaded attached file " + filename + " to the server.```\n").set_flags(dpp::m_ephemeral)
+                                    dpp::message(msg_str).set_flags(dpp::m_ephemeral)
                                 )
                             );
                         } else {
+                            std::string msg_str = "```Failed to upload the attached file " + filename + " .```\n";
                             bot.interaction_response_create(
                                 event.command.id,
                                 event.command.token,
                                 dpp::interaction_response(
                                     dpp::ir_channel_message_with_source,
-                                    dpp::message("```Failed to upload the attached file " + filename + " .```\n").set_flags(dpp::m_ephemeral)
+                                    dpp::message(msg_str).set_flags(dpp::m_ephemeral)
                                 )
                             );
                         }
@@ -549,21 +551,23 @@ int main() {
                     std::ofstream buffer(wad_dir);
                     buffer << content;
 
+                    std::string msg_str = "```Successfully uploaded file "  + filename + " from URL to the server.```\n";
                     bot.interaction_response_create(
                         event.command.id,
                         event.command.token,
                         dpp::interaction_response(
                             dpp::ir_channel_message_with_source,
-                            dpp::message("```Successfully uploaded file "  + filename + " from URL to the server.```\n").set_flags(dpp::m_ephemeral)
+                            dpp::message(msg_str).set_flags(dpp::m_ephemeral)
                         )
                     );
                 } else {
+                    std::string msg_str = "```Failed to upload file " + filename + " from URL.```\n";
                     bot.interaction_response_create(
                         event.command.id,
                         event.command.token,
                         dpp::interaction_response(
                             dpp::ir_channel_message_with_source,
-                            dpp::message("```Failed to upload file " + filename + " from URL.```\n").set_flags(dpp::m_ephemeral)
+                            dpp::message(msg_str).set_flags(dpp::m_ephemeral)
                         )
                     );
                 }
