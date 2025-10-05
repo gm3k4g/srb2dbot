@@ -489,7 +489,7 @@ int main() {
                                 event.command.token,
                                 dpp::interaction_response(
                                     dpp::ir_channel_message_with_source,
-                                    dpp::message("```Successfully uploaded attached file to the server.```\n")
+                                    dpp::message("```Successfully uploaded attached file " + filename + " to the server.```\n").set_flags(dpp::m_ephemeral)
                                 )
                             );
                         } else {
@@ -498,7 +498,7 @@ int main() {
                                 event.command.token,
                                 dpp::interaction_response(
                                     dpp::ir_channel_message_with_source,
-                                    dpp::message("```Failed to upload the attached file.```\n")
+                                    dpp::message("```Failed to upload the attached file " + filename + " .```\n").set_flags(dpp::m_ephemeral)
                                 )
                             );
                         }
@@ -526,7 +526,7 @@ int main() {
                         event.command.token,
                         dpp::interaction_response(
                             dpp::ir_channel_message_with_source,
-                            dpp::message("```Successfully uploaded file from URL to the server.```\n")
+                            dpp::message("```Successfully uploaded file "  + filename + " from URL to the server.```\n").set_flags(dpp::m_ephemeral)
                         )
                     );
                 } else {
@@ -535,7 +535,7 @@ int main() {
                         event.command.token,
                         dpp::interaction_response(
                             dpp::ir_channel_message_with_source,
-                            dpp::message("```Failed to upload file from URL.```\n")
+                            dpp::message("```Failed to upload file " + filename + " from URL.```\n").set_flags(dpp::m_ephemeral)
                         )
                     );
                 }
