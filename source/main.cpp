@@ -85,14 +85,35 @@ namespace {
 
     auto pipe_write(const std::string& data) -> bool {
         std::string fifo = pipe_get();
-        int fd = open(fifo.c_str(), O_WRONLY|O_NONBLOCK);
+
+    	// TODO: pipe_clear func
+    	int fd = open(fifo.c_str(), O_RDONLY | O_NONBLOCK);
+       	if (fd == -1) {
+      		//std::cerr << "Failed to open FIFO for flushing: " << strerror(errno) << std::endl;
+      		perror("open");
+               	return false;
+        }
+
+    	char buffer[1024];
+    	ssize_t bytesRead;
+    	// Flush pipe to clear out data before writing to it
+    	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0) {
+    		// Empty
+    	}
+    	// Check if read ended because there's no data left
+       	//if (bytesRead == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+            //	std::cerr << "Error reading from FIFO: " << strerror(errno) << std::endl;
+       	//}
+    	close(fd);
+
+        fd = open(fifo.c_str(), O_WRONLY|O_NONBLOCK);
         if (fd == -1) {
             perror("open");
             return false;
         }
 
         std::string cmd = "say " + data;
-        ssize_t bytes_written = write(fd, data.c_str(), strlen(cmd.c_str()));
+        ssize_t bytes_written = write(fd, data.c_str(), strlen(cmd.c_str())-1);
         if (bytes_written == -1) {
             perror("write");
             close(fd);
