@@ -146,6 +146,7 @@ namespace {
         return success;
     }
 
+    // TODO: Separate into script_get_path and script_get_str
     // returns: [0]: Script name [1]: Script absolute path
     auto script_get(std::ifstream& script_file) -> std::array<std::string, 2> {
         std::string script_path = dir_srb2_str();
@@ -195,10 +196,33 @@ namespace {
         return script;
     }
 
-    auto script_find(std::string &script_content) -> std::string {
-        std::string result;
+    // TODO: Pass arguments for case insensitive/sensitive search
+    auto script_find(const std::string &target_string) -> std::string {
+        std::ifstream script_file;
+        auto script_content = script_get(script_file);
+        if (!script_file) {
+            return std::string();
+        }
+
+        std::stringstream input_buffer;
+        std::stringstream output_buffer;
+        std::string line;
+        input_buffer << script_file.rdbuf();
+        int i = 1;
+        while(std::getline(input_buffer, line)) {
+            // Ignore password
+            if (line.find("password") != std::string::npos) {
+                continue;
+            } else if (line.find(target_string) != std::string::npos) {
+                output_buffer << i << ": " << line << "\n";
+            }
+            i+=1;
+        }
+
+        return output_buffer.str();
     }
 
+    // TODO: Validate bash command as string before writing it
     auto script_validate() -> bool {
         std::ifstream script_buf;
         auto script_content = script_get(script_buf);
@@ -429,7 +453,7 @@ int main() {
             event.reply(msg.set_flags(dpp::m_ephemeral));
         }
 
-        else if (event.command.get_command_name() == CMD_LISTFILES) {
+        else if (event.command.get_command_name() == CMD_LIST_FILES) {
             std::string wad_list = wads_get_str();
             dpp::message msg(event.command.channel_id, "");
             msg.add_file("wads_list.txt", wad_list);
@@ -518,7 +542,7 @@ int main() {
             });
         }
 
-        else if (event.command.get_command_name() == CMD_INSERTLINE) {
+        else if (event.command.get_command_name() == CMD_INSERT_LINE) {
 
             int64_t line_num = std::get<int64_t>(event.get_parameter("line_num"));
             std::string inserted_line;
@@ -539,7 +563,7 @@ int main() {
             dpp::message msg(event.command.channel_id, result.str());
             event.reply(msg.set_flags(dpp::m_ephemeral));
         }
-        else if (event.command.get_command_name() == CMD_REMOVELINE) {
+        else if (event.command.get_command_name() == CMD_REMOVE_LINE) {
             int64_t line_num = std::get<int64_t>(event.get_parameter("line_num"));
 
             bool script_removed_line = script_remove_line(line_num);
@@ -556,7 +580,7 @@ int main() {
             event.reply(msg.set_flags(dpp::m_ephemeral));
         }
 
-        else if (event.command.get_command_name() == CMD_CHANGELINE) {
+        else if (event.command.get_command_name() == CMD_CHANGE_LINE) {
             int64_t line_num = std::get<int64_t>(event.get_parameter("line_num"));
 
             std::string changed_line;
@@ -579,7 +603,7 @@ int main() {
 
         }
 
-        else if (event.command.get_command_name() == CMD_MOVELINE) {
+        else if (event.command.get_command_name() == CMD_MOVE_LINE) {
             int64_t old_line = std::get<int64_t>(event.get_parameter("old_line_num"));
             int64_t new_line = std::get<int64_t>(event.get_parameter("new_line_num"));
 
@@ -597,9 +621,22 @@ int main() {
             event.reply(msg.set_flags(dpp::m_ephemeral));
         }
 
+        else if (event.command.get_command_name() == CMD_FIND_LINE) {
+            std::string target_string = std::get<std::string>(event.get_parameter("target_string"));
+            std::string found_results = script_find(target_string);
+
+            if (found_results.empty()) {
+                found_results = "```No matches were found!```";
+            } else {
+                found_results = "```"+found_results+"```";
+            }
+            dpp::message msg(event.command.channel_id, found_results);
+            event.reply(msg.set_flags(dpp::m_ephemeral));
+        }
+
         // Inspects a line. This will show the targeted line along with line numbers,
         // as well as 10 lines above and beneath the targeted line.
-        else if (event.command.get_command_name() == CMD_INSPECTLINE) {
+        else if (event.command.get_command_name() == CMD_INSPECT_LINE) {
             int64_t line_num = std::get<int64_t>(event.get_parameter("line_num"));
 
             auto script_contents = script_get_str();
@@ -723,16 +760,20 @@ int main() {
             dpp::slashcommand   get_script(CMD_GET_SCRIPT, "Gets the entire srb2 script and uploads it to the user.", bot.me.id);
             get_script
                 .set_default_permissions(PERMS);
-            dpp::slashcommand   inspect_line(CMD_INSPECTLINE, "Inspects lines at a given line number from the server script, and shows them.", bot.me.id);
+            dpp::slashcommand   find_line(CMD_FIND_LINE, "Finds matches of the specified string to look for.", bot.me.id);
+            find_line
+                .add_option(dpp::command_option(dpp::co_string, "target_string", "String to look up in the script"))
+                .set_default_permissions(PERMS);
+            dpp::slashcommand   inspect_line(CMD_INSPECT_LINE, "Inspects lines at a given line number from the server script, and shows them.", bot.me.id);
             inspect_line
                 .add_option(dpp::command_option(dpp::co_integer, "line_num", "Line number to inspect.", true))
                 .set_default_permissions(PERMS);
-            dpp::slashcommand   insert_line(CMD_INSERTLINE, "Adds a line to the script at a given line number, then prints the result.", bot.me.id);
+            dpp::slashcommand   insert_line(CMD_INSERT_LINE, "Adds a line to the script at a given line number, then prints the result.", bot.me.id);
             insert_line
                 .add_option(dpp::command_option(dpp::co_integer, "line_num", "The line number at which to insert the content.", true))
                 .add_option(dpp::command_option(dpp::co_string, "line_contents", "The line contents that will be inserted.", false))
                 .set_default_permissions(PERMS);
-            dpp::slashcommand   remove_line(CMD_REMOVELINE, "Removes a line from the script, then prints the result.", bot.me.id);
+            dpp::slashcommand   remove_line(CMD_REMOVE_LINE, "Removes a line from the script, then prints the result.", bot.me.id);
             remove_line
                 .add_option(dpp::command_option(dpp::co_integer, "line_num", "The line to remove.", true))
                 .set_default_permissions(PERMS);
@@ -742,17 +783,17 @@ int main() {
             dpp::slashcommand   stop_server(CMD_STOP_SERVER, "Stops the SRB2 server.", bot.me.id);
             stop_server
                 .set_default_permissions(PERMS);
-            dpp::slashcommand   move_line(CMD_MOVELINE, "Moves a line from a given old line number to a new line number.", bot.me.id);
+            dpp::slashcommand   move_line(CMD_MOVE_LINE, "Moves a line from a given old line number to a new line number.", bot.me.id);
             move_line
                 .add_option(dpp::command_option(dpp::co_integer, "old_line_num", "The line to be moved.", true))
                 .add_option(dpp::command_option(dpp::co_integer, "new_line_num", "The destination of the line to be moved.", true))
                 .set_default_permissions(PERMS);
-            dpp::slashcommand   change_line(CMD_CHANGELINE, "Change the contents of the given line number.", bot.me.id);
+            dpp::slashcommand   change_line(CMD_CHANGE_LINE, "Change the contents of the given line number.", bot.me.id);
             change_line
                 .add_option(dpp::command_option(dpp::co_integer, "line_num", "The line to be moved.", true))
                 .add_option(dpp::command_option(dpp::co_string, "line_contents", "The new content for the given line.", false))
                 .set_default_permissions(PERMS);
-            dpp::slashcommand   list_files(CMD_LISTFILES, "Lists wads in the wads directory.", bot.me.id);
+            dpp::slashcommand   list_files(CMD_LIST_FILES, "Lists wads in the wads directory.", bot.me.id);
             list_files
                 .set_default_permissions(PERMS);
             dpp::slashcommand   addfile_upload(CMD_ADDFILE_UPLOAD, "Uploads a file to the server's wad directory via an attachment.", bot.me.id);
@@ -783,6 +824,7 @@ int main() {
 
             bot.guild_bulk_command_create({
                 get_script,
+                find_line,
                 inspect_line,
                 insert_line,
                 remove_line,
@@ -795,6 +837,7 @@ int main() {
                 addfile_link,
                 kick_player,
                 ban_player,
+                server_do,
                 server_say
             }, guild_id);
 
