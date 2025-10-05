@@ -110,7 +110,8 @@ PROJECT_NAME " v" PROJECT_VERSION_MAJOR "." PROJECT_VERSION_MINOR "\n"\
 // Discord command definitions
 #define CMD_GET_SCRIPT "get_script"
 
-#define CMD_LIST_FILES "listfiles"
+#define CMD_SEARCH_WADS "search_wads"
+#define CMD_LIST_WADS "list_wads"
 #define CMD_ADDFILE_UPLOAD "addfile_upload"
 #define CMD_ADDFILE_LINK "addfile_link"
 #define CMD_REMOVE_FILE "removefile"

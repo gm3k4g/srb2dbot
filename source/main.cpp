@@ -66,6 +66,24 @@ namespace {
         return wads_list.str();
     }
 
+    auto wads_search_str(std::string target_string) -> std::string {
+        std::string wads_dir = dir_srb2_str();
+        wads_dir.append("/addons");
+
+        std::stringstream wads_list;
+        wads_list << "Showing all matches in " << wads_dir << ":\n\n";
+        int i = 1;
+        for (const auto& entry : std::filesystem::directory_iterator(wads_dir)) {
+            std::string line = entry.path().filename();
+            if (line.find(target_string) != std::string::npos) {
+                wads_list << i << " " << entry.path().filename() << "\n";
+            }
+            i+=1;
+        }
+
+        return wads_list.str();
+    }
+
     // TODO: Pipe name will be taken by config name
     // e.g. "srb2b" -- "srb2b.fifo"
     auto pipe_get() -> std::string {
@@ -453,8 +471,18 @@ int main() {
             event.reply(msg.set_flags(dpp::m_ephemeral));
         }
 
-        else if (event.command.get_command_name() == CMD_LIST_FILES) {
+        else if (event.command.get_command_name() == CMD_SEARCH_WADS) {
+            std::string target_filename = std::get<std::string>(event.get_parameter("target_filename"));
+            std::string wad_list = wads_search_str(target_filename);
+
+            dpp::message msg(event.command.channel_id, "");
+            msg.add_file("wads_search.txt", wad_list);
+            event.reply(msg.set_flags(dpp::m_ephemeral));
+        }
+
+        else if (event.command.get_command_name() == CMD_LIST_WADS) {
             std::string wad_list = wads_get_str();
+
             dpp::message msg(event.command.channel_id, "");
             msg.add_file("wads_list.txt", wad_list);
             event.reply(msg.set_flags(dpp::m_ephemeral));
@@ -762,7 +790,7 @@ int main() {
                 .set_default_permissions(PERMS);
             dpp::slashcommand   find_line(CMD_FIND_LINE, "Finds matches of the specified string to look for.", bot.me.id);
             find_line
-                .add_option(dpp::command_option(dpp::co_string, "target_string", "String to look up in the script"))
+                .add_option(dpp::command_option(dpp::co_string, "target_string", "String to look up in the script", true))
                 .set_default_permissions(PERMS);
             dpp::slashcommand   inspect_line(CMD_INSPECT_LINE, "Inspects lines at a given line number from the server script, and shows them.", bot.me.id);
             inspect_line
@@ -793,8 +821,12 @@ int main() {
                 .add_option(dpp::command_option(dpp::co_integer, "line_num", "The line to be moved.", true))
                 .add_option(dpp::command_option(dpp::co_string, "line_contents", "The new content for the given line.", false))
                 .set_default_permissions(PERMS);
-            dpp::slashcommand   list_files(CMD_LIST_FILES, "Lists wads in the wads directory.", bot.me.id);
-            list_files
+            dpp::slashcommand   search_wads(CMD_SEARCH_WADS, "Look up wads that contain a target string in filename.", bot.me.id);
+            search_wads
+                .add_option(dpp::command_option(dpp::co_string, "target_filename", "The string to look for in filenames.", true))
+                .set_default_permissions(PERMS);
+            dpp::slashcommand   list_wads(CMD_LIST_WADS, "Lists wads in the wads directory.", bot.me.id);
+            list_wads
                 .set_default_permissions(PERMS);
             dpp::slashcommand   addfile_upload(CMD_ADDFILE_UPLOAD, "Uploads a file to the server's wad directory via an attachment.", bot.me.id);
             addfile_upload
@@ -824,21 +856,27 @@ int main() {
 
             bot.guild_bulk_command_create({
                 get_script,
+
                 find_line,
                 inspect_line,
                 insert_line,
                 remove_line,
-                restart_server,
-                stop_server,
                 move_line,
                 change_line,
-                list_files,
+
+                restart_server,
+                stop_server,
+
+                search_wads,
+                list_wads,
+
                 addfile_upload,
                 addfile_link,
+
+                server_do,
+                server_say,
                 kick_player,
                 ban_player,
-                server_do,
-                server_say
             }, guild_id);
 
             // This will make the server download the file(s) provided to SRB2's addon
