@@ -84,6 +84,7 @@ namespace {
         return wads_list.str();
     }
 
+    // TODO: Maybe clearing the pipe is unnecessary now (we fixed the error with garbage characters)
     // TODO: Pipe name will be taken by config name
     // e.g. "srb2b" -- "srb2b.fifo"
     auto pipe_get() -> std::string {
@@ -130,8 +131,8 @@ namespace {
             return false;
         }
 
-        std::string cmd = "say " + data;
-        ssize_t bytes_written = write(fd, data.c_str(), strlen(cmd.c_str())-1);
+        std::string cmd = data;
+        ssize_t bytes_written = write(fd, data.c_str(), strlen(cmd.c_str()));
         if (bytes_written == -1) {
             perror("write");
             close(fd);
@@ -142,8 +143,10 @@ namespace {
         return true;
     }
 
-    auto pipe_srb2_server_do(const std::string &cmd) -> bool {
-        return pipe_write(cmd);
+    auto pipe_srb2_server_do(const std::string &data) -> bool {
+        std::string cmd = data;
+        bool success = pipe_write(cmd);
+        return success;
     }
 
     auto pipe_srb2_server_say(const std::string &msg) -> bool {
@@ -327,6 +330,7 @@ namespace {
         return script_write(script_content[1], new_script.str());
     }
 
+    // TODO: Show old line and new lines
     auto script_change_line(std::string& line_content, int line_number) -> bool {
         std::ifstream script_file;
         auto script_content = script_get(script_file);
@@ -392,6 +396,7 @@ namespace {
         return script_write(script_content[1], new_script.str());
     }
 
+    // TODO: Show line being removed
     // TODO: parameter that lets you keep an empty line
     // instead of removing the line?
     auto script_remove_line(int line_num) -> bool {
