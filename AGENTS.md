@@ -74,12 +74,11 @@ When modifying the codebase, maintain these invariants:
 From `source/main.cpp` comments:
 
 - [ ] Replace code-block replies with Discord embeds/cards
-- [ ] Make admin commands invisible (ephemeral replies)
+- [x] Make admin commands invisible (ephemeral replies)
 - [ ] Chat log reading and printing in channel
 - [ ] Game stats command
-- [ ] Implement `CMD_REMOVE_FILE` / `CMD_RENAME_FILE` (defined but not wired up)
-- [ ] Implement CLI argument parsing (`-r`, `-v`, `-c`, `-n`, `-e`) and print `USAGE`
-- [ ] Configurable script name via `-c` parameter (currently hardcoded `srb2b.sh`)
+- [ ] Configurable script name via CLI parameter (currently hardcoded `srb2b.sh`)
+- [ ] Implement CLI argument parsing
 - [ ] Case-insensitive search option for `find_line`
 
 ## Known Issues
@@ -88,10 +87,8 @@ From the previous audit:
 
 | ID | Severity | Issue |
 |---|---|---|
-| M5 | Medium | `file(GLOB SOURCES)` — new source files silently ignored by CMake |
 | M10 | Medium | FIFO open for write blocks if no reader (even with `O_NONBLOCK`) |
-| L14 | Low | CI preset forces C++17 but project uses C++26 |
-| L1-L17 | Low | Various naming, formatting, and dead code issues |
+| L1-L17 | Low | Various naming, formatting issues |
 
 ## All Slash Commands
 
@@ -99,18 +96,18 @@ From the previous audit:
 |---|---|---|
 | `/get_script` | Script | — |
 | `/find_line` | Script | `target_string` |
-| `/inspect_line` | Script | `line_number` |
-| `/insert_line` | Script | `line_content`, `line_number` |
-| `/remove_line` | Script | `line_number` |
-| `/change_line` | Script | `new_content`, `line_number` |
-| `/move_line` | Script | `old_line`, `new_line` |
+| `/inspect_line` | Script | `line_num` |
+| `/insert_line` | Script | `line_num`, `line_contents` |
+| `/remove_line` | Script | `line_num` |
+| `/change_line` | Script | `line_num`, `line_contents` |
+| `/move_line` | Script | `old_line_num`, `new_line_num` |
 | `/list_wads` | WADs | — |
-| `/search_wads` | WADs | `target_string` |
+| `/search_wads` | WADs | `target_filename` |
 | `/addfile_upload` | WADs | `file` (attachment) |
 | `/addfile_link` | WADs | `file_url` |
 | `/restart_server` | Server | — |
 | `/stop_server` | Server | — |
-| `/server_do` | Server | `command` |
-| `/server_say` | Players | `message` |
+| `/server_do` | Server | `server_command` |
+| `/server_say` | Players | `server_message` |
 | `/kick_player` | Players | `player` |
 | `/ban_player` | Players | `player` |

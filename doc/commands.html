@@ -53,33 +53,33 @@
 </div>
 
 <div class="cmd-info">
-    <h3><code>/inspect_line &lt;line_number&gt;</code></h3>
+    <h3><code>/inspect_line &lt;line_num&gt;</code></h3>
     <p>Shows a range of lines around the target line (approximately 8 lines above and below), with the target line highlighted with an arrow (<code>-></code>).</p>
-    <p>Parameters: <code>line_number</code> — the line to inspect (1-based)</p>
+    <p>Parameters: <code>line_num</code> — the line to inspect (1-based)</p>
 </div>
 
 <div class="cmd-info">
-    <h3><code>/insert_line &lt;line_content&gt; &lt;line_number&gt;</code></h3>
+    <h3><code>/insert_line &lt;line_num&gt; &lt;line_contents&gt;</code></h3>
     <p>Inserts a new line of text at the specified position, shifting existing lines down. Empty content inserts a blank line.</p>
-    <p>Parameters: <code>line_content</code> — text to insert; <code>line_number</code> — position to insert at</p>
+    <p>Parameters: <code>line_num</code> — position to insert at; <code>line_contents</code> — text to insert</p>
 </div>
 
 <div class="cmd-info">
-    <h3><code>/remove_line &lt;line_number&gt;</code></h3>
+    <h3><code>/remove_line &lt;line_num&gt;</code></h3>
     <p>Removes the specified line from the script. Shifts subsequent lines up.</p>
-    <p>Parameters: <code>line_number</code> — the line to remove (1-based)</p>
+    <p>Parameters: <code>line_num</code> — the line to remove (1-based)</p>
 </div>
 
 <div class="cmd-info">
-    <h3><code>/change_line &lt;new_content&gt; &lt;line_number&gt;</code></h3>
+    <h3><code>/change_line &lt;line_num&gt; &lt;line_contents&gt;</code></h3>
     <p>Replaces the content of the specified line with new text.</p>
-    <p>Parameters: <code>new_content</code> — replacement text; <code>line_number</code> — line to change</p>
+    <p>Parameters: <code>line_num</code> — line to change; <code>line_contents</code> — replacement text</p>
 </div>
 
 <div class="cmd-info">
-    <h3><code>/move_line &lt;old_line&gt; &lt;new_line&gt;</code></h3>
+    <h3><code>/move_line &lt;old_line_num&gt; &lt;new_line_num&gt;</code></h3>
     <p>Moves a line from one position to another. The line at the destination shifts to accommodate. When moving downward, the destination line stays before the moved line. When moving upward, the moved line goes before the destination.</p>
-    <p>Parameters: <code>old_line</code> — source position; <code>new_line</code> — target position</p>
+    <p>Parameters: <code>old_line_num</code> — source position; <code>new_line_num</code> — target position</p>
 </div>
 
 <h2>WAD Management Commands</h2>
@@ -91,9 +91,9 @@
 </div>
 
 <div class="cmd-info">
-    <h3><code>/search_wads &lt;target_string&gt;</code></h3>
+    <h3><code>/search_wads &lt;target_filename&gt;</code></h3>
     <p>Searches for WAD files whose names contain the target string (case-insensitive).</p>
-    <p>Parameters: <code>target_string</code> — string to match against filenames</p>
+    <p>Parameters: <code>target_filename</code> — string to match against filenames</p>
 </div>
 
 <div class="cmd-info">
@@ -121,17 +121,17 @@
 </div>
 
 <div class="cmd-info">
-    <h3><code>/server_do &lt;command&gt;</code></h3>
+    <h3><code>/server_do &lt;server_command&gt;</code></h3>
     <p>Sends a raw command to the SRB2 server console via the FIFO pipe. Input is sanitized — control characters and newlines are rejected.</p>
-    <p>Parameters: <code>command</code> — console command to execute</p>
+    <p>Parameters: <code>server_command</code> — console command to execute</p>
 </div>
 
 <h2>Player Management Commands</h2>
 
 <div class="cmd-info">
-    <h3><code>/server_say &lt;message&gt;</code></h3>
+    <h3><code>/server_say &lt;server_message&gt;</code></h3>
     <p>Sends a chat message to the server visible to all players.</p>
-    <p>Parameters: <code>message</code> — text to broadcast in-game</p>
+    <p>Parameters: <code>server_message</code> — text to broadcast in-game</p>
 </div>
 
 <div class="cmd-info">
