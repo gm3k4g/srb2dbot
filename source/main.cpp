@@ -10,6 +10,7 @@
 
 #include <dpp/appcommand.h>
 #include <dpp/dpp.h>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <dpp/message.h>
@@ -23,9 +24,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <pwd.h>
-
-//#include <absl/strings/match.h>
-//#include <cpr/cpr.h>
 
 #include "version.h"
 #include "srb2dbot/utils.hpp"
@@ -73,8 +71,8 @@ namespace {
             std::string line = entry.path().filename();
             if (line.find(target_string) != std::string::npos) {
                 wads_list << i << " " << entry.path().filename() << "\n";
+                i += 1;
             }
-            i+=1;
         }
 
         return wads_list.str();
@@ -113,6 +111,7 @@ namespace {
             ssize_t bytes_written = write(fd, buf, remaining);
             if (bytes_written == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    usleep(1000);
                     continue;
                 }
                 perror("write");
@@ -133,9 +132,7 @@ namespace {
                 return false;
             }
         }
-        std::string cmd = data;
-        bool success = pipe_write(cmd);
-        return success;
+        return pipe_write(data);
     }
 
     auto pipe_srb2_server_say(const std::string &msg) -> bool {
@@ -461,22 +458,15 @@ int main() {
     std::filesystem::create_directories(srb2_dir + "/srb2_servers.d/srb2b.d");
     std::filesystem::create_directories(srb2_dir + "/addons");
 
-    std::string guild_id_str = data["guild_id"].dump();
-    guild_id_str = guild_id_str.substr(1, guild_id_str.size() - 2);
+    std::string guild_id_str = data["guild_id"].get<std::string>();
     auto guild_id = std::stol(guild_id_str);
 
-    // TODO: Bot token will be taken from current directory
-    // TODO: Create CLI option that lets you looks elsewhere for token
-    // Get bot token and trim the quote marks off the start and end
-    std::string bot_token = data["bot_token"].dump();
-    bot_token = bot_token.substr(1, bot_token.size() - 2);
+    std::string bot_token = data["bot_token"].get<std::string>();
 
     std::string service_name = "srb2@srb2b";
     if (data.contains("service_name") && data["service_name"].is_string()) {
         service_name = data["service_name"].get<std::string>();
     }
-
-    //std::cout << USAGE << std::endl;
 
     dpp::cluster bot(bot_token);
 
@@ -833,18 +823,6 @@ int main() {
             }
         });
 
-        // Used to delete the old global commands
-        /*
-        if (dpp::run_once<struct clear_bot_commands>()) {
-            // Deletes global commands
-            bot.global_bulk_command_delete();
-            // Deletes guild-specifc commands
-            bot.guild_bulk_command_delete(guild_id);
-        }
-        */
-
-        /* Because the run_once above uses a 'clear_bot_commands' struct, you can continue to register commands below! */
-
         if (dpp::run_once<struct register_bot_commands>()) {
 
             // TODO: When the function implementations are created,
@@ -943,55 +921,6 @@ int main() {
                 kick_player,
                 ban_player,
             }, guild_id);
-
-            // This will make the server download the file(s) provided to SRB2's addon
-            // directory, whether in URL form or as files.
-            // It will then modify the script to include the new file
-            // if it doesn't already exist.
-            // A combination of file uploads and urls can also work.
-            // /addfiles [FILES/LINK]
-
-            // Examples:
-            // /addfiles [URL 1] [URL 2] ... [URL n] Characters
-            // /addfiles [FILE UPLOAD 1] [FILE UPLOAD 2] ... [FILE UPLOAD n] Maps
-            //bot.guild_command_create(dpp::slashcommand(CMD_ADDFILE, "Adds files to the server's directory and script.", bot.me.id), GUILD_ID);
-
-            // addfiles, but the other way around.
-            // If it detects that a category has zero files, the category directory
-            // will be removed both from the system and from the directories script file.
-            //bot.global_command_create(dpp::slashcommand("removefile", "Removes files from the server's directory and script.", bot.me.id));
-
-            //bot.global_command_create(dpp::slashcommand("changeorder", "Changes order of a wad file on the server.", bot.me.id));
-
-            // Kicks one or more players from the game.
-            // Examples:
-            // /kick ["Player 1" "Player 2"]        # Multiple players
-            // /kick [1,5]                          # Accepts nodes
-            // /kick ["Player 5"] "A kick reason"   # Kick reason is optional
-            //bot.global_command_create(dpp::slashcommand("kick", "Kicks players from the server.", bot.me.id));
-            //bot.global_command_create(dpp::slashcommand("ban", "Bans players from the server.", bot.me.id));
-
-            // Primarily present in case there might be anything admins might want to do.
-            // /doas [COMMAND]
-
-            // Examples:
-            // /doas nodes
-           //bot.global_command_create(dpp::slashcommand("doas", "Executes a command as the server admin.", bot.me.id));
-
-            // Hardcoded, resets the game server, bypassing SRB2 entirely.
-            //bot.global_command_create(dpp::slashcommand("restart_server", "Restarts the server.", bot.me.id));
-
-            // For now, this only supports most of the gametypes in SRB2 Battle.
-            //bot.global_command_create(dpp::slashcommand("get_stats", "Gets the current game status of the server.", bot.me.id));
-
-            // IDEA: The following could be potentially implemented, but idk lol
-            // "randomify [EXCLUDED VARIABLES]" -> immediately changes to a random map of a random gametype with random factors (e.g. random character picks, colors, game settings (time/score)
-            //      , battle variables, etc.
-            //      Excluded variables could be MAP (doesn't change map), CHARACTER, COLOR, BATTLE_VARIABLES (specify?), GAMETYPE_SETTINGS (gametype specific?), GAME_SETTINGS (time/score?)
-            // "copy_config [NAME OF NEW CONFIG]" -> Copies the current server config into another server config (directory) in the `srb2dbot.d` directory.
-            //      Can be used mostly as a way to create a copy of the discord server config.
-            //
-
         }
     });
 
