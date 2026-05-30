@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — srb2dbot</title>
+    <style>
+        :root { --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff; --border: #30363d; --code-bg: #161b22; --heading: #f0f6fc; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; }
+        nav { background: #161b22; border-bottom: 1px solid var(--border); padding: 1rem 2rem; position: sticky; top: 0; z-index: 10; }
+        nav a { color: var(--accent); text-decoration: none; margin-right: 1.5rem; font-weight: 500; }
+        main { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        h1, h2, h3 { color: var(--heading); margin: 1.5rem 0 0.75rem; }
+        h1 { font-size: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        h2 { font-size: 1.5rem; }
+        h3 { font-size: 1.15rem; }
+        code { background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.9em; }
+        pre { background: var(--code-bg); padding: 1rem; border-radius: 6px; overflow-x: auto; margin-bottom: 1rem; border: 1px solid var(--border); }
+        pre code { background: none; padding: 0; }
+        ul, ol { margin: 0 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+        th, td { text-align: left; padding: 0.5rem 0.75rem; border: 1px solid var(--border); vertical-align: top; }
+        th { background: var(--code-bg); color: var(--heading); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <strong style="color:var(--heading);margin-right:2rem">srb2dbot v0.1</strong>
+    <a href="index.html">Overview</a>
+    <a href="commands.html">Commands</a>
+    <a href="building.html">Building</a>
+    <a href="architecture.html">Architecture</a>
+</nav>
+
+<main>
+<h1>Project Architecture</h1>
+
+<h2>Directory Structure</h2>
+<pre><code>srb2dbot/
+├── source/
+│   ├── main.cpp          # Bot initialization, command handlers, anonymous namespace utilities
+│   ├── version.h.cmake   # CMake template → version.h (project constants, command names)
+│   ├── utils.cpp         # Filename sanitization and URL extraction
+│   └── script.cpp        # Script manipulation logic (pure string I/O)
+├── include/
+│   └── srb2dbot/
+│       ├── utils.hpp     # sanitize_filename(), link_filename_str()
+│       └── script.hpp    # script_inspect_str(), find_str(), move_line_str(), etc.
+├── test/
+│   ├── CMakeLists.txt
+│   └── source/
+│       └── srb2dbot_test.cpp  # 28 unit tests
+├── cmake/                # CMake modules (dev-mode, linting, presets, etc.)
+├── doc/                  # HTML documentation
+├── CMakeLists.txt        # Main build configuration
+├── CMakePresets.json     # CI build presets
+├── shell.nix             # Nix shell for dependencies
+├── build.sh              # Build helper script (NixOS / Linux)
+├── secret.json.default   # Configuration template
+├── README.md
+├── AGENTS.md
+└── DOCS.md
+</code></pre>
+
+<h2>Runtime Pipeline</h2>
+<p>Commands flow through three distinct paths:</p>
+
+<h3>1. Script Path</h3>
+<p>Script editing commands (<code>/get_script</code>, <code>/find_line</code>, <code>/insert_line</code>, etc.) read and write <code>~/.srb2/srb2_servers.d/srb2b.d/srb2b.sh</code>. Each write is validated with <code>bash -n</code> via <code>fork()</code> + <code>execlp()</code> before committing.</p>
+<p>Core logic is extracted into <code>source/script.cpp</code> as pure string-in/string-out functions, making them independently testable without filesystem access.</p>
+
+<h3>2. WAD Path</h3>
+<p>WAD commands (<code>/list_wads</code>, <code>/search_wads</code>, <code>/addfile_upload</code>, <code>/addfile_link</code>) operate on <code>~/.srb2/addons/</code>. Uploads are capped at 100 MB and filenames are sanitized to prevent path traversal attacks.</p>
+
+<h3>3. Server Pipe Path</h3>
+<p>Server and player commands (<code>/server_do</code>, <code>/server_say</code>, <code>/kick_player</code>, <code>/ban_player</code>, <code>/restart_server</code>, <code>/stop_server</code>) communicate with SRB2 through:</p>
+<ul>
+    <li><strong>FIFO pipe</strong> at <code>~/.srb2/srb2_servers.d/srb2b.d/srb2b.fifo</code> for console commands. All input is sanitized to reject control characters and newlines.</li>
+    <li><strong>systemd</strong> via <code>systemctl restart|stop &lt;service&gt; --user</code> for service lifecycle. The service name is configurable in <code>secret.json</code>.</li>
+</ul>
+
+<h2>Key Files</h2>
+<table>
+    <tr><th>File</th><th>Role</th></tr>
+    <tr><td><code>source/main.cpp</code></td><td>Bot entry point. Initializes D++, reads secrets, registers slash commands, runs the event loop. Contains anonymous namespace functions for filesystem operations that depend on POSIX APIs (FIFO pipes, directory iteration, process management).</td></tr>
+    <tr><td><code>source/utils.cpp</code></td><td>Pure utility functions: <code>sanitize_filename()</code> strips path components from user input, <code>link_filename_str()</code> extracts filenames from URLs.</td></tr>
+    <tr><td><code>source/script.cpp</code></td><td>Script manipulation logic operating on string content rather than files. Includes <code>script_inspect_str()</code>, <code>script_find_str()</code>, <code>script_move_line_str()</code>, <code>script_add_line_str()</code>, <code>script_remove_line_str()</code>, and <code>script_change_line_str()</code>.</td></tr>
+    <tr><td><code>secret.json.default</code></td><td>Configuration template — copy to <code>secret.json</code> and fill in bot token, guild ID, and service name.</td></tr>
+    <tr><td><code>source/version.h.cmake</code></td><td>CMake template that generates <code>version.h</code> with project metadata, CLI argument defines, and command name strings.</td></tr>
+</table>
+
+<h2>Anonymous Namespace Dependencies</h2>
+<p>Functions remaining in the anonymous namespace of <code>main.cpp</code> are those that depend on system APIs:</p>
+<table>
+    <tr><th>Function</th><th>System Dependency</th></tr>
+    <tr><td><code>dir_srb2_str()</code></td><td><code>getpwuid()</code>, <code>getuid()</code></td></tr>
+    <tr><td><code>wads_get_str()</code></td><td><code>std::filesystem::directory_iterator</code></td></tr>
+    <tr><td><code>wads_search_str()</code></td><td><code>std::filesystem::directory_iterator</code></td></tr>
+    <tr><td><code>pipe_get()</code></td><td>File path construction (depends on <code>dir_srb2_str()</code>)</td></tr>
+    <tr><td><code>pipe_write()</code></td><td><code>open()</code>, <code>write()</code> POSIX I/O on FIFO</td></tr>
+    <tr><td><code>pipe_srb2_*</code></td><td>Command formatting + <code>pipe_write()</code></td></tr>
+    <tr><td><code>script_get()</code></td><td><code>std::ifstream</code> filesystem access</td></tr>
+    <tr><td><code>script_write()</code></td><td><code>std::ofstream</code> filesystem access</td></tr>
+    <tr><td><code>script_validate()</code></td><td><code>fork()</code>, <code>execlp()</code>, <code>waitpid()</code></td></tr>
+    <tr><td><code>script_*_line()</code></td><td>Thin wrappers calling shared implementations + filesystem I/O</td></tr>
+</table>
+
+<h2>Security Architecture</h2>
+<table>
+    <tr><th>Attack Vector</th><th>Mitigation</th></tr>
+    <tr><td>Command injection via script path</td><td><code>fork()</code> + <code>execlp()</code> with argument arrays — shell never interprets the path</td></tr>
+    <tr><td>Command injection via pipe input</td><td>Control characters (\x00-\x1F except tab), newlines, and carriage returns are rejected before writing to the FIFO</td></tr>
+    <tr><td>Path traversal via upload filenames</td><td><code>sanitize_filename()</code> extracts only the filename component via <code>std::filesystem::path::filename()</code>, rejects <code>.</code> and <code>..</code></td></tr>
+    <tr><td>Unbounded upload size</td><td>Downloads are capped at 100 MB; response bodies exceeding <code>MAX_WAD_SIZE</code> are rejected</td></tr>
+    <tr><td>JSON parse exceptions</td><td><code>try/catch</code> around <code>json::parse()</code> with early file-open check</td></tr>
+    <tr><td>Information disclosure (passwords)</td><td>Lines containing "password" are redacted in script output</td></tr>
+    <tr><td>FIFO truncation</td><td><code>write()</code> retry loop handles partial writes and <code>EAGAIN</code></td></tr>
+</table>
+
+<h2>CI Pipeline</h2>
+<p>CMake presets provide automated builds for Ubuntu (GCC/clang with clang-tidy, cppcheck), macOS (AppleClang), and Windows (MSVC). Dev mode enables CTest, clang-format linting, codespell, and code coverage with gcov/lcov.</p>
+</main>
+</body>
+</html>

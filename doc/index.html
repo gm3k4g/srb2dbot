@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>srb2dbot — Documentation</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --fg: #c9d1d9;
+            --accent: #58a6ff;
+            --border: #30363d;
+            --code-bg: #161b22;
+            --heading: #f0f6fc;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.7;
+        }
+        nav {
+            background: #161b22;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        nav a {
+            color: var(--accent);
+            text-decoration: none;
+            margin-right: 1.5rem;
+            font-weight: 500;
+        }
+        nav a:hover { text-decoration: underline; }
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        h1, h2, h3 { color: var(--heading); margin: 1.5rem 0 0.75rem; }
+        h1 { font-size: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        h2 { font-size: 1.5rem; }
+        h3 { font-size: 1.15rem; }
+        p { margin-bottom: 1rem; }
+        ul, ol { margin: 0 0 1rem 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        code {
+            background: var(--code-bg);
+            padding: 0.15em 0.4em;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+        }
+        pre code { background: none; padding: 0; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+        }
+        th { background: var(--code-bg); color: var(--heading); font-weight: 600; }
+        .badge {
+            display: inline-block;
+            padding: 0.15em 0.6em;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .badge-script { background: #1f6feb; color: #fff; }
+        .badge-wad { background: #238636; color: #fff; }
+        .badge-server { background: #da3633; color: #fff; }
+        .badge-player { background: #8957e5; color: #fff; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <strong style="color:var(--heading);margin-right:2rem">srb2dbot v0.1</strong>
+    <a href="index.html">Overview</a>
+    <a href="commands.html">Commands</a>
+    <a href="building.html">Building</a>
+    <a href="architecture.html">Architecture</a>
+</nav>
+
+<main>
+<h1>srb2dbot</h1>
+<p>
+    A <strong>Discord bot</strong> that remotely controls <strong>Sonic Robo Blast 2</strong> game servers.
+    Built with the <strong>D++</strong> library in C++26, it manages server lifecycle, script editing,
+    WAD file uploads, and in-game administration — all through Discord slash commands.
+</p>
+
+<h2>Quick Start</h2>
+<pre><code># Clone and build
+git clone https://github.com/gm3k4g/srb2dbot.git
+cd srb2dbot
+
+# On NixOS / with Nix installed
+./build.sh
+
+# On regular Linux
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+
+# Configure
+cp secret.json.default secret.json
+# Edit secret.json with your bot token and guild ID</code></pre>
+
+<h2>How It Works</h2>
+<p>
+    The bot communicates with an SRB2 server through a <strong>named FIFO pipe</strong>
+    (<code>~/.srb2/srb2_servers.d/srb2b.d/srb2b.fifo</code>). SRB2 reads commands
+    from this pipe as if they were typed in the server console.
+</p>
+<p>
+    Server lifecycle (start, stop, restart) is managed through <strong>systemd</strong>
+    user services, with the service name configurable via <code>secret.json</code>.
+</p>
+<p>
+    Script editing operates on the bash configuration file
+    (<code>~/.srb2/srb2_servers.d/srb2b.d/srb2b.sh</code>),
+    validated with <code>bash -n</code> before writing.
+</p>
+
+<h2>Features at a Glance</h2>
+<table>
+    <tr><th>Category</th><th>Commands</th><th>Description</th></tr>
+    <tr>
+        <td><span class="badge badge-script">Script</span></td>
+        <td>7</td>
+        <td>View, search, insert, remove, change, and move lines in the server config script</td>
+    </tr>
+    <tr>
+        <td><span class="badge badge-wad">WADs</span></td>
+        <td>4</td>
+        <td>List, search, and upload addon files via Discord attachment or URL</td>
+    </tr>
+    <tr>
+        <td><span class="badge badge-server">Server</span></td>
+        <td>3</td>
+        <td>Restart, stop the server, and send raw console commands</td>
+    </tr>
+    <tr>
+        <td><span class="badge badge-player">Players</span></td>
+        <td>3</td>
+        <td>Send chat messages, kick, and ban players</td>
+    </tr>
+</table>
+
+<h2>Security Model</h2>
+<ul>
+    <li>All slash commands require <code>p_ban_members</code> permission</li>
+    <li>Pipe input is sanitized — newlines, carriage returns, and control characters are rejected</li>
+    <li>Script validation uses <code>fork/exec</code> with argument arrays instead of shell string construction</li>
+    <li>Uploaded files are capped at <strong>100 MB</strong> with filename path-traversal protection</li>
+    <li>Password lines in scripts are redacted automatically</li>
+</ul>
+
+<h2>Dependencies</h2>
+<ul>
+    <li><strong>C++26</strong> compiler (GCC 14+ or Clang 18+)</li>
+    <li><strong>CMake</strong> 3.14+</li>
+    <li><strong><a href="https://dpp.dev">D++</a></strong> — Discord API library</li>
+    <li><strong><a href="https://github.com/nlohmann/json">nlohmann/json</a></strong> — JSON parsing</li>
+    <li><strong>systemd</strong> — for service management</li>
+    <li><strong>bash</strong> — for script validation</li>
+</ul>
+
+<h2>Test Suite</h2>
+<p>
+    The project includes <strong>28 unit tests</strong> covering utility functions,
+    filename sanitization, and all script manipulation logic. Run with:
+</p>
+<pre><code>BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh</code></pre>
+
+<h2>License & Author</h2>
+<p>
+    Created by <strong>gm3k4g</strong>.
+    <a href="https://github.com/gm3k4g/srb2dbot">GitHub Repository</a>
+</p>
+</main>
+</body>
+</html>

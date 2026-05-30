@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commands — srb2dbot</title>
+    <style>
+        :root { --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff; --border: #30363d; --code-bg: #161b22; --heading: #f0f6fc; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; }
+        nav { background: #161b22; border-bottom: 1px solid var(--border); padding: 1rem 2rem; position: sticky; top: 0; z-index: 10; }
+        nav a { color: var(--accent); text-decoration: none; margin-right: 1.5rem; font-weight: 500; }
+        main { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        h1, h2, h3 { color: var(--heading); margin: 1.5rem 0 0.75rem; }
+        h1 { font-size: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        h2 { font-size: 1.5rem; }
+        code { background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.9em; }
+        pre { background: var(--code-bg); padding: 1rem; border-radius: 6px; overflow-x: auto; margin-bottom: 1rem; border: 1px solid var(--border); }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+        th, td { text-align: left; padding: 0.5rem 0.75rem; border: 1px solid var(--border); }
+        th { background: var(--code-bg); color: var(--heading); font-weight: 600; }
+        .cmd-info { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
+        .cmd-info h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <strong style="color:var(--heading);margin-right:2rem">srb2dbot v0.1</strong>
+    <a href="index.html">Overview</a>
+    <a href="commands.html">Commands</a>
+    <a href="building.html">Building</a>
+    <a href="architecture.html">Architecture</a>
+</nav>
+
+<main>
+<h1>Slash Commands</h1>
+<p>All commands require the <code>p_ban_members</code> Discord permission. Commands are registered as guild-specific slash commands.</p>
+
+<h2>Script Editing Commands</h2>
+<p>These commands edit <code>~/.srb2/srb2_servers.d/srb2b.d/srb2b.sh</code> — the bash configuration script that runs the SRB2 server. Password lines are redacted in output.</p>
+
+<div class="cmd-info">
+    <h3><code>/get_script</code></h3>
+    <p>Displays the entire server configuration script (with password lines redacted).</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/find_line &lt;target_string&gt;</code></h3>
+    <p>Searches the script for lines containing the target string (case-sensitive). Returns line numbers and contents of matches.</p>
+    <p>Parameters: <code>target_string</code> — string to search for</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/inspect_line &lt;line_number&gt;</code></h3>
+    <p>Shows a range of lines around the target line (approximately 8 lines above and below), with the target line highlighted with an arrow (<code>-></code>).</p>
+    <p>Parameters: <code>line_number</code> — the line to inspect (1-based)</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/insert_line &lt;line_content&gt; &lt;line_number&gt;</code></h3>
+    <p>Inserts a new line of text at the specified position, shifting existing lines down. Empty content inserts a blank line.</p>
+    <p>Parameters: <code>line_content</code> — text to insert; <code>line_number</code> — position to insert at</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/remove_line &lt;line_number&gt;</code></h3>
+    <p>Removes the specified line from the script. Shifts subsequent lines up.</p>
+    <p>Parameters: <code>line_number</code> — the line to remove (1-based)</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/change_line &lt;new_content&gt; &lt;line_number&gt;</code></h3>
+    <p>Replaces the content of the specified line with new text.</p>
+    <p>Parameters: <code>new_content</code> — replacement text; <code>line_number</code> — line to change</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/move_line &lt;old_line&gt; &lt;new_line&gt;</code></h3>
+    <p>Moves a line from one position to another. The line at the destination shifts to accommodate. When moving downward, the destination line stays before the moved line. When moving upward, the moved line goes before the destination.</p>
+    <p>Parameters: <code>old_line</code> — source position; <code>new_line</code> — target position</p>
+</div>
+
+<h2>WAD Management Commands</h2>
+<p>These commands operate on <code>~/.srb2/addons/</code>.</p>
+
+<div class="cmd-info">
+    <h3><code>/list_wads</code></h3>
+    <p>Lists all WAD/PK3 files currently in the addons directory.</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/search_wads &lt;target_string&gt;</code></h3>
+    <p>Searches for WAD files whose names contain the target string (case-insensitive).</p>
+    <p>Parameters: <code>target_string</code> — string to match against filenames</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/addfile_upload &lt;file&gt;</code></h3>
+    <p>Uploads a file attached to the Discord message to the server's addons directory. Files are capped at 100 MB. Filenames are sanitized to prevent path traversal.</p>
+    <p>Parameters: <code>file</code> — Discord file attachment</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/addfile_link &lt;file_url&gt;</code></h3>
+    <p>Downloads a file from a URL and stores it in the addons directory. The filename is extracted from the URL path. Files are capped at 100 MB.</p>
+    <p>Parameters: <code>file_url</code> — direct download URL</p>
+</div>
+
+<h2>Server Control Commands</h2>
+
+<div class="cmd-info">
+    <h3><code>/restart_server</code></h3>
+    <p>Restarts the SRB2 server via systemd. Equivalent to <code>systemctl restart &lt;service&gt; --user</code>. The service name defaults to <code>srb2@srb2b</code> and can be changed in <code>secret.json</code>.</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/stop_server</code></h3>
+    <p>Stops the SRB2 server via systemd. Equivalent to <code>systemctl stop &lt;service&gt; --user</code>.</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/server_do &lt;command&gt;</code></h3>
+    <p>Sends a raw command to the SRB2 server console via the FIFO pipe. Input is sanitized — control characters and newlines are rejected.</p>
+    <p>Parameters: <code>command</code> — console command to execute</p>
+</div>
+
+<h2>Player Management Commands</h2>
+
+<div class="cmd-info">
+    <h3><code>/server_say &lt;message&gt;</code></h3>
+    <p>Sends a chat message to the server visible to all players.</p>
+    <p>Parameters: <code>message</code> — text to broadcast in-game</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/kick_player &lt;player&gt;</code></h3>
+    <p>Kicks a player from the server by name or node number.</p>
+    <p>Parameters: <code>player</code> — player name or node number to kick</p>
+</div>
+
+<div class="cmd-info">
+    <h3><code>/ban_player &lt;player&gt;</code></h3>
+    <p>Bans a player from the server by name or node number.</p>
+    <p>Parameters: <code>player</code> — player name or node number to ban</p>
+</div>
+</main>
+</body>
+</html>

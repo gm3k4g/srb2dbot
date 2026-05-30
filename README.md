@@ -1,19 +1,64 @@
-# STILL A WIP!!!
+# srb2dbot
 
-# SRB2 Discord Bot | C++
+> Control SRB2 servers via Discord.
 
-A discord bot to primarily control SRB2 servers along with other features.
+A Discord bot that remotely manages [Sonic Robo Blast 2](https://www.srb2.org/) game servers through slash commands. Edit server config scripts, manage WAD addon files, send console commands, kick/ban players — all from Discord.
 
-# PREREQUISITES
+## Quick Start
 
-### DEPENDENCIES
-  - dpp
-  - nlohmann/json
+```bash
+# Clone
+git clone https://github.com/gm3k4g/srb2dbot.git
+cd srb2dbot
 
-# [WIP] GUIDE
+# Build (auto-detects NixOS vs Linux)
+./build.sh
 
-- This guide assumes you using the console/terminal, preferably on an **Arch Linux x86_64** machine. It's not been tested on Windows/Mac, but it should work there as long as you're using a terminal.
+# Or manually
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
 
-# Building and installing
+# Configure
+cp secret.json.default secret.json
+# Edit with your bot token, guild ID, and service name
+```
 
-- [TODO]
+## Features
+
+| Category | Commands |
+|---|---|
+| **Script Editing** | `get_script`, `find_line`, `inspect_line`, `insert_line`, `remove_line`, `change_line`, `move_line` |
+| **WAD Management** | `list_wads`, `search_wads`, `addfile_upload`, `addfile_link` |
+| **Server Control** | `restart_server`, `stop_server`, `server_do` |
+| **Player Management** | `server_say`, `kick_player`, `ban_player` |
+
+## How It Works
+
+The bot communicates with SRB2 through a **named FIFO pipe** (`~/.srb2/srb2_servers.d/srb2b.d/srb2b.fifo`) for console commands, and **systemd** for service lifecycle management. Script editing operates on a bash config file validated with `bash -n` before each write.
+
+## Dependencies
+
+- **C++26** compiler (GCC 14+ / Clang 18+)
+- **CMake** 3.14+
+- **[D++](https://dpp.dev)** — Discord API library
+- **[nlohmann/json](https://github.com/nlohmann/json)** — JSON parsing
+- **systemd** + **bash** (runtime)
+
+## Testing
+
+28 unit tests covering utilities, filename sanitization, and script manipulation:
+
+```bash
+BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh
+```
+
+## Documentation
+
+- [Full Documentation](DOCS.md) — table of contents for `doc/`
+- [Commands Reference](doc/commands.html)
+- [Build Instructions](doc/building.html)
+- [Architecture Overview](doc/architecture.html)
+
+## Author
+
+**gm3k4g** — [GitHub](https://github.com/gm3k4g/srb2dbot)
