@@ -15,32 +15,28 @@
 #include <dpp/message.h>
 #include <nlohmann/json.hpp>
 #include <cstdlib>
+#include <cerrno>
 #include <filesystem>
+#include <fcntl.h>
 #include <string>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <pwd.h>
 
 //#include <absl/strings/match.h>
 //#include <cpr/cpr.h>
 
 #include "version.h"
+#include "srb2dbot/utils.hpp"
+#include "srb2dbot/script.hpp"
 using json = nlohmann::json;
 
 const std::array<std::string, 2>INVALID_ARRAY = {"Invalid filename", "Invalid content"};
 
+const size_t MAX_WAD_SIZE = 100ULL * 1024 * 1024;
+
 namespace {
-    auto link_filename_str(const std::string& url) -> std::string {
-        // Remove query string if present
-        std::string base = url.substr(0, url.find('?'));
-
-        // Extract filename from path
-        std::string filename = std::filesystem::path(base).filename().string();
-
-        return filename.empty() ? "downloaded_file" : filename;
-    }
-
-
     auto dir_srb2_str() -> std::string {
         struct passwd *pw = getpwuid(getuid());
         std::string homedir = pw->pw_dir;
@@ -105,38 +101,26 @@ namespace {
     auto pipe_write(const std::string& data) -> bool {
         std::string fifo = pipe_get();
 
-    	// TODO: pipe_clear func
-    	int fd = open(fifo.c_str(), O_RDONLY | O_NONBLOCK);
-       	if (fd == -1) {
-      		//std::cerr << "Failed to open FIFO for flushing: " << strerror(errno) << std::endl;
-      		perror("open");
-               	return false;
-        }
-
-    	char buffer[1024];
-    	ssize_t bytesRead;
-    	// Flush pipe to clear out data before writing to it
-    	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0) {
-    		// Empty
-    	}
-    	// Check if read ended because there's no data left
-       	//if (bytesRead == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-            //	std::cerr << "Error reading from FIFO: " << strerror(errno) << std::endl;
-       	//}
-    	close(fd);
-
-        fd = open(fifo.c_str(), O_WRONLY|O_NONBLOCK);
+        int fd = open(fifo.c_str(), O_WRONLY|O_NONBLOCK);
         if (fd == -1) {
             perror("open");
             return false;
         }
 
-        std::string cmd = data;
-        ssize_t bytes_written = write(fd, data.c_str(), strlen(cmd.c_str()));
-        if (bytes_written == -1) {
-            perror("write");
-            close(fd);
-            return false;
+        const char* buf = data.c_str();
+        size_t remaining = data.size();
+        while (remaining > 0) {
+            ssize_t bytes_written = write(fd, buf, remaining);
+            if (bytes_written == -1) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    continue;
+                }
+                perror("write");
+                close(fd);
+                return false;
+            }
+            buf += bytes_written;
+            remaining -= static_cast<size_t>(bytes_written);
         }
 
         close(fd);
@@ -144,24 +128,44 @@ namespace {
     }
 
     auto pipe_srb2_server_do(const std::string &data) -> bool {
+        for (char c : data) {
+            if (c == '\n' || c == '\r' || (c >= 0 && c < 0x20 && c != '\t')) {
+                return false;
+            }
+        }
         std::string cmd = data;
         bool success = pipe_write(cmd);
         return success;
     }
 
     auto pipe_srb2_server_say(const std::string &msg) -> bool {
+        for (char c : msg) {
+            if (c == '\n' || c == '\r' || (c >= 0 && c < 0x20 && c != '\t')) {
+                return false;
+            }
+        }
         std::string cmd = "say " + msg;
         bool success = pipe_write(cmd);
         return success;
     }
 
     auto pipe_srb2_kick_player(const std::string &player) -> bool {
+        for (char c : player) {
+            if (c == '\n' || c == '\r' || (c >= 0 && c < 0x20 && c != '\t')) {
+                return false;
+            }
+        }
         std::string cmd = "kick " + player;
         bool success = pipe_write(cmd);
         return success;
     }
 
     auto pipe_srb2_ban_player(const std::string &player) -> bool {
+        for (char c : player) {
+            if (c == '\n' || c == '\r' || (c >= 0 && c < 0x20 && c != '\t')) {
+                return false;
+            }
+        }
         std::string cmd = "ban " + player;
         bool success = pipe_write(cmd);
         return success;
@@ -179,11 +183,10 @@ namespace {
         script_path.append("/srb2_servers.d")
             .append(subscript_dir)
             .append(script_name);
-        std::ifstream file(script_path);
-        if (!file.is_open()) {
+        script_file.open(script_path);
+        if (!script_file.is_open()) {
             return INVALID_ARRAY;
         }
-        script_file.open(script_path);
 
         // TODO: maybe script_name becomes a globally accessible variable (globally within int main)
         return {script_name, script_path};
@@ -249,9 +252,19 @@ namespace {
         auto script_content = script_get(script_buf);
 
         std::string script_path = script_content[1];
-        std::string bash_validate = "bash -n " + script_path;
-        bool success = system(bash_validate.c_str()) == EXIT_SUCCESS;
-        return success;
+
+        pid_t pid = fork();
+        if (pid == -1) {
+            perror("fork");
+            return false;
+        }
+        if (pid == 0) {
+            execlp("bash", "bash", "-n", script_path.c_str(), (char*)nullptr);
+            _exit(EXIT_FAILURE);
+        }
+        int status;
+        waitpid(pid, &status, 0);
+        return WIFEXITED(status) && WEXITSTATUS(status) == 0;
     }
 
     auto script_write(std::string script_name, std::string script_contents) -> bool {
@@ -382,8 +395,9 @@ namespace {
         while(std::getline(old_script, line)) {
             if (new_line == i) {
                 new_script << held_line << "\n";
-                //i += 1;
-                //new_script << line << "\n";
+                if (old_line != new_line) {
+                    new_script << line << "\n";
+                }
             }
             else if (old_line == i) {
 
@@ -427,13 +441,25 @@ const auto PERMS = dpp::p_ban_members; //dpp::p_administrator
 int main() {
     // Read secret
     std::ifstream secret("secret.json");
-    json data = json::parse(secret);
-    if (data == NULL) {
-        std::cout << "ERROR: Secret wasn't found!\n";
+    if (!secret.is_open()) {
+        std::cerr << "ERROR: Could not open secret.json\n";
+        return EXIT_FAILURE;
+    }
+    json data;
+    try {
+        data = json::parse(secret);
+    } catch (const json::parse_error& e) {
+        std::cerr << "ERROR: Failed to parse secret.json: " << e.what() << "\n";
+        return EXIT_FAILURE;
+    }
+    if (data.is_null()) {
+        std::cerr << "ERROR: secret.json is empty or null\n";
         return EXIT_FAILURE;
     }
 
-    // TODO: Create directories if they don't exist.
+    std::string srb2_dir = dir_srb2_str();
+    std::filesystem::create_directories(srb2_dir + "/srb2_servers.d/srb2b.d");
+    std::filesystem::create_directories(srb2_dir + "/addons");
 
     std::string guild_id_str = data["guild_id"].dump();
     guild_id_str = guild_id_str.substr(1, guild_id_str.size() - 2);
@@ -445,13 +471,18 @@ int main() {
     std::string bot_token = data["bot_token"].dump();
     bot_token = bot_token.substr(1, bot_token.size() - 2);
 
+    std::string service_name = "srb2@srb2b";
+    if (data.contains("service_name") && data["service_name"].is_string()) {
+        service_name = data["service_name"].get<std::string>();
+    }
+
     //std::cout << USAGE << std::endl;
 
     dpp::cluster bot(bot_token);
 
     bot.on_log(dpp::utility::cout_logger());
 
-    bot.on_slashcommand([&bot](const dpp::slashcommand_t& event) {
+    bot.on_slashcommand([&bot, &service_name](const dpp::slashcommand_t& event) {
         //std::cout << "Received slash command: " << event.command.get_command_name() << "\n";
 
         // Gatekeep anyone who potentially tries to run commands without perms.
@@ -505,11 +536,22 @@ int main() {
                 auto attachment = event.command.resolved.attachments.find(attachment_id);
                 if (attachment != event.command.resolved.attachments.end()) {
                     std::string url = attachment->second.url;
-                    std::string filename = attachment->second.filename;
+                    std::string filename = sanitize_filename(attachment->second.filename);
 
-                    // Download the file from Discord CDN
                     bot.request(url, dpp::m_get, [&bot, event, filename](const dpp::http_request_completion_t& resp) {
                         if (resp.status == 200) {
+                            if (resp.body.size() > MAX_WAD_SIZE) {
+                                std::string msg_str = "```File " + filename + " exceeds max size of 100MB.```\n";
+                                bot.interaction_response_create(
+                                    event.command.id,
+                                    event.command.token,
+                                    dpp::interaction_response(
+                                        dpp::ir_channel_message_with_source,
+                                        dpp::message(msg_str).set_flags(dpp::m_ephemeral)
+                                    )
+                                );
+                                return;
+                            }
                             std::string content = resp.body;
                             std::string wad_dir = dir_srb2_str();
                             wad_dir.append("/addons/").append(filename);
@@ -549,6 +591,18 @@ int main() {
             // Download the file from Discord CDN
             bot.request(wad_url, dpp::m_get, [&bot, event, filename](const dpp::http_request_completion_t& resp) {
                 if (resp.status == 200) {
+                    if (resp.body.size() > MAX_WAD_SIZE) {
+                        std::string msg_str = "```File " + filename + " exceeds max size of 100MB.```\n";
+                        bot.interaction_response_create(
+                            event.command.id,
+                            event.command.token,
+                            dpp::interaction_response(
+                                dpp::ir_channel_message_with_source,
+                                dpp::message(msg_str).set_flags(dpp::m_ephemeral)
+                            )
+                        );
+                        return;
+                    }
                     std::string content = resp.body;
                     std::string wad_dir = dir_srb2_str();
                     wad_dir.append("/addons/").append(filename);
@@ -606,7 +660,7 @@ int main() {
             bool script_removed_line = script_remove_line(line_num);
             std::stringstream result;
             if (!script_removed_line) {
-                result << "```Couldn't add line!```";
+                result << "```Couldn't remove line!```";
             } else {
                 auto script_contents = script_get_str();
                 auto inspect = script_inspect(script_contents[1], line_num);
@@ -742,7 +796,8 @@ int main() {
        }
 
         else if (event.command.get_command_name() == CMD_RESTART_SERVER) {
-            int ret = system("systemctl restart srb2@srb2b --user");
+            std::string cmd = "systemctl restart " + service_name + " --user";
+            int ret = system(cmd.c_str());
             std::string return_status;
             if (ret == 0) {
                 return_status = "```Server was succesfully restarted!```\n";
@@ -754,7 +809,8 @@ int main() {
         }
 
         else if (event.command.get_command_name() == CMD_STOP_SERVER) {
-            int ret = system("systemctl stop srb2@srb2b --user");
+            std::string cmd = "systemctl stop " + service_name + " --user";
+            int ret = system(cmd.c_str());
             std::string return_status;
             if (ret == 0) {
                 return_status = "```Server was stopped.```\n";

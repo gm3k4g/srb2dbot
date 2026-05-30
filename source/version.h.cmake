@@ -21,7 +21,7 @@
 #define ARG_NOCONFIG_GNU "--noconfig"
 #define ARG_EXECUTABLE "-e"
 #define ARG_EXECUTABLE_GNU "--executable"
-#define ARG_HOMEDIR "-h"
+#define ARG_HOMEDIR "-H"
 #define ARG_HOMEDIR_GNU "--home"
 #define SRB2_ARGUMENTS_LIST "https://wiki.srb2.org/wiki/Command_line_parameters"
 
