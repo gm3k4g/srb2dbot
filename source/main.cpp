@@ -78,7 +78,7 @@ namespace {
         return wads_list.str();
     }
 
-    // TODO: Maybe clearing the pipe is unnecessary now (we fixed the error with garbage characters)
+    // TODO: Maybe clearing the pipe is unnecessary now? (fixed garbage characters)
     // TODO: Pipe name will be taken by config name
     // e.g. "srb2b" -- "srb2b.fifo"
     auto pipe_get() -> std::string {
@@ -204,7 +204,6 @@ namespace {
         input_buffer << script_file.rdbuf();
 
         while(std::getline(input_buffer, line)) {
-            //if (absl::StrContains(line, "password")) {
             if (line.find("password") != std::string::npos) {
                 output_buffer << "[REDACTED]\n";
             } else {
@@ -224,23 +223,9 @@ namespace {
         if (!script_file) {
             return std::string();
         }
-
-        std::stringstream input_buffer;
-        std::stringstream output_buffer;
-        std::string line;
-        input_buffer << script_file.rdbuf();
-        int i = 1;
-        while(std::getline(input_buffer, line)) {
-            // Ignore password
-            if (line.find("password") != std::string::npos) {
-                // do nothing lol
-            } else if (line.find(target_string) != std::string::npos) {
-                output_buffer << i << ": " << line << "\n";
-            }
-            i+=1;
-        }
-
-        return output_buffer.str();
+        std::stringstream buf;
+        buf << script_file.rdbuf();
+        return script_find_str(buf.str(), target_string);
     }
 
     // TODO: Validate bash command as string before writing it
@@ -276,44 +261,7 @@ namespace {
     }
 
     auto script_inspect(std::string& script_content, int target_line) -> std::string {
-        std::istringstream split_lines(script_content);
-        std::vector<std::string> lines;
-        std::stringstream inspected_region;
-        std::string line;
-
-        int size = 0;
-        while (std::getline(split_lines, line)) {
-            size += 1;
-        }
-        split_lines.clear();
-        split_lines.seekg(0);
-
-        int i = 1;
-        int targeted_line = target_line;
-        if (target_line < 1) {
-            targeted_line = 1;
-        } else if (target_line > size) {
-            targeted_line = size;
-        }
-        const int range = 8;
-        int start   = std::max(1, targeted_line - range-1);
-        int end     = std::min(size - 1, targeted_line + range);
-
-        inspected_region << "```Showing line " << start << " to " << end << "```\n";
-        inspected_region << "```";
-        while (std::getline(split_lines, line)) {
-            if (i >= start && i <= end) {
-                if (i == targeted_line) {
-                    inspected_region << "\n-> " << i << ": " << line << "\n\n";
-                } else {
-                    inspected_region << i << ": " << line << "\n";
-                }
-            }
-            i += 1;
-        }
-        inspected_region << "```";
-
-        return inspected_region.str();
+        return script_inspect_str(script_content, target_line);
     }
 
     auto script_add_line(std::string& line_content, int line_number) -> bool {
@@ -321,23 +269,8 @@ namespace {
         auto script_content = script_get(script_file);
         std::stringstream old_script;
         old_script << script_file.rdbuf();
-
-        std::stringstream new_script;
-        std::string line;
-        int i = 1;
-        while(std::getline(old_script, line)) {
-            if (i == line_number) {
-                if (line_content.empty()) {
-                    new_script << "\n";
-                } else {
-                    new_script << line_content << "\n";
-                }
-            }
-            new_script << line << "\n";
-            i += 1;
-        }
-
-        return script_write(script_content[1], new_script.str());
+        std::string result = script_add_line_str(old_script.str(), line_content, line_number);
+        return script_write(script_content[1], result);
     }
 
     // TODO: Show old line and new lines
@@ -346,24 +279,8 @@ namespace {
         auto script_content = script_get(script_file);
         std::stringstream old_script;
         old_script << script_file.rdbuf();
-
-        std::stringstream new_script;
-        std::string line;
-        int i = 1;
-        while(std::getline(old_script, line)) {
-            if (i == line_number) {
-                if (line_content.empty()) {
-                    new_script << "\n";
-                } else {
-                    new_script << line_content << "\n";
-                }
-            } else {
-                new_script << line << "\n";
-            }
-            i += 1;
-        }
-
-        return script_write(script_content[1], new_script.str());
+        std::string result = script_change_line_str(old_script.str(), line_content, line_number);
+        return script_write(script_content[1], result);
     }
 
     auto script_move_line(int old_line, int new_line) -> bool {
@@ -371,40 +288,8 @@ namespace {
         auto script_content = script_get(script_file);
         std::stringstream old_script;
         old_script << script_file.rdbuf();
-
-        std::stringstream new_script;
-        std::string line;
-        std::string held_line;
-
-        int i = 1;
-        while(std::getline(old_script, line)) {
-            if (old_line == i) {
-                held_line = line;
-                break;
-            }
-            i += 1;
-        }
-
-        old_script.seekg(0);
-        old_script.clear();
-        i = 1;
-
-        while(std::getline(old_script, line)) {
-            if (new_line == i) {
-                new_script << held_line << "\n";
-                if (old_line != new_line) {
-                    new_script << line << "\n";
-                }
-            }
-            else if (old_line == i) {
-
-            } else {
-                new_script << line << "\n";
-            }
-            i += 1;
-        }
-
-        return script_write(script_content[1], new_script.str());
+        std::string result = script_move_line_str(old_script.str(), old_line, new_line);
+        return script_write(script_content[1], result);
     }
 
     // TODO: Show line being removed
@@ -415,20 +300,9 @@ namespace {
         auto script_content = script_get(script_file);
         std::stringstream old_script;
         old_script << script_file.rdbuf();
-
-        std::stringstream new_script;
-        std::string line;
-        int i = 1;
-        while (std::getline(old_script, line)) {
-            if (i != line_num) {
-                new_script << line << "\n";
-            }
-            i += 1;
-        }
-
-        return script_write(script_content[1], new_script.str());
+        std::string result = script_remove_line_str(old_script.str(), line_num);
+        return script_write(script_content[1], result);
     }
-
 
 } // namespace
 
@@ -754,9 +628,8 @@ int main() {
            event.reply(msg.set_flags(dpp::m_ephemeral));
        }
 
-       // TODO: find a more concrete way of knowing
-       // whether command succeeded or not
-       // (we're currently using system())
+            // TODO: find a more concrete way of knowing whether
+            // the systemctl command succeeded or not
         else if (event.command.get_command_name() == CMD_KICK_PLAYER) {
            std::string player = std::get<std::string>(event.get_parameter("player"));
            bool kicked_player = pipe_srb2_kick_player(player);

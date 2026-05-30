@@ -18,7 +18,7 @@ dev_env.sh
 run_release
 run
 
-# Source header: Generated from version.h.cmake
+# Generated header: version.h.cmake -> build/source/version.h
 source/version.h
 
 # Secret
