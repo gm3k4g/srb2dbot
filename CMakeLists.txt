@@ -17,7 +17,7 @@ project(
 # Let's create a header file to use within the project for our variables.
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/source/version.h.cmake"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/version.h"
+    "${CMAKE_CURRENT_BINARY_DIR}/source/version.h"
 )
 
 include(cmake/project-is-top-level.cmake)
@@ -27,23 +27,19 @@ include(cmake/variables.cmake)
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_BINARY_DIR}/source"
 )
-# Collect all cpp and hpp files from `source`
-file(GLOB SOURCES ${PROJECT_SOURCE_DIR}/source/*.cpp)
-file(GLOB HEADERS ${PROJECT_SOURCE_DIR}/source/*.hpp)
+# Collect source files
+set(SOURCES
+    source/main.cpp
+    source/utils.cpp
+    source/script.cpp
+)
 
-# TODO: Enable sanitizers if in debug mode
 message(STATUS,"CMake project is building in: ${CMAKE_BUILD_TYPE}")
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fsanitize=address -fno-omit-frame-pointer")
-    set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address")
-endif()
 
 # ---- Declare executable ----
-add_executable(${CMAKE_PROJECT_NAME} ${SOURCES} ${HEADERS})
-
-#set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY OUTPUT_NAME srb2dbot)
-#target_compile_features(srb2dbot_exe PRIVATE cxx_std_17)
+add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} dpp)
 

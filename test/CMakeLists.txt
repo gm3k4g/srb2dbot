@@ -12,7 +12,7 @@ set(TEST_SOURCES
 
 add_executable(srb2dbot_test ${TEST_SOURCES})
 target_include_directories(srb2dbot_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_compile_features(srb2dbot_test PRIVATE cxx_std_17)
+target_compile_features(srb2dbot_test PRIVATE cxx_std_26)
 
 add_test(NAME srb2dbot_test COMMAND srb2dbot_test)
 
