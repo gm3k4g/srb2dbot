@@ -4,14 +4,16 @@
 
 project(srb2dbotTests LANGUAGES CXX)
 
-# ---- Tests ----
+set(TEST_SOURCES
+    source/srb2dbot_test.cpp
+    ${CMAKE_SOURCE_DIR}/source/utils.cpp
+    ${CMAKE_SOURCE_DIR}/source/script.cpp
+)
 
-add_executable(srb2dbot_test source/srb2dbot_test.cpp)
-target_link_libraries(srb2dbot_test PRIVATE srb2dbot_lib)
+add_executable(srb2dbot_test ${TEST_SOURCES})
+target_include_directories(srb2dbot_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_compile_features(srb2dbot_test PRIVATE cxx_std_17)
 
 add_test(NAME srb2dbot_test COMMAND srb2dbot_test)
-
-# ---- End-of-file commands ----
 
 add_folders(Test)
