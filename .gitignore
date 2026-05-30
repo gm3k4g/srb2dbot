@@ -2,8 +2,10 @@
 .idea/
 .vs/
 .vscode/
+.opencode/
 build/
 cmake-build-*/
+CMakeFiles/
 prefix/
 .clangd
 CMakeLists.txt.user

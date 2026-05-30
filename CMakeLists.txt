@@ -25,11 +25,9 @@ include(cmake/variables.cmake)
 
 # Linux: include libraries
 include_directories(
-    "/usr/include"
-    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
-link_directories(/usr/lib)
-
 # Collect all cpp and hpp files from `source`
 file(GLOB SOURCES ${PROJECT_SOURCE_DIR}/source/*.cpp)
 file(GLOB HEADERS ${PROJECT_SOURCE_DIR}/source/*.hpp)
@@ -47,10 +45,7 @@ add_executable(${CMAKE_PROJECT_NAME} ${SOURCES} ${HEADERS})
 #set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY OUTPUT_NAME srb2dbot)
 #target_compile_features(srb2dbot_exe PRIVATE cxx_std_17)
 
-target_link_libraries(${PROJECT_NAME} dpp )
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
-                           "${PROJECT_BINARY_DIR}"
-)
+target_link_libraries(${PROJECT_NAME} dpp)
 
 # ---- Install rules ----
 if(NOT CMAKE_SKIP_INSTALL_RULES)

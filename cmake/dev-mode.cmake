@@ -7,10 +7,10 @@ endif()
 
 add_custom_target(
     run-exe
-    COMMAND srb2dbot_exe
+    COMMAND srb2dbot
     VERBATIM
 )
-add_dependencies(run-exe srb2dbot_exe)
+add_dependencies(run-exe srb2dbot)
 
 option(BUILD_MCSS_DOCS "Build documentation using Doxygen and m.css" OFF)
 if(BUILD_MCSS_DOCS)
