@@ -913,15 +913,10 @@ int main() {
                             embed.set_title(gt + " — Round Ended");
                             std::string scoreboard;
                             for (size_t i = 1; i < event->fields.size(); i++) {
-                                size_t colon2 = event->fields[i].find(':', 6);
-                                if (colon2 != std::string::npos) {
-                                    std::string key = event->fields[i].substr(0, colon2);
-                                    std::string val = event->fields[i].substr(colon2 + 1);
-                                    if (key == "TEAM") {
-                                        scoreboard += key + " " + val + "\n";
-                                    } else {
-                                        scoreboard += key + ": " + val + "\n";
-                                    }
+                                size_t colon = event->fields[i].find(':');
+                                if (colon != std::string::npos) {
+                                    std::string val = event->fields[i].substr(colon + 1);
+                                    scoreboard += val + "\n";
                                 }
                             }
                             embed.set_description(scoreboard.empty() ? "Round complete." : scoreboard);
