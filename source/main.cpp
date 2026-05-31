@@ -642,33 +642,45 @@ int main() {
 
             // TODO: find a more concrete way of knowing whether
             // the systemctl command succeeded or not
-        else if (event.command.get_command_name() == CMD_KICK_PLAYER) {
-           std::string player = std::get<std::string>(event.get_parameter("player"));
-           bool kicked_player = pipe_srb2_kick_player(player);
-           std::stringstream result;
-           if (!kicked_player) {
-               result << "```Failed to kick player " << player << " .```\n";
-           } else {
-               result << "```Attempted to kick player " << player << " .```\n";
-           }
-           dpp::message msg(event.command.channel_id, result.str());
-           event.reply(msg.set_flags(dpp::m_ephemeral));
+         else if (event.command.get_command_name() == CMD_KICK_PLAYER) {
+            std::string player = std::get<std::string>(event.get_parameter("player"));
+            bool kicked_player = pipe_srb2_kick_player(player);
+            std::stringstream result;
+            if (!kicked_player) {
+                result << "```Failed to kick player " << player << " .```\n";
+            } else {
+                result << "```Attempted to kick player " << player << " .```\n";
+            }
+            dpp::message msg(event.command.channel_id, result.str());
+            event.reply(msg.set_flags(dpp::m_ephemeral));
 
-       }
+            if (kicked_player) {
+                std::string home = dir_srb2_str();
+                std::ofstream msgs(home + "/luafiles/client/DiscordBot/Messages.txt", std::ios::app);
+                if (msgs.is_open())
+                    msgs << "[EVENT:KICK_PLAYER]|" << player << "\n";
+            }
+        }
 
-        else if (event.command.get_command_name() == CMD_BAN_PLAYER) {
-           std::string player = std::get<std::string>(event.get_parameter("player"));
-           bool banned_player = pipe_srb2_ban_player(player);
-           std::stringstream result;
-           if (banned_player) {
-               result << "```Attempted to ban player " << player << " .```\n";
-           } else {
-               result << "```Failed to ban player " << player << " .```\n";
-           }
-           dpp::message msg(event.command.channel_id, result.str());
-           event.reply(msg.set_flags(dpp::m_ephemeral));
+         else if (event.command.get_command_name() == CMD_BAN_PLAYER) {
+            std::string player = std::get<std::string>(event.get_parameter("player"));
+            bool banned_player = pipe_srb2_ban_player(player);
+            std::stringstream result;
+            if (banned_player) {
+                result << "```Attempted to ban player " << player << " .```\n";
+            } else {
+                result << "```Failed to ban player " << player << " .```\n";
+            }
+            dpp::message msg(event.command.channel_id, result.str());
+            event.reply(msg.set_flags(dpp::m_ephemeral));
 
-       }
+            if (banned_player) {
+                std::string home = dir_srb2_str();
+                std::ofstream msgs(home + "/luafiles/client/DiscordBot/Messages.txt", std::ios::app);
+                if (msgs.is_open())
+                    msgs << "[EVENT:BAN_PLAYER]|" << player << "\n";
+            }
+        }
 
         else if (event.command.get_command_name() == CMD_RESTART_SERVER) {
             std::string cmd = "systemctl restart " + service_name + " --user";
@@ -997,6 +1009,16 @@ int main() {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
                             embed.set_title("Player Left");
                             embed.set_description(":door: **" + player + "** has left the game.");
+                            embed.set_color(0xED4245);
+                        } else if (event->type == "KICK_PLAYER") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            embed.set_title("Player Kicked");
+                            embed.set_description(":boot: **" + player + "** was kicked.");
+                            embed.set_color(0xED4245);
+                        } else if (event->type == "BAN_PLAYER") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            embed.set_title("Player Banned");
+                            embed.set_description(":hammer: **" + player + "** was banned.");
                             embed.set_color(0xED4245);
                         } else {
                             embed.set_title(event->type);
