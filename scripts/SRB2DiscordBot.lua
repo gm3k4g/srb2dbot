@@ -444,21 +444,20 @@ addHook("NetVars", function(n)
 	 DiscordBot.Messages = n($)
 end)
 
--- Event hooks for Discord embed cards
-
 addHook("MapLoad", function(map)
+	if map == DiscordBot.Data.current_map then return end
+	DiscordBot.Data.current_map = map
+	DiscordBot.Data.round_active = true
 	local mapname = mapheaderinfo[map]
-	local maptitle = "Unknown"
+	local maptitle = "Unknown Map"
 	if mapname and mapname.lvlttl
 		maptitle = mapname.lvlttl
 		if mapname.actnum and mapname.actnum > 0
 			maptitle = maptitle.." Act "..mapname.actnum
 		end
 	end
-	DiscordBot.Data.current_map = map
-	local cv_servername = CV_FindVar("servername")
-	local sn = cv_servername.string or "SRB2 Server"
-	local event_line = "[EVENT:MAP_CHANGE]|"..map.."|"..maptitle.."\n"
+	local gtname = get_gametype_name(gametype)
+	local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..map.."|"..maptitle.."\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
 end)
 
@@ -481,7 +480,6 @@ addHook("IntermissionThink", function()
 	DiscordBot.Data.round_active = false
 
 	local gtname = get_gametype_name(gametype)
-	local event_line = "[EVENT:ROUND_END]|"..gtname.."|"..gamemap
 	if gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE
 		local reds = ""
 		local blues = ""
