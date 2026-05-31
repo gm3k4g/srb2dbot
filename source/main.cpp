@@ -656,7 +656,7 @@ int main() {
 
             if (kicked_player) {
                 std::string home = dir_srb2_str();
-                std::ofstream msgs(home + "/client/DiscordBot/Messages.txt", std::ios::app);
+                std::ofstream msgs(home + "/luafiles/client/DiscordBot/Messages.txt", std::ios::app);
                 if (msgs.is_open())
                     msgs << "[EVENT:KICK_PLAYER]|" << player << "\n";
             }
@@ -676,7 +676,7 @@ int main() {
 
             if (banned_player) {
                 std::string home = dir_srb2_str();
-                std::ofstream msgs(home + "/client/DiscordBot/Messages.txt", std::ios::app);
+                std::ofstream msgs(home + "/luafiles/client/DiscordBot/Messages.txt", std::ios::app);
                 if (msgs.is_open())
                     msgs << "[EVENT:BAN_PLAYER]|" << player << "\n";
             }
@@ -728,7 +728,7 @@ int main() {
         }
 
         std::string home = dir_srb2_str();
-        std::string bridge_path = home + "/client/DiscordBot";
+        std::string bridge_path = home + "/luafiles/client/DiscordBot";
         std::filesystem::create_directories(bridge_path);
         std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
         if (disc_file.is_open()) {
@@ -847,7 +847,7 @@ int main() {
         }
     });
 
-    std::string bridge_dir = srb2_dir + "/client/DiscordBot";
+    std::string bridge_dir = srb2_dir + "/luafiles/client/DiscordBot";
     std::filesystem::create_directories(bridge_dir);
     std::string messages_path = bridge_dir + "/Messages.txt";
     {
@@ -900,7 +900,7 @@ int main() {
 
                 auto attach_thumb = [&](dpp::embed& e, const std::string& map) {
                     if (!thumb_path.empty()) return;
-                    std::string tpath = home_srb2 + "/client/DiscordBot/thumbnails/" + map + ".png";
+                    std::string tpath = home_srb2 + "/luafiles/client/DiscordBot/thumbnails/" + map + ".png";
                     std::ifstream test(tpath);
                     if (test.is_open()) {
                         test.close();
@@ -931,7 +931,7 @@ int main() {
                             if (event->fields.size() >= 2) {
                                 attach_thumb(embed, event->fields[1]);
                                 if (thumb_path.empty())
-                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/client/DiscordBot/thumbnails");
+                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
                             }
                         } else if (event->type == "ROUND_END") {
                             std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
@@ -994,7 +994,7 @@ int main() {
                             if (event->fields.size() >= 2) {
                                 attach_thumb(embed, event->fields[1]);
                                 if (thumb_path.empty())
-                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/client/DiscordBot/thumbnails");
+                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
                             }
                         } else if (event->type == "CTF_CAPTURE") {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";

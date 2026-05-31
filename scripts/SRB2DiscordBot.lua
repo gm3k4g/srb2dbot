@@ -296,7 +296,11 @@ local function bot_function()
 		COM_BufInsertText(server, "server_log discord")
 		COM_BufInsertText(server, "server_log console")
 		if DiscordBot.Data.msgsrb2 != ''
-			COM_BufInsertText(server, "server_log msg")
+			local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a+")
+			if logmsg then
+				logmsg:write(DiscordBot.Data.msgsrb2)
+				logmsg:close()
+			end
 			DiscordBot.Data.msgsrb2 = ''
 		end
 		if DiscordBot.Data.log != ''
