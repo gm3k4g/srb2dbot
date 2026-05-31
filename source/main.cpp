@@ -1008,7 +1008,7 @@ int main() {
                         } else if (event->type == "PLAYER_QUIT") {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
                             embed.set_title("Player Left");
-                            embed.set_description("**" + player + "** has left the game.");
+                            embed.set_description(":door: **" + player + "** has left the game.");
                             embed.set_color(0xED4245);
                         } else {
                             embed.set_title(event->type);
