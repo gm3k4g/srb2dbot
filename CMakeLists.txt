@@ -34,6 +34,7 @@ set(SOURCES
     source/main.cpp
     source/utils.cpp
     source/script.cpp
+    source/bridge.cpp
 )
 
 message(STATUS,"CMake project is building in: ${CMAKE_BUILD_TYPE}")

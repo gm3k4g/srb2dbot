@@ -8,6 +8,7 @@ set(TEST_SOURCES
     source/srb2dbot_test.cpp
     ${CMAKE_SOURCE_DIR}/source/utils.cpp
     ${CMAKE_SOURCE_DIR}/source/script.cpp
+    ${CMAKE_SOURCE_DIR}/source/bridge.cpp
 )
 
 add_executable(srb2dbot_test ${TEST_SOURCES})

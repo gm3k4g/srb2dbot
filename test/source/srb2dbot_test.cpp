@@ -1,5 +1,6 @@
 #include "srb2dbot/utils.hpp"
 #include "srb2dbot/script.hpp"
+#include "srb2dbot/bridge.hpp"
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -242,11 +243,55 @@ void test_script_change_line_str() {
     PASS();
 }
 
+void test_sanitize_message_for_srb2() {
+    TEST("bridge: normal ASCII message");
+    CHECK(sanitize_message_for_srb2("hello world") == "hello world");
+    PASS();
+
+    TEST("bridge: strips non-ASCII characters");
+    CHECK(sanitize_message_for_srb2("hello\x01world") == "helloworld");
+    PASS();
+
+    TEST("bridge: strips Unicode emoji");
+    std::string emoji_msg = "hi \xf0\x9f\x98\x80 there";
+    std::string result = sanitize_message_for_srb2(emoji_msg);
+    CHECK(result == "hi  there");
+    PASS();
+
+    TEST("bridge: escapes newlines");
+    CHECK(sanitize_message_for_srb2("line1\nline2") == "line1\\nline2");
+    PASS();
+
+    TEST("bridge: replaces http link with [LINK]");
+    std::string result2 = sanitize_message_for_srb2("check https://example.com now");
+    CHECK(result2 == "check [LINK] now");
+    PASS();
+
+    TEST("bridge: replaces http link mid-word stays as word boundary");
+    result2 = sanitize_message_for_srb2("go to https://x.com/path");
+    CHECK(result2 == "go to [LINK]");
+    PASS();
+
+    TEST("bridge: multiple links replaced");
+    result2 = sanitize_message_for_srb2("a http://a.com b https://b.com c");
+    CHECK(result2 == "a [LINK] b [LINK] c");
+    PASS();
+
+    TEST("bridge: empty input returns empty");
+    CHECK(sanitize_message_for_srb2("") == "");
+    PASS();
+
+    TEST("bridge: preserves original characters");
+    CHECK(sanitize_message_for_srb2("  hello   world  ") == "  hello   world  ");
+    PASS();
+}
+
 auto main() -> int {
     std::cout << "=== srb2dbot test suite ===\n\n";
 
     test_sanitize_filename();
     test_link_filename_str();
+    test_sanitize_message_for_srb2();
     test_script_inspect_str();
     test_script_find_str();
     test_script_move_line_str();

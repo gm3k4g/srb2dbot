@@ -28,6 +28,7 @@
 #include "version.h"
 #include "srb2dbot/utils.hpp"
 #include "srb2dbot/script.hpp"
+#include "srb2dbot/bridge.hpp"
 using json = nlohmann::json;
 
 const std::array<std::string, 2>INVALID_ARRAY = {"Invalid filename", "Invalid content"};
@@ -693,6 +694,32 @@ int main() {
 
             dpp::message msg(event.command.channel_id, return_status);
             event.reply(msg.set_flags(dpp::m_ephemeral));
+        }
+    });
+
+    bot.on_message_create([&bot, bridge_channel_id, bot_id](const dpp::message_create_t& event) {
+        std::string channel_str = std::to_string(event.msg.channel_id);
+        std::string author_str = std::to_string(event.msg.author.id);
+        if (channel_str != bridge_channel_id) return;
+        if (author_str == bot_id) return;
+
+        std::string content = event.msg.content;
+        if (content.empty()) return;
+
+        std::string sanitized = sanitize_message_for_srb2(content);
+        if (sanitized.size() <= 1) return;
+
+        std::string display_name = event.msg.author.global_name;
+        if (display_name.empty()) {
+            display_name = event.msg.author.username;
+        }
+
+        std::string home = dir_srb2_str();
+        std::string bridge_path = home + "/luafiles/client/DiscordBot";
+        std::filesystem::create_directories(bridge_path);
+        std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
+        if (disc_file.is_open()) {
+            disc_file << "<" << display_name << "> " << sanitized << "\n";
         }
     });
 
