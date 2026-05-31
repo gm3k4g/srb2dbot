@@ -102,7 +102,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 	if player != server then return end
 	if arg == "msg"
 		if DiscordBot.Data.msgsrb2
-			local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a+")
+			local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a")
 			logmsg:write(DiscordBot.Data.msgsrb2)
 			logmsg:close()
 		end
@@ -558,7 +558,7 @@ local function emit_server_start()
 	end
 	local mapstr = map_num_to_mapstr(gamemap)
 	local event_line = "[EVENT:SERVER_START]|"..sn.."|"..mapstr.."|"..maptitle.."\n"
-	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
+	DiscordBot.Data.msgsrb2 = event_line..DiscordBot.Data.msgsrb2
 	DiscordBot.Data.round_active = true
 	DiscordBot.Data.current_map = gamemap
 end
