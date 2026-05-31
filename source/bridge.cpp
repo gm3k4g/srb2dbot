@@ -1,7 +1,9 @@
 #include "srb2dbot/bridge.hpp"
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 auto sanitize_message_for_srb2(const std::string& content) -> std::string {
     std::string result = content;
@@ -84,4 +86,23 @@ auto bridge_replace_emojis(const std::string& content, const std::unordered_map<
         }
     }
     return result;
+}
+
+auto bridge_parse_event(const std::string& line) -> std::optional<BridgeEvent> {
+    if (line.rfind("[EVENT:", 0) != 0) return std::nullopt;
+
+    BridgeEvent event;
+    std::istringstream stream(line);
+    std::string token;
+    std::getline(stream, token, '|');
+    std::string prefix = token;
+    if (prefix.size() > 8 && prefix[prefix.size()-1] == ']') {
+        event.type = prefix.substr(7, prefix.size() - 8);
+    } else {
+        event.type = prefix.substr(7);
+    }
+    while (std::getline(stream, token, '|')) {
+        event.fields.push_back(token);
+    }
+    return event;
 }

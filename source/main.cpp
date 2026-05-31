@@ -877,9 +877,104 @@ int main() {
             std::string content = bridge_read_range(messages_path, seek_start, seek_end);
             if (content.size() > 1) {
                 content = bridge_replace_emojis(content, guild_emojis);
-                dpp::message msg(bridge_channel_sf, content);
-                msg.set_allowed_mentions(false, false, false, false, {});
-                bot.message_create(msg);
+                std::istringstream lines(content);
+                std::string line;
+                std::string chat_lines;
+                while (std::getline(lines, line)) {
+                    auto event = bridge_parse_event(line);
+                    if (event) {
+                        if (!chat_lines.empty()) {
+                            dpp::message chat_msg(bridge_channel_sf, chat_lines);
+                            chat_msg.set_allowed_mentions(false, false, false, false, {});
+                            bot.message_create(chat_msg);
+                            chat_lines.clear();
+                        }
+                        dpp::embed embed;
+                        if (event->type == "SERVER_START") {
+                            embed.set_title("Server Online");
+                            embed.set_description(event->fields.size() >= 2
+                                ? "**" + event->fields[0] + "** — " + event->fields[1] : "SRB2 Server started");
+                            embed.set_color(0x57F287);
+                        } else if (event->type == "MAP_CHANGE") {
+                            embed.set_title("Map Changed");
+                            std::string map_name = event->fields.size() >= 2
+                                ? event->fields[1] + " (" + event->fields[0] + ")" : event->fields[0];
+                            embed.set_description("Now playing: **" + map_name + "**");
+                            embed.set_color(0x5865F2);
+                        } else if (event->type == "ROUND_START") {
+                            std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
+                            std::string map_info = event->fields.size() >= 3
+                                ? event->fields[2] + " (" + event->fields[1] + ")" : "";
+                            embed.set_title(gt + " — Round Started");
+                            embed.set_description("Map: **" + map_info + "**");
+                            embed.set_color(0x5865F2);
+                        } else if (event->type == "ROUND_END") {
+                            std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
+                            embed.set_title(gt + " — Round Ended");
+                            std::string scoreboard;
+                            for (size_t i = 1; i < event->fields.size(); i++) {
+                                size_t colon2 = event->fields[i].find(':', 6);
+                                if (colon2 != std::string::npos) {
+                                    std::string key = event->fields[i].substr(0, colon2);
+                                    std::string val = event->fields[i].substr(colon2 + 1);
+                                    if (key == "TEAM") {
+                                        scoreboard += key + " " + val + "\n";
+                                    } else {
+                                        scoreboard += key + ": " + val + "\n";
+                                    }
+                                }
+                            }
+                            embed.set_description(scoreboard.empty() ? "Round complete." : scoreboard);
+                            embed.set_color(0x747F8D);
+                        } else if (event->type == "CTF_CAPTURE") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            std::string team = event->fields.size() >= 2 ? event->fields[1] : "";
+                            embed.set_title("Flag Captured!");
+                            embed.set_description("**" + player + "** captured the flag for **" + team + "**!");
+                            embed.set_color(0xFEE75C);
+                        } else if (event->type == "CTF_DROP") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            embed.set_title("Flag Dropped");
+                            embed.set_description("**" + player + "** dropped the flag.");
+                            embed.set_color(0xED4245);
+                        } else if (event->type == "CTF_PICKUP") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            embed.set_title("Flag Taken");
+                            embed.set_description("**" + player + "** picked up the flag.");
+                            embed.set_color(0xFEE75C);
+                        } else if (event->type == "CTF_RETURN") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Server";
+                            embed.set_title("Flag Returned");
+                            embed.set_description("The flag was returned by **" + player + "**.");
+                            embed.set_color(0x747F8D);
+                        } else if (event->type == "PLAYER_JOIN") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            embed.set_title("Player Joined");
+                            embed.set_description("**" + player + "** has joined the game.");
+                            embed.set_color(0x57F287);
+                        } else if (event->type == "PLAYER_QUIT") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            embed.set_title("Player Left");
+                            embed.set_description("**" + player + "** has left the game.");
+                            embed.set_color(0xED4245);
+                        } else {
+                            embed.set_title(event->type);
+                            embed.set_description(line);
+                            embed.set_color(0x2F3136);
+                        }
+                        dpp::message evt_msg(bridge_channel_sf, "");
+                        evt_msg.add_embed(embed);
+                        bot.message_create(evt_msg);
+                    } else {
+                        chat_lines += line;
+                        chat_lines += '\n';
+                    }
+                }
+                if (!chat_lines.empty()) {
+                    dpp::message chat_msg(bridge_channel_sf, chat_lines);
+                    chat_msg.set_allowed_mentions(false, false, false, false, {});
+                    bot.message_create(chat_msg);
+                }
             }
             seek_start = seek_end;
         }

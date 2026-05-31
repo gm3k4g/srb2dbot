@@ -442,6 +442,51 @@ void test_bridge_polling_cycle() {
     std::remove(tmp.c_str());
 }
 
+void test_bridge_parse_event() {
+    TEST("bridge_parse_event: returns nullopt for plain chat");
+    CHECK(!bridge_parse_event("Player1: hello world").has_value());
+    PASS();
+
+    TEST("bridge_parse_event: parses SERVER_START");
+    auto ev = bridge_parse_event("[EVENT:SERVER_START]|My Server|MAP01|Greenflower Zone");
+    CHECK(ev.has_value());
+    CHECK(ev->type == "SERVER_START");
+    CHECK(ev->fields.size() == 3);
+    CHECK(ev->fields[0] == "My Server");
+    PASS();
+
+    TEST("bridge_parse_event: parses ROUND_END with teams");
+    ev = bridge_parse_event("[EVENT:ROUND_END]|CTF|TEAM:Red:3|TEAM:Blue:1");
+    CHECK(ev.has_value());
+    CHECK(ev->type == "ROUND_END");
+    CHECK(ev->fields.size() == 3);
+    CHECK(ev->fields[1] == "TEAM:Red:3");
+    PASS();
+
+    TEST("bridge_parse_event: parses CTF_CAPTURE");
+    ev = bridge_parse_event("[EVENT:CTF_CAPTURE]|PlayerOne|Blue");
+    CHECK(ev.has_value());
+    CHECK(ev->type == "CTF_CAPTURE");
+    CHECK(ev->fields[0] == "PlayerOne");
+    CHECK(ev->fields[1] == "Blue");
+    PASS();
+
+    TEST("bridge_parse_event: parses PLAYER_JOIN");
+    ev = bridge_parse_event("[EVENT:PLAYER_JOIN]|NewPlayer");
+    CHECK(ev.has_value());
+    CHECK(ev->type == "PLAYER_JOIN");
+    CHECK(ev->fields[0] == "NewPlayer");
+    PASS();
+
+    TEST("bridge_parse_event: parses MAP_CHANGE");
+    ev = bridge_parse_event("[EVENT:MAP_CHANGE]|MAP02|Flame Rift Zone");
+    CHECK(ev.has_value());
+    CHECK(ev->type == "MAP_CHANGE");
+    CHECK(ev->fields[0] == "MAP02");
+    CHECK(ev->fields[1] == "Flame Rift Zone");
+    PASS();
+}
+
 auto main() -> int {
     std::cout << "=== srb2dbot test suite ===\n\n";
 
@@ -452,6 +497,7 @@ auto main() -> int {
     test_bridge_read_range();
     test_bridge_replace_emojis();
     test_bridge_polling_cycle();
+    test_bridge_parse_event();
     test_script_inspect_str();
     test_script_find_str();
     test_script_move_line_str();
