@@ -715,6 +715,7 @@ int main() {
         std::string author_str = std::to_string(event.msg.author.id);
         if (channel_str != bridge_channel_id) return;
         if (author_str == bot_id) return;
+        if (event.msg.author.is_bot()) return;
 
         std::string content = event.msg.content;
         if (content.empty()) return;

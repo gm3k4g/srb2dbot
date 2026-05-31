@@ -198,9 +198,9 @@ end, COM_LOCAL)
 COM_AddCommand("discord_message", function(player, ...)
 	if player != server then return end
 	if not ... then return end
-	for _,i in ipairs({...}) do
-		chatprint("\x89".."[Discord]".."\x80"..i, true)
-	end
+	local args = {...}
+	local msg = table.concat(args, " ", 1, #args)
+	chatprint("\x89".."[Discord]".."\x80"..msg, true)
 end)
 
 local function bot_function()
@@ -462,21 +462,29 @@ local function get_gametype_name(gt)
 	return "Unknown"
 end
 
+local function map_num_to_mapstr(n)
+	if n < 100 then
+		return string.format("MAP%02d", n)
+	end
+	return "MAP"..n
+end
+
 addHook("MapLoad", function(map)
-	if DiscordBot.Data.current_map == nil then
-		DiscordBot.Data.current_map = map
-		return
-	end
-	local mapname = mapheaderinfo[map]
-	local maptitle = "Unknown Map"
-	if mapname and mapname.lvlttl
-		maptitle = mapname.lvlttl
-		if mapname.actnum and mapname.actnum > 0
-			maptitle = maptitle.." Act "..mapname.actnum
+		if DiscordBot.Data.current_map == nil then
+			DiscordBot.Data.current_map = map
+			return
 		end
-	end
-	local gtname = get_gametype_name(gametype)
-	local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..map.."|"..maptitle.."\n"
+		local mapname = mapheaderinfo[map]
+		local maptitle = "Unknown Map"
+		if mapname and mapname.lvlttl
+			maptitle = mapname.lvlttl
+			if mapname.actnum and mapname.actnum > 0
+				maptitle = maptitle.." Act "..mapname.actnum
+			end
+		end
+		local gtname = get_gametype_name(gametype)
+		local mapstr = map_num_to_mapstr(map)
+		local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
 	DiscordBot.Data.round_active = true
 	DiscordBot.Data.current_map = map
@@ -487,6 +495,7 @@ local ok, err = pcall(addHook, "IntermissionThink", function()
 	DiscordBot.Data.round_active = false
 
 	local gtname = get_gametype_name(gametype)
+	local mapstr = map_num_to_mapstr(gamemap)
 	local mapname = mapheaderinfo[gamemap]
 	local maptitle = "Unknown"
 	if mapname and mapname.lvlttl
@@ -495,7 +504,7 @@ local ok, err = pcall(addHook, "IntermissionThink", function()
 			maptitle = maptitle.." Act "..mapname.actnum
 		end
 	end
-	local event_line = "[EVENT:ROUND_END]|"..gtname.."|"..gamemap.."|MAPNAME:"..maptitle
+	local event_line = "[EVENT:ROUND_END]|"..gtname.."|"..mapstr.."|MAPNAME:"..maptitle
 	if gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE
 		local reds = ""
 		local blues = ""
@@ -547,8 +556,8 @@ local function emit_server_start()
 			maptitle = maptitle.." Act "..mapname.actnum
 		end
 	end
-	local event_line = "[EVENT:SERVER_START]|"..sn.."|"..gamemap.."|"..maptitle.."\n"
-	event_line = event_line.."[EVENT:ROUND_START]|"..get_gametype_name(gametype).."|"..gamemap.."|"..maptitle.."\n"
+	local mapstr = map_num_to_mapstr(gamemap)
+	local event_line = "[EVENT:SERVER_START]|"..sn.."|"..mapstr.."|"..maptitle.."\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
 	DiscordBot.Data.round_active = true
 	DiscordBot.Data.current_map = gamemap
