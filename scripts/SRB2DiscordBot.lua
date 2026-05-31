@@ -444,23 +444,6 @@ addHook("NetVars", function(n)
 	 DiscordBot.Messages = n($)
 end)
 
-addHook("MapLoad", function(map)
-	if map == DiscordBot.Data.current_map then return end
-	DiscordBot.Data.current_map = map
-	DiscordBot.Data.round_active = true
-	local mapname = mapheaderinfo[map]
-	local maptitle = "Unknown Map"
-	if mapname and mapname.lvlttl
-		maptitle = mapname.lvlttl
-		if mapname.actnum and mapname.actnum > 0
-			maptitle = maptitle.." Act "..mapname.actnum
-		end
-	end
-	local gtname = get_gametype_name(gametype)
-	local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..map.."|"..maptitle.."\n"
-	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
-end)
-
 local function get_gametype_name(gt)
 	if gt == GT_COOP then return "Cooperative" end
 	if gt == GT_COMPETITION then return "Competition" end
@@ -474,6 +457,26 @@ local function get_gametype_name(gt)
 	if gt == GT_TEAMBATTLE then return "Team Battle" end
 	return "Unknown"
 end
+
+addHook("MapLoad", function(map)
+	if DiscordBot.Data.current_map == nil then
+		DiscordBot.Data.current_map = map
+		return
+	end
+	local mapname = mapheaderinfo[map]
+	local maptitle = "Unknown Map"
+	if mapname and mapname.lvlttl
+		maptitle = mapname.lvlttl
+		if mapname.actnum and mapname.actnum > 0
+			maptitle = maptitle.." Act "..mapname.actnum
+		end
+	end
+	local gtname = get_gametype_name(gametype)
+	local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..map.."|"..maptitle.."\n"
+	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
+	DiscordBot.Data.round_active = true
+	DiscordBot.Data.current_map = map
+end)
 
 addHook("IntermissionThink", function()
 	if not DiscordBot.Data.round_active then return end
@@ -529,23 +532,6 @@ addHook("IntermissionThink", function()
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
 end)
 
-addHook("MapLoad", function(map)
-	if map == DiscordBot.Data.current_map then return end
-	if not DiscordBot.Data.round_active then return end
-	DiscordBot.Data.round_active = true
-	local mapname = mapheaderinfo[map]
-	local maptitle = "Unknown Map"
-	if mapname and mapname.lvlttl
-		maptitle = mapname.lvlttl
-		if mapname.actnum and mapname.actnum > 0
-			maptitle = maptitle.." Act "..mapname.actnum
-		end
-	end
-	local gtname = get_gametype_name(gametype)
-	local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..map.."|"..maptitle.."\n"
-	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
-end)
-
 local function emit_server_start()
 	local cv_servername = CV_FindVar("servername")
 	local sn = cv_servername.string or "SRB2 Server"
@@ -558,6 +544,7 @@ local function emit_server_start()
 		end
 	end
 	local event_line = "[EVENT:SERVER_START]|"..sn.."|"..gamemap.."|"..maptitle.."\n"
+	event_line = event_line.."[EVENT:ROUND_START]|"..get_gametype_name(gametype).."|"..gamemap.."|"..maptitle.."\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
 	DiscordBot.Data.round_active = true
 	DiscordBot.Data.current_map = gamemap
