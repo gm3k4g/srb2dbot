@@ -478,7 +478,7 @@ addHook("MapLoad", function(map)
 	DiscordBot.Data.current_map = map
 end)
 
-addHook("IntermissionThink", function()
+local ok, err = pcall(addHook, "IntermissionThink", function()
 	if not DiscordBot.Data.round_active then return end
 	DiscordBot.Data.round_active = false
 
