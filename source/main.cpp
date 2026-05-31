@@ -1003,7 +1003,7 @@ int main() {
                         } else if (event->type == "PLAYER_JOIN") {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
                             embed.set_title("Player Joined");
-                            embed.set_description("**" + player + "** has joined the game.");
+                            embed.set_description(":bust_in_silhouette: **" + player + "** has joined the game.");
                             embed.set_color(0x57F287);
                         } else if (event->type == "PLAYER_QUIT") {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
