@@ -913,16 +913,57 @@ int main() {
                         } else if (event->type == "ROUND_END") {
                             std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
                             embed.set_title(gt + " — Round Ended");
-                            std::string scoreboard;
+                            embed.set_color(0x747F8D);
+
+                            std::string red_players;
+                            std::string blue_players;
+                            std::string unaffiliated;
+                            std::string red_score = "?";
+                            std::string blue_score = "?";
+                            bool has_teams = false;
+
                             for (size_t i = 1; i < event->fields.size(); i++) {
                                 size_t colon = event->fields[i].find(':');
-                                if (colon != std::string::npos) {
-                                    std::string val = event->fields[i].substr(colon + 1);
-                                    scoreboard += val + "\n";
+                                if (colon == std::string::npos) continue;
+                                std::string key = event->fields[i].substr(0, colon);
+                                std::string val = event->fields[i].substr(colon + 1);
+
+                                if (key == "TEAM" && val == "Red") {
+                                    if (++i < event->fields.size()) red_score = event->fields[i];
+                                    has_teams = true;
+                                } else if (key == "TEAM" && val == "Blue") {
+                                    if (++i < event->fields.size()) blue_score = event->fields[i];
+                                    has_teams = true;
+                                } else if (key == "RED") {
+                                    size_t c2 = val.find(':');
+                                    if (c2 != std::string::npos)
+                                        red_players += val.substr(0, c2) + "  " + val.substr(c2 + 1) + "\n";
+                                    else
+                                        red_players += val + "\n";
+                                } else if (key == "BLUE") {
+                                    size_t c2 = val.find(':');
+                                    if (c2 != std::string::npos)
+                                        blue_players += val.substr(0, c2) + "  " + val.substr(c2 + 1) + "\n";
+                                    else
+                                        blue_players += val + "\n";
+                                } else if (key == "PLAYER") {
+                                    size_t c2 = val.find(':');
+                                    if (c2 != std::string::npos)
+                                        unaffiliated += val.substr(0, c2) + "  " + val.substr(c2 + 1) + "\n";
+                                    else
+                                        unaffiliated += val + "\n";
                                 }
                             }
-                            embed.set_description(scoreboard.empty() ? "Round complete." : scoreboard);
-                            embed.set_color(0x747F8D);
+
+                            if (has_teams) {
+                                embed.add_field("Red Team  " + red_score, red_players.empty() ? "_no players_" : red_players, true);
+                                embed.add_field("Blue Team  " + blue_score, blue_players.empty() ? "_no players_" : blue_players, true);
+                            }
+                            if (!unaffiliated.empty()) {
+                                embed.add_field("Players", unaffiliated, false);
+                            }
+                            embed.set_footer({});
+                            embed.set_timestamp(time(nullptr));
                         } else if (event->type == "CTF_CAPTURE") {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
                             std::string team = event->fields.size() >= 2 ? event->fields[1] : "";

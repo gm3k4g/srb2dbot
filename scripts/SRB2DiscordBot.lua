@@ -483,13 +483,30 @@ addHook("IntermissionThink", function()
 	local gtname = get_gametype_name(gametype)
 	local event_line = "[EVENT:ROUND_END]|"..gtname
 	if gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE
+		local reds = ""
+		local blues = ""
+		for player in players.iterate do
+			if player and player.spectator != true
+				local pname = string.gsub(player.name, "|", "")
+				if player.ctfteam == 1
+					reds = reds.."|RED:"..pname..":"..player.score
+				elseif player.ctfteam == 2
+					blues = blues.."|BLUE:"..pname..":"..player.score
+				else
+					event_line = event_line.."|PLAYER:"..pname..":"..player.score
+				end
+			end
+		end
 		event_line = event_line.."|TEAM:Red:"..GetTeamScore(1)
+		event_line = event_line..reds
 		event_line = event_line.."|TEAM:Blue:"..GetTeamScore(2)
+		event_line = event_line..blues
 	end
 	if gametype == GT_COMPETITION or gametype == GT_MATCH or gametype == GT_BATTLE or gametype == GT_RACE
 		for player in players.iterate do
 			if player and player.spectator != true
-				event_line = event_line.."|PLAYER:"..player.name..":"..player.score
+				local pname = string.gsub(player.name, "|", "")
+				event_line = event_line.."|PLAYER:"..pname..":"..player.score
 			end
 		end
 	end

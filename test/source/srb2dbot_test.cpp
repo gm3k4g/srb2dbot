@@ -486,18 +486,17 @@ void test_bridge_parse_event() {
     CHECK(ev->fields[1] == "Flame Rift Zone");
     PASS();
 
-    TEST("bridge_parse_event: ROUND_END scoreboard splits correctly");
-    ev = bridge_parse_event("[EVENT:ROUND_END]|CTF|TEAM:Red:3|TEAM:Blue:1|PLAYER:Player1:5");
+    TEST("bridge_parse_event: ROUND_END with teams and player red/blue");
+    ev = bridge_parse_event("[EVENT:ROUND_END]|CTF|TEAM:Red:3|RED:Alpha:2|RED:Beta:1|TEAM:Blue:1|BLUE:Gamma:1");
     CHECK(ev.has_value());
     CHECK(ev->type == "ROUND_END");
-    CHECK(ev->fields.size() == 4);
-    // First colon should split TEAM/PLAYER key from display value
-    size_t colon = ev->fields[1].find(':');
-    CHECK(ev->fields[1].substr(0, colon) == "TEAM");
-    CHECK(ev->fields[1].substr(colon + 1) == "Red:3");
-    colon = ev->fields[3].find(':');
-    CHECK(ev->fields[3].substr(0, colon) == "PLAYER");
-    CHECK(ev->fields[3].substr(colon + 1) == "Player1:5");
+    CHECK(ev->fields.size() == 5);
+    size_t col2 = ev->fields[1].find(':');
+    CHECK(ev->fields[1].substr(0, col2) == "TEAM");
+    col2 = ev->fields[2].find(':');
+    CHECK(ev->fields[2].substr(0, col2) == "RED");
+    col2 = ev->fields[4].find(':');
+    CHECK(ev->fields[4].substr(0, col2) == "BLUE");
     PASS();
 }
 
