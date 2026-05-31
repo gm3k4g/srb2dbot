@@ -912,14 +912,22 @@ int main() {
                             embed.set_description(event->fields.size() >= 3
                                 ? "**" + event->fields[0] + "** — " + event->fields[2] : "SRB2 Server started");
                             embed.set_color(0x57F287);
-                            if (event->fields.size() >= 2) attach_thumb(embed, event->fields[1]);
+                            if (event->fields.size() >= 2) {
+                                attach_thumb(embed, event->fields[1]);
+                                if (thumb_path.empty())
+                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
+                            }
                         } else if (event->type == "MAP_CHANGE") {
                             embed.set_title("Map Changed");
                             std::string map_name = event->fields.size() >= 2
                                 ? event->fields[1] + " (" + event->fields[0] + ")" : event->fields[0];
                             embed.set_description("Now playing: **" + map_name + "**");
                             embed.set_color(0x5865F2);
-                            if (!event->fields.empty()) attach_thumb(embed, event->fields[0]);
+                            if (!event->fields.empty()) {
+                                attach_thumb(embed, event->fields[0]);
+                                if (thumb_path.empty())
+                                    bridge_extract_thumbnail(event->fields[0], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
+                            }
                         } else if (event->type == "ROUND_START") {
                             std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
                             std::string map_info = event->fields.size() >= 3
@@ -927,7 +935,11 @@ int main() {
                             embed.set_title(gt + " — Round Started");
                             embed.set_description("Map: **" + map_info + "**");
                             embed.set_color(0x5865F2);
-                            if (event->fields.size() >= 2) attach_thumb(embed, event->fields[1]);
+                            if (event->fields.size() >= 2) {
+                                attach_thumb(embed, event->fields[1]);
+                                if (thumb_path.empty())
+                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
+                            }
                         } else if (event->type == "ROUND_END") {
                             std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
                             embed.set_title(gt + " — Round Ended");
@@ -983,7 +995,11 @@ int main() {
                         embed.set_footer({});
                         embed.set_timestamp(time(nullptr));
                         embed.set_color(0x747F8D);
-                        if (event->fields.size() >= 2) attach_thumb(embed, event->fields[1]);
+                        if (event->fields.size() >= 2) {
+                            attach_thumb(embed, event->fields[1]);
+                            if (thumb_path.empty())
+                                bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
+                        }
                         } else if (event->type == "PLAYER_JOIN") {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
                             embed.set_title("Player Joined");

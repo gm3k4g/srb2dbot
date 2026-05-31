@@ -1,7 +1,12 @@
 #include "srb2dbot/bridge.hpp"
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <unordered_map>
 #include <vector>
 
@@ -105,4 +110,31 @@ auto bridge_parse_event(const std::string& line) -> std::optional<BridgeEvent> {
         event.fields.push_back(token);
     }
     return event;
+}
+
+auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir) -> void {
+    char thumb[256];
+    snprintf(thumb, sizeof(thumb), "%s/%s.png", outdir.c_str(), map.c_str());
+    if (access(thumb, F_OK) == 0) return;
+
+    pid_t pid = fork();
+    if (pid == -1) return;
+    if (pid != 0) return;
+
+    std::string cmd =
+        "for pk3 in \"$HOME\"/.srb2/addons/*.pk3; do "
+        "  [ -f \"$pk3\" ] || continue; "
+        "  if unzip -l \"$pk3\" 2>/dev/null | grep -q '" + map + "P.lmp'; then "
+        "    unzip -p \"$pk3\" 'Level select pictures/" + map + "P.lmp' 2>/dev/null | "
+        "    tail -c 16000 2>/dev/null | "
+        "    if command -v magick >/dev/null 2>&1; then "
+        "      magick -size 160x100 -depth 8 GRAY:- -auto-level '" + thumb + "' 2>/dev/null; "
+        "    else "
+        "      convert -size 160x100 -depth 8 GRAY:- -auto-level '" + thumb + "' 2>/dev/null; "
+        "    fi; "
+        "    break; "
+        "  fi; "
+        "done";
+    execl("/bin/sh", "sh", "-c", cmd.c_str(), (char*)NULL);
+    _exit(1);
 }

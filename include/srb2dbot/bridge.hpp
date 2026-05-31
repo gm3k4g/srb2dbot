@@ -17,3 +17,5 @@ struct BridgeEvent {
 };
 
 auto bridge_parse_event(const std::string& line) -> std::optional<BridgeEvent>;
+
+auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir) -> void;
