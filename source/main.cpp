@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <pwd.h>
+#include <vector>
 
 #include "version.h"
 #include "srb2dbot/utils.hpp"
@@ -880,6 +881,7 @@ int main() {
                 std::istringstream lines(content);
                 std::string line;
                 std::string chat_lines;
+                std::vector<dpp::embed> pending_embeds;
                 while (std::getline(lines, line)) {
                     auto event = bridge_parse_event(line);
                     if (event) {
@@ -957,9 +959,13 @@ int main() {
                             embed.set_description(line);
                             embed.set_color(0x2F3136);
                         }
-                        dpp::message evt_msg(bridge_channel_sf, "");
-                        evt_msg.add_embed(embed);
-                        bot.message_create(evt_msg);
+                        pending_embeds.push_back(embed);
+                        if (pending_embeds.size() >= 10) {
+                            dpp::message evt_batch(bridge_channel_sf, "");
+                            for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                            bot.message_create(evt_batch);
+                            pending_embeds.clear();
+                        }
                     } else {
                         chat_lines += line;
                         chat_lines += '\n';
@@ -969,6 +975,11 @@ int main() {
                     dpp::message chat_msg(bridge_channel_sf, chat_lines);
                     chat_msg.set_allowed_mentions(false, false, false, false, {});
                     bot.message_create(chat_msg);
+                }
+                if (!pending_embeds.empty()) {
+                    dpp::message evt_batch(bridge_channel_sf, "");
+                    for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                    bot.message_create(evt_batch);
                 }
             }
             seek_start = seek_end;
