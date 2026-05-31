@@ -846,6 +846,16 @@ int main() {
         if (disc_file.is_open()) disc_file << "\n";
     }
 
+    // Chat bridge status
+    if (bridge_channel_id != "0") {
+        std::cout << "[bridge] disc -> srb2: channel " << bridge_channel_id
+                  << " (messages forwarded to " << bridge_dir << "/discordmessage.txt)\n";
+        std::cout << "[bridge] srb2 -> disc: polling " << bridge_dir << "/Messages.txt"
+                  << " every 2s" << std::endl;
+    } else {
+        std::cout << "[bridge] disabled (channel_id not set in secret.json)" << std::endl;
+    }
+
     std::unordered_map<std::string, std::string> guild_emojis;
     bot.on_ready([&bot, guild_id, &guild_emojis](const dpp::ready_t& event) {
         auto guild = dpp::find_guild(guild_id);
