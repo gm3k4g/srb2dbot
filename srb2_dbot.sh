@@ -11,13 +11,16 @@ PORT="${1:-5029}"
 ROOM="${2:-38}"
 SERVERNAME="${3:-srb2dbot test server}"
 
-# Search for the WAD in multiple locations
+# Search for the WAD/Lua in multiple locations
 find_wad() {
     for loc in \
         "${4:-}" \
         "$SCRIPT_DIR/scripts/SRB2DiscordBot.wad" \
+        "$SCRIPT_DIR/scripts/SRB2DiscordBot.lua" \
         "$HOME/.srb2/SRB2DiscordBot.wad" \
-        "$HOME/.srb2/luafiles/client/SRB2DiscordBot.wad"
+        "$HOME/.srb2/luafiles/client/SRB2DiscordBot.wad" \
+        "$HOME/.srb2/addons/SRB2DiscordBot.wad" \
+        "$SCRIPT_DIR/../CONTENT_SRB2/HOSTING/SCRIPTS/SRB2_DiscordBot/SRB2DiscordBot.wad"
     do
         [[ -n "$loc" && -f "$loc" ]] && { echo "$loc"; return 0; }
     done
