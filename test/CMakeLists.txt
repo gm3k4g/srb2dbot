@@ -17,4 +17,13 @@ target_compile_features(srb2dbot_test PRIVATE cxx_std_26)
 
 add_test(NAME srb2dbot_test COMMAND srb2dbot_test)
 
+add_executable(srb2dbot_bridge_e2e
+    source/srb2dbot_bridge_e2e.cpp
+    ${CMAKE_SOURCE_DIR}/source/bridge.cpp
+)
+target_include_directories(srb2dbot_bridge_e2e PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_features(srb2dbot_bridge_e2e PRIVATE cxx_std_26)
+
+add_test(NAME srb2dbot_bridge_e2e COMMAND srb2dbot_bridge_e2e)
+
 add_folders(Test)
