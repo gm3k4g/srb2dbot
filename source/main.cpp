@@ -920,15 +920,8 @@ int main() {
                         }
                         dpp::embed embed;
                         if (event->type == "SERVER_START") {
-                            embed.set_title("Server Online");
-                            embed.set_description(event->fields.size() >= 3
-                                ? "**" + event->fields[0] + "** — " + event->fields[2] : "SRB2 Server started");
+                            embed.set_title(":green_circle: The server has started");
                             embed.set_color(0x57F287);
-                            if (event->fields.size() >= 2) {
-                                attach_thumb(embed, event->fields[1]);
-                                if (thumb_path.empty())
-                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
-                            }
                         } else if (event->type == "ROUND_START") {
                             std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
                             std::string map_num = event->fields.size() >= 2 ? event->fields[1] : "?";
@@ -942,14 +935,18 @@ int main() {
                             }
                         } else if (event->type == "ROUND_END") {
                             std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
-                            embed.set_title(gt + " — Round Ended");
-                            embed.set_color(0x747F8D);
+                            std::string map_num = event->fields.size() >= 2 ? event->fields[1] : "?";
+                            std::string map_title = "";
 
-                            std::string red_players;
-                            std::string blue_players;
+                            embed.set_title(map_num + ": " + map_title + " - " + gt);
+                            embed.set_color(0x57F287);
+
+                            std::string red_team;
+                            std::string blue_team;
                             std::string unaffiliated;
-                            std::string red_score = "?";
-                            std::string blue_score = "?";
+                            std::string spectators;
+                            std::string red_score;
+                            std::string blue_score;
                             bool has_teams = false;
 
                             for (size_t i = 1; i < event->fields.size(); i++) {
@@ -958,7 +955,9 @@ int main() {
                                 std::string key = event->fields[i].substr(0, colon);
                                 std::string val = event->fields[i].substr(colon + 1);
 
-                                if (key == "TEAM" && val == "Red") {
+                                if (key == "MAPNAME") {
+                                    map_title = val;
+                                } else if (key == "TEAM" && val == "Red") {
                                     if (++i < event->fields.size()) red_score = event->fields[i];
                                     has_teams = true;
                                 } else if (key == "TEAM" && val == "Blue") {
@@ -967,39 +966,57 @@ int main() {
                                 } else if (key == "RED") {
                                     size_t c2 = val.find(':');
                                     if (c2 != std::string::npos)
-                                        red_players += val.substr(0, c2) + "  " + val.substr(c2 + 1) + "\n";
-                                    else
-                                        red_players += val + "\n";
+                                        red_team += val.substr(0, c2) + "  " + val.substr(c2 + 1) + "\n";
                                 } else if (key == "BLUE") {
                                     size_t c2 = val.find(':');
                                     if (c2 != std::string::npos)
-                                        blue_players += val.substr(0, c2) + "  " + val.substr(c2 + 1) + "\n";
-                                    else
-                                        blue_players += val + "\n";
+                                        blue_team += val.substr(0, c2) + "  " + val.substr(c2 + 1) + "\n";
                                 } else if (key == "PLAYER") {
                                     size_t c2 = val.find(':');
                                     if (c2 != std::string::npos)
                                         unaffiliated += val.substr(0, c2) + "  " + val.substr(c2 + 1) + "\n";
-                                    else
-                                        unaffiliated += val + "\n";
+                                } else if (key == "SPEC") {
+                                    spectators += val + "\n";
                                 }
                             }
 
                             if (has_teams) {
-                            embed.add_field("Red Team  " + red_score, red_players.empty() ? "_no players_" : red_players, true);
-                            embed.add_field("Blue Team  " + blue_score, blue_players.empty() ? "_no players_" : blue_players, true);
-                        }
-                        if (!unaffiliated.empty()) {
-                            embed.add_field("Players", unaffiliated, false);
-                        }
-                        embed.set_footer({});
-                        embed.set_timestamp(time(nullptr));
-                        embed.set_color(0x747F8D);
-                        if (event->fields.size() >= 2) {
-                            attach_thumb(embed, event->fields[1]);
-                            if (thumb_path.empty())
-                                bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
-                        }
+                                embed.add_field("Red Team  " + red_score, red_team.empty() ? "_no players_" : red_team, true);
+                                embed.add_field("Blue Team  " + blue_score, blue_team.empty() ? "_no players_" : blue_team, true);
+                            }
+                            if (!unaffiliated.empty()) {
+                                embed.add_field("Players", unaffiliated, false);
+                            }
+                            if (!spectators.empty()) {
+                                embed.set_footer(dpp::embed_footer().set_text("Spectators:\n" + spectators));
+                            }
+                            embed.set_timestamp(time(nullptr));
+                            if (event->fields.size() >= 2) {
+                                attach_thumb(embed, event->fields[1]);
+                                if (thumb_path.empty())
+                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
+                            }
+                        } else if (event->type == "CTF_CAPTURE") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            std::string team = event->fields.size() >= 2 ? event->fields[1] : "";
+                            embed.set_title("Flag Captured!");
+                            embed.set_description("**" + player + "** has captured the **" + team + "** flag!");
+                            embed.set_color(team == "Blue" ? 0x5865F2 : 0xED4245);
+                        } else if (event->type == "CTF_DROP") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            embed.set_title("Flag Dropped");
+                            embed.set_description("**" + player + "** dropped the flag.");
+                            embed.set_color(0xED4245);
+                        } else if (event->type == "CTF_PICKUP") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
+                            embed.set_title("Flag Taken");
+                            embed.set_description("**" + player + "** picked up the flag.");
+                            embed.set_color(0xFEE75C);
+                        } else if (event->type == "CTF_RETURN") {
+                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Server";
+                            embed.set_title("Flag Returned");
+                            embed.set_description("The flag was returned by **" + player + "**.");
+                            embed.set_color(0x747F8D);
                         } else if (event->type == "PLAYER_JOIN") {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
                             embed.set_title("Player Joined");
