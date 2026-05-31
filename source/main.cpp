@@ -337,12 +337,22 @@ int main() {
 
     std::string bot_token = data["bot_token"].get<std::string>();
 
+    std::string bot_id = "0";
+    if (data.contains("bot_id") && data["bot_id"].is_string()) {
+        bot_id = data["bot_id"].get<std::string>();
+    }
+
+    std::string bridge_channel_id = "0";
+    if (data.contains("channel_id") && data["channel_id"].is_string()) {
+        bridge_channel_id = data["channel_id"].get<std::string>();
+    }
+
     std::string service_name = "srb2@srb2b";
     if (data.contains("service_name") && data["service_name"].is_string()) {
         service_name = data["service_name"].get<std::string>();
     }
 
-    dpp::cluster bot(bot_token);
+    dpp::cluster bot(bot_token, dpp::i_default_intents | dpp::i_message_content);
 
     bot.on_log(dpp::utility::cout_logger());
 
