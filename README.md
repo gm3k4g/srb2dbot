@@ -39,6 +39,30 @@ The bot communicates with SRB2 through a **named FIFO pipe** (`~/.srb2/srb2_serv
 
 The **chat bridge** forwards Discord messages to SRB2 via `~/.srb2/luafiles/client/DiscordBot/discordmessage.txt`, and polls `Messages.txt` every second to relay SRB2 chat back to Discord with emoji conversion and mention suppression.
 
+## Configuration
+
+Create `secret.json` from the template and fill in these fields:
+
+```json
+{
+    "bot_token":     "YOUR_BOT_TOKEN",
+    "bot_id":        "YOUR_BOT_USER_ID",
+    "guild_id":      "YOUR_GUILD_ID",
+    "channel_id":    "YOUR_BRIDGE_CHANNEL_ID",
+    "service_name":  "srb2@srb2b"
+}
+```
+
+| Field | Required | Description |
+|---|---|---|
+| `bot_token` | **Yes** | Discord bot token from the [Developer Portal](https://discord.com/developers/applications) → Bot → Token |
+| `bot_id` | **Yes** | The bot's own Discord user ID. Used by the chat bridge to prevent echoing its own messages back. Find under General Information → Application ID |
+| `guild_id` | **Yes** | Discord server (guild) ID where slash commands are registered and the bot operates |
+| `channel_id` | For bridge | Discord channel ID for chat relay. Messages in this channel are forwarded to SRB2. Optional — if unset or `"0"`, the bridge is disabled |
+| `service_name` | For server control | systemd user service name for restart/stop commands. Defaults to `srb2@srb2b` |
+
+**After creating `secret.json`, you must also enable** the Message Content Intent in the Discord Developer Portal under Bot → Privileged Gateway Intents for the chat bridge to read message content.
+
 ## Dependencies
 
 - **C++26** compiler (GCC 14+ / Clang 18+)

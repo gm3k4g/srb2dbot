@@ -151,12 +151,36 @@ cmake --build build -j$(nproc)</code></pre>
 <h2>Configuration</h2>
 <p>After building, create a <code>secret.json</code> file:</p>
 <pre><code>cp secret.json.default secret.json</code></pre>
-<p>Required fields:</p>
-<ul>
-    <li><code>bot_token</code> — Discord bot token</li>
-    <li><code>guild_id</code> — Discord server (guild) ID</li>
-    <li><code>service_name</code> — systemd service name (default: <code>srb2@srb2b</code>)</li>
-</ul>
+
+<table>
+    <tr><th>Field</th><th>Required</th><th>Description</th></tr>
+    <tr>
+        <td><code>bot_token</code></td>
+        <td><strong>Yes</strong></td>
+        <td>Discord bot token from Developer Portal → Bot → Token</td>
+    </tr>
+    <tr>
+        <td><code>bot_id</code></td>
+        <td><strong>Yes</strong></td>
+        <td>Bot's own Discord user ID (Application ID). Prevents chat bridge echo</td>
+    </tr>
+    <tr>
+        <td><code>guild_id</code></td>
+        <td><strong>Yes</strong></td>
+        <td>Discord server (guild) ID for slash command registration</td>
+    </tr>
+    <tr>
+        <td><code>channel_id</code></td>
+        <td>For bridge</td>
+        <td>Channel ID for chat relay. Set to <code>"0"</code> or omit to disable bridge</td>
+    </tr>
+    <tr>
+        <td><code>service_name</code></td>
+        <td>For server control</td>
+        <td>systemd user service name (default: <code>srb2@srb2b</code>)</td>
+    </tr>
+</table>
+<p><strong>Important:</strong> Enable <strong>Message Content Intent</strong> in the Discord Developer Portal under Bot → Privileged Gateway Intents for the chat bridge to function.</p>
 </main>
 </body>
 </html>

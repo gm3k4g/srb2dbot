@@ -119,7 +119,46 @@ cmake --build build -j$(nproc)
 
 # Configure
 cp secret.json.default secret.json
-# Edit secret.json with your bot token, guild ID, channel ID, and service name</code></pre>
+# Fill in the fields described below</code></pre>
+
+<h2>Configuration</h2>
+<p>Create <code>secret.json</code> from the template:</p>
+<pre><code>{
+    "bot_token":     "YOUR_BOT_TOKEN",
+    "bot_id":        "YOUR_BOT_USER_ID",
+    "guild_id":      "YOUR_GUILD_ID",
+    "channel_id":    "YOUR_BRIDGE_CHANNEL_ID",
+    "service_name":  "srb2@srb2b"
+}</code></pre>
+<table>
+    <tr><th>Field</th><th>Required</th><th>Description</th></tr>
+    <tr>
+        <td><code>bot_token</code></td>
+        <td><strong>Yes</strong></td>
+        <td>Discord bot token from <a href="https://discord.com/developers/applications">Developer Portal</a> → Bot → Token</td>
+    </tr>
+    <tr>
+        <td><code>bot_id</code></td>
+        <td><strong>Yes</strong></td>
+        <td>The bot's own Discord user ID (Application ID). Prevents the chat bridge from echoing its own messages</td>
+    </tr>
+    <tr>
+        <td><code>guild_id</code></td>
+        <td><strong>Yes</strong></td>
+        <td>Discord server (guild) ID where slash commands are registered</td>
+    </tr>
+    <tr>
+        <td><code>channel_id</code></td>
+        <td>For bridge</td>
+        <td>Discord channel ID for chat relay. If unset or <code>"0"</code>, the bridge is disabled</td>
+    </tr>
+    <tr>
+        <td><code>service_name</code></td>
+        <td>For server control</td>
+        <td>systemd user service name. Defaults to <code>srb2@srb2b</code></td>
+    </tr>
+</table>
+<p><strong>Important:</strong> Enable the <strong>Message Content Intent</strong> in the Discord Developer Portal under Bot → Privileged Gateway Intents for the chat bridge to read message content.</p>
 
 <h2>How It Works</h2>
 <p>
