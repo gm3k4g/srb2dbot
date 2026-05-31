@@ -49,7 +49,7 @@ The **chat bridge** forwards Discord messages to SRB2 via `~/.srb2/luafiles/clie
 
 ## Testing
 
-47 unit tests covering utilities, filename sanitization, script manipulation, and chat bridge functions:
+52 unit tests covering utilities, filename sanitization, script manipulation, chat bridge functions, and integration-level polling simulation:
 
 ```bash
 BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh

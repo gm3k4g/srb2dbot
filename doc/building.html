@@ -92,14 +92,24 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -Dsrb2dbot_DEVELOPER_MODE=ON
 cmake --build build -j$(nproc)</code></pre>
 
 <h2>Testing</h2>
-<p>The project includes a test suite with 28 unit tests covering utility functions, filename sanitization, and script manipulation logic.</p>
+<p>The project includes <strong>52 unit tests</strong> covering utility functions, filename sanitization, script manipulation, chat bridge message sanitization, file polling, emoji conversion, and integration-level bridge cycle simulation.</p>
 <pre><code># Build with tests
 BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh
 
 # Or manually
 cmake -B build -DCMAKE_BUILD_TYPE=Debug -Dsrb2dbot_DEVELOPER_MODE=ON
 cmake --build build
-cd build && ctest --output-on-failure</code></pre>
+cd build && ctest --output-on-failure
+
+# Run individual test binary with verbose output
+./build/test/srb2dbot_test</code></pre>
+
+<h3>Manual Bridge Integration Test</h3>
+<p>After deploying the bot with a configured <code>secret.json</code>:</p>
+<ol>
+    <li><strong>Discord → SRB2:</strong> Send a message in the configured bridge Discord channel, then check <code>~/.srb2/luafiles/client/DiscordBot/discordmessage.txt</code> for the sanitized output.</li>
+    <li><strong>SRB2 → Discord:</strong> Write a test line to <code>~/.srb2/luafiles/client/DiscordBot/Messages.txt</code> (e.g., <code>echo "Player1: test" >> Messages.txt</code>). Within 2 seconds the message should appear in the bridge Discord channel with mentions suppressed.</li>
+</ol>
 
 <h2>Build Variants</h2>
 <table>

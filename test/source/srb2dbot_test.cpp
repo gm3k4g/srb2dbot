@@ -358,6 +358,90 @@ void test_bridge_replace_emojis() {
     PASS();
 }
 
+void test_bridge_polling_cycle() {
+    std::string tmp = "/tmp/srb2dbot_test_poll.txt";
+
+    TEST("bridge_integration: empty file has zero lines");
+    {
+        std::ofstream f(tmp, std::ios::trunc);
+        f << "\n";
+    }
+    CHECK(bridge_get_lines(tmp) == 1);
+    PASS();
+
+    TEST("bridge_integration: detect new lines via seek tracking");
+    {
+        std::ofstream f(tmp, std::ios::trunc);
+        f << "\n";
+    }
+    {
+        size_t seek = bridge_get_lines(tmp);
+        {
+            std::ofstream f(tmp, std::ios::app);
+            f << "Player1: hello\n";
+        }
+        size_t new_seek = bridge_get_lines(tmp);
+        CHECK(new_seek > seek);
+        std::string content = bridge_read_range(tmp, seek, new_seek);
+        CHECK(content == "Player1: hello\n");
+    }
+    PASS();
+
+    TEST("bridge_integration: multiple incremental polls");
+    {
+        std::ofstream f(tmp, std::ios::trunc);
+        f << "\nline1\n";
+    }
+    {
+        size_t s = 1;
+        {
+            std::ofstream f(tmp, std::ios::app);
+            f << "line2\nline3\n";
+        }
+        size_t e = bridge_get_lines(tmp);
+        std::string content = bridge_read_range(tmp, s, e);
+        CHECK(content == "line1\nline2\nline3\n");
+    }
+    PASS();
+
+    TEST("bridge_integration: emoji conversion on full message");
+    {
+        std::ofstream f(tmp, std::ios::trunc);
+        f << "\n";
+    }
+    {
+        std::ofstream f(tmp, std::ios::app);
+        f << ":smile: hello :wave: world\n";
+    }
+    size_t s = 1;
+    {
+        std::ofstream f(tmp, std::ios::app);
+        f << ":smile: again\n";
+    }
+    size_t e = bridge_get_lines(tmp);
+    std::string content = bridge_read_range(tmp, s, e);
+    std::unordered_map<std::string, std::string> emojis;
+    emojis["smile"] = "111";
+    emojis["wave"] = "222";
+    std::string converted = bridge_replace_emojis(content, emojis);
+    CHECK(converted == "<:smile:111> hello <:wave:222> world\n<:smile:111> again\n");
+    PASS();
+
+    TEST("bridge_integration: character cap within read_range");
+    {
+        std::string big_line(1200, 'x');
+        {
+            std::ofstream f(tmp, std::ios::trunc);
+            f << "\n" << big_line << "\n";
+        }
+        std::string capped = bridge_read_range(tmp, 0, 2);
+        CHECK(!capped.empty());
+    }
+    PASS();
+
+    std::remove(tmp.c_str());
+}
+
 auto main() -> int {
     std::cout << "=== srb2dbot test suite ===\n\n";
 
@@ -367,6 +451,7 @@ auto main() -> int {
     test_bridge_get_lines();
     test_bridge_read_range();
     test_bridge_replace_emojis();
+    test_bridge_polling_cycle();
     test_script_inspect_str();
     test_script_find_str();
     test_script_move_line_str();
