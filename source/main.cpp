@@ -834,5 +834,44 @@ int main() {
         }
     });
 
+    std::string bridge_dir = srb2_dir + "/luafiles/client/DiscordBot";
+    std::filesystem::create_directories(bridge_dir);
+    std::string messages_path = bridge_dir + "/Messages.txt";
+    {
+        std::ofstream msg_file(messages_path, std::ios::trunc);
+        if (msg_file.is_open()) {
+            msg_file << "\n";
+        }
+    }
+
+    std::unordered_map<std::string, std::string> guild_emojis;
+    bot.on_ready([&bot, guild_id, &guild_emojis](const dpp::ready_t& event) {
+        auto guild = dpp::find_guild(guild_id);
+        if (guild) {
+            for (const auto& emoji_id : guild->emojis) {
+                auto emoji = dpp::find_emoji(emoji_id);
+                if (emoji) {
+                    guild_emojis[emoji->name] = std::to_string(emoji_id);
+                }
+            }
+        }
+    });
+
+    size_t seek_start = 0;
+    dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
+    bot.start_timer([&bot, messages_path, &seek_start, bridge_channel_sf, &guild_emojis](dpp::timer) {
+        size_t seek_end = bridge_get_lines(messages_path);
+        if (seek_end > seek_start) {
+            std::string content = bridge_read_range(messages_path, seek_start, seek_end);
+            if (content.size() > 1) {
+                content = bridge_replace_emojis(content, guild_emojis);
+                dpp::message msg(bridge_channel_sf, content);
+                msg.set_allowed_mentions(false, false, false, false, {});
+                bot.message_create(msg);
+            }
+            seek_start = seek_end;
+        }
+    }, 2);
+
     bot.start(dpp::st_wait);
 }

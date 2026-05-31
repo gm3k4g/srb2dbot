@@ -1,9 +1,12 @@
 #include "srb2dbot/utils.hpp"
 #include "srb2dbot/script.hpp"
 #include "srb2dbot/bridge.hpp"
+#include <cstdio>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 static int failures = 0;
 
@@ -286,12 +289,84 @@ void test_sanitize_message_for_srb2() {
     PASS();
 }
 
+void test_bridge_get_lines() {
+    std::string tmp = "/tmp/srb2dbot_test_getlines.txt";
+    {
+        std::ofstream f(tmp);
+        f << "line1\nline2\nline3\n";
+    }
+    TEST("bridge_get_lines: counts 3 lines");
+    CHECK(bridge_get_lines(tmp) == 3);
+    PASS();
+
+    std::remove(tmp.c_str());
+
+    TEST("bridge_get_lines: non-existent file returns 0");
+    CHECK(bridge_get_lines("/tmp/srb2dbot_nonexistent_xyz.txt") == 0);
+    PASS();
+}
+
+void test_bridge_read_range() {
+    std::string tmp = "/tmp/srb2dbot_test_readrange.txt";
+    {
+        std::ofstream f(tmp);
+        f << "a\nb\nc\nd\ne\n";
+    }
+    TEST("bridge_read_range: reads middle lines");
+    std::string result = bridge_read_range(tmp, 1, 4);
+    CHECK(result == "b\nc\nd\n");
+    PASS();
+
+    TEST("bridge_read_range: start 0 reads from first line");
+    result = bridge_read_range(tmp, 0, 2);
+    CHECK(result == "a\nb\n");
+    PASS();
+
+    TEST("bridge_read_range: end beyond file");
+    result = bridge_read_range(tmp, 3, 99);
+    CHECK(result == "d\ne\n");
+    PASS();
+
+    TEST("bridge_read_range: start equals end returns empty");
+    result = bridge_read_range(tmp, 2, 2);
+    CHECK(result == "");
+    PASS();
+
+    std::remove(tmp.c_str());
+}
+
+void test_bridge_replace_emojis() {
+    std::unordered_map<std::string, std::string> emojis;
+    emojis["smile"] = "12345";
+    emojis["wave"] = "67890";
+
+    TEST("bridge_replace_emojis: replaces :smile:");
+    CHECK(bridge_replace_emojis("hello :smile: world", emojis) == "hello <:smile:12345> world");
+    PASS();
+
+    TEST("bridge_replace_emojis: multiple emoji replacements");
+    CHECK(bridge_replace_emojis(":wave: hello :smile:", emojis) == "<:wave:67890> hello <:smile:12345>");
+    PASS();
+
+    TEST("bridge_replace_emojis: no emojis returns unchanged");
+    CHECK(bridge_replace_emojis("plain text", emojis) == "plain text");
+    PASS();
+
+    TEST("bridge_replace_emojis: empty map returns unchanged");
+    std::unordered_map<std::string, std::string> empty;
+    CHECK(bridge_replace_emojis(":smile: test", empty) == ":smile: test");
+    PASS();
+}
+
 auto main() -> int {
     std::cout << "=== srb2dbot test suite ===\n\n";
 
     test_sanitize_filename();
     test_link_filename_str();
     test_sanitize_message_for_srb2();
+    test_bridge_get_lines();
+    test_bridge_read_range();
+    test_bridge_replace_emojis();
     test_script_inspect_str();
     test_script_find_str();
     test_script_move_line_str();
