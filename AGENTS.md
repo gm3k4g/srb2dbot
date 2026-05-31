@@ -75,7 +75,7 @@ From `source/main.cpp` comments:
 
 - [ ] Replace code-block replies with Discord embeds/cards
 - [x] Make admin commands invisible (ephemeral replies)
-- [ ] Chat log reading and printing in channel
+- [x] Chat log reading and printing in channel (chat bridge via `~/.srb2/luafiles/client/DiscordBot/`)
 - [ ] Game stats command
 - [ ] Configurable script name via CLI parameter (currently hardcoded `srb2b.sh`)
 - [ ] Implement CLI argument parsing

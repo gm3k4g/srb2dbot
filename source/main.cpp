@@ -839,9 +839,11 @@ int main() {
     std::string messages_path = bridge_dir + "/Messages.txt";
     {
         std::ofstream msg_file(messages_path, std::ios::trunc);
-        if (msg_file.is_open()) {
-            msg_file << "\n";
-        }
+        if (msg_file.is_open()) msg_file << "\n";
+    }
+    {
+        std::ofstream disc_file(bridge_dir + "/discordmessage.txt", std::ios::trunc);
+        if (disc_file.is_open()) disc_file << "\n";
     }
 
     std::unordered_map<std::string, std::string> guild_emojis;

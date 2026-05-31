@@ -102,7 +102,7 @@
 <p>
     A <strong>Discord bot</strong> that remotely controls <strong>Sonic Robo Blast 2</strong> game servers.
     Built with the <strong>D++</strong> library in C++26, it manages server lifecycle, script editing,
-    WAD file uploads, and in-game administration — all through Discord slash commands.
+    WAD file uploads, in-game administration, and real-time chat bridging — all through Discord.
 </p>
 
 <h2>Quick Start</h2>
@@ -119,7 +119,7 @@ cmake --build build -j$(nproc)
 
 # Configure
 cp secret.json.default secret.json
-# Edit secret.json with your bot token and guild ID</code></pre>
+# Edit secret.json with your bot token, guild ID, channel ID, and service name</code></pre>
 
 <h2>How It Works</h2>
 <p>
@@ -135,6 +135,13 @@ cp secret.json.default secret.json
     Script editing operates on the bash configuration file
     (<code>~/.srb2/srb2_servers.d/srb2b.d/srb2b.sh</code>),
     validated with <code>bash -n</code> before writing.
+</p>
+<p>
+    The <strong>chat bridge</strong> relays messages between Discord and SRB2
+    in real time via shared text files in <code>~/.srb2/luafiles/client/DiscordBot/</code>.
+    Discord messages are sanitized (ASCII-filtered, links replaced) and forwarded to SRB2.
+    SRB2 chat is polled every second and posted to Discord with emoji conversion
+    and mention suppression.
 </p>
 
 <h2>Features at a Glance</h2>
@@ -160,6 +167,11 @@ cp secret.json.default secret.json
         <td>3</td>
         <td>Send chat messages, kick, and ban players</td>
     </tr>
+    <tr>
+        <td style="background: var(--accent); color: var(--heading); font-weight: 600; padding: 0.15em 0.6em; border-radius: 12px; font-size: 0.8em;">Chat Bridge</td>
+        <td>—</td>
+        <td>Real-time Discord↔SRB2 message relay via shared text files</td>
+    </tr>
 </table>
 
 <h2>Security Model</h2>
@@ -183,8 +195,8 @@ cp secret.json.default secret.json
 
 <h2>Test Suite</h2>
 <p>
-    The project includes <strong>28 unit tests</strong> covering utility functions,
-    filename sanitization, and all script manipulation logic. Run with:
+The project includes <strong>47 unit tests</strong> covering utility functions,
+filename sanitization, script manipulation, and chat bridge logic. Run with:
 </p>
 <pre><code>BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh</code></pre>
 
