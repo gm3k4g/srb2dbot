@@ -481,7 +481,7 @@ addHook("IntermissionThink", function()
 	DiscordBot.Data.round_active = false
 
 	local gtname = get_gametype_name(gametype)
-	local event_line = "[EVENT:ROUND_END]|"..gtname
+	local event_line = "[EVENT:ROUND_END]|"..gtname.."|"..gamemap
 	if gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE
 		local reds = ""
 		local blues = ""
@@ -542,7 +542,7 @@ local function emit_server_start()
 			maptitle = maptitle.." Act "..mapname.actnum
 		end
 	end
-	local event_line = "[EVENT:SERVER_START]|"..sn.."|"..maptitle.."\n"
+	local event_line = "[EVENT:SERVER_START]|"..sn.."|"..gamemap.."|"..maptitle.."\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
 	DiscordBot.Data.round_active = true
 	DiscordBot.Data.current_map = gamemap

@@ -872,7 +872,8 @@ int main() {
 
     size_t seek_start = 0;
     dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
-    bot.start_timer([&bot, messages_path, &seek_start, bridge_channel_sf, &guild_emojis](dpp::timer) {
+    std::string home_srb2 = dir_srb2_str();
+    bot.start_timer([&bot, messages_path, &seek_start, bridge_channel_sf, &guild_emojis, home_srb2](dpp::timer) {
         size_t seek_end = bridge_get_lines(messages_path);
         if (seek_end > seek_start) {
             std::string content = bridge_read_range(messages_path, seek_start, seek_end);
@@ -882,6 +883,20 @@ int main() {
                 std::string line;
                 std::string chat_lines;
                 std::vector<dpp::embed> pending_embeds;
+                std::string thumb_path;
+                std::string thumb_map;
+
+                auto attach_thumb = [&](dpp::embed& e, const std::string& map) {
+                    if (!thumb_path.empty()) return;
+                    std::string tpath = home_srb2 + "/luafiles/client/DiscordBot/thumbnails/" + map + ".png";
+                    std::ifstream test(tpath);
+                    if (test.is_open()) {
+                        test.close();
+                        e.set_thumbnail("attachment://" + map + ".png");
+                        thumb_path = tpath;
+                        thumb_map = map;
+                    }
+                };
                 while (std::getline(lines, line)) {
                     auto event = bridge_parse_event(line);
                     if (event) {
@@ -894,15 +909,17 @@ int main() {
                         dpp::embed embed;
                         if (event->type == "SERVER_START") {
                             embed.set_title("Server Online");
-                            embed.set_description(event->fields.size() >= 2
-                                ? "**" + event->fields[0] + "** — " + event->fields[1] : "SRB2 Server started");
+                            embed.set_description(event->fields.size() >= 3
+                                ? "**" + event->fields[0] + "** — " + event->fields[2] : "SRB2 Server started");
                             embed.set_color(0x57F287);
+                            if (event->fields.size() >= 2) attach_thumb(embed, event->fields[1]);
                         } else if (event->type == "MAP_CHANGE") {
                             embed.set_title("Map Changed");
                             std::string map_name = event->fields.size() >= 2
                                 ? event->fields[1] + " (" + event->fields[0] + ")" : event->fields[0];
                             embed.set_description("Now playing: **" + map_name + "**");
                             embed.set_color(0x5865F2);
+                            if (!event->fields.empty()) attach_thumb(embed, event->fields[0]);
                         } else if (event->type == "ROUND_START") {
                             std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
                             std::string map_info = event->fields.size() >= 3
@@ -910,6 +927,7 @@ int main() {
                             embed.set_title(gt + " — Round Started");
                             embed.set_description("Map: **" + map_info + "**");
                             embed.set_color(0x5865F2);
+                            if (event->fields.size() >= 2) attach_thumb(embed, event->fields[1]);
                         } else if (event->type == "ROUND_END") {
                             std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
                             embed.set_title(gt + " — Round Ended");
@@ -956,35 +974,16 @@ int main() {
                             }
 
                             if (has_teams) {
-                                embed.add_field("Red Team  " + red_score, red_players.empty() ? "_no players_" : red_players, true);
-                                embed.add_field("Blue Team  " + blue_score, blue_players.empty() ? "_no players_" : blue_players, true);
-                            }
-                            if (!unaffiliated.empty()) {
-                                embed.add_field("Players", unaffiliated, false);
-                            }
-                            embed.set_footer({});
-                            embed.set_timestamp(time(nullptr));
-                        } else if (event->type == "CTF_CAPTURE") {
-                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
-                            std::string team = event->fields.size() >= 2 ? event->fields[1] : "";
-                            embed.set_title("Flag Captured!");
-                            embed.set_description("**" + player + "** captured the flag for **" + team + "**!");
-                            embed.set_color(0xFEE75C);
-                        } else if (event->type == "CTF_DROP") {
-                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
-                            embed.set_title("Flag Dropped");
-                            embed.set_description("**" + player + "** dropped the flag.");
-                            embed.set_color(0xED4245);
-                        } else if (event->type == "CTF_PICKUP") {
-                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
-                            embed.set_title("Flag Taken");
-                            embed.set_description("**" + player + "** picked up the flag.");
-                            embed.set_color(0xFEE75C);
-                        } else if (event->type == "CTF_RETURN") {
-                            std::string player = event->fields.size() >= 1 ? event->fields[0] : "Server";
-                            embed.set_title("Flag Returned");
-                            embed.set_description("The flag was returned by **" + player + "**.");
-                            embed.set_color(0x747F8D);
+                            embed.add_field("Red Team  " + red_score, red_players.empty() ? "_no players_" : red_players, true);
+                            embed.add_field("Blue Team  " + blue_score, blue_players.empty() ? "_no players_" : blue_players, true);
+                        }
+                        if (!unaffiliated.empty()) {
+                            embed.add_field("Players", unaffiliated, false);
+                        }
+                        embed.set_footer({});
+                        embed.set_timestamp(time(nullptr));
+                        embed.set_color(0x747F8D);
+                        if (event->fields.size() >= 2) attach_thumb(embed, event->fields[1]);
                         } else if (event->type == "PLAYER_JOIN") {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";
                             embed.set_title("Player Joined");
@@ -1004,8 +1003,12 @@ int main() {
                         if (pending_embeds.size() >= 10) {
                             dpp::message evt_batch(bridge_channel_sf, "");
                             for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                            if (!thumb_path.empty())
+                                evt_batch.add_file(thumb_map + ".png",
+                                    dpp::utility::read_file(thumb_path));
                             bot.message_create(evt_batch);
                             pending_embeds.clear();
+                            thumb_path.clear();
                         }
                     } else {
                         chat_lines += line;
@@ -1020,6 +1023,9 @@ int main() {
                 if (!pending_embeds.empty()) {
                     dpp::message evt_batch(bridge_channel_sf, "");
                     for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                    if (!thumb_path.empty())
+                        evt_batch.add_file(thumb_map + ".png",
+                            dpp::utility::read_file(thumb_path));
                     bot.message_create(evt_batch);
                 }
             }
