@@ -1,4 +1,5 @@
 #include "srb2dbot/bridge.hpp"
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -112,29 +113,99 @@ auto bridge_parse_event(const std::string& line) -> std::optional<BridgeEvent> {
     return event;
 }
 
+auto bridge_decode_patch(const std::string& lump_data, int width, int height) -> std::string {
+    if (lump_data.size() < 8) return "";
+
+    std::string pixels(width * height, '\0');
+    int col_offset_base = 8;
+    int num_columns = width;
+
+    for (int col = 0; col < num_columns; col++) {
+        size_t off = col_offset_base + col * 4;
+        if (off + 4 > lump_data.size()) break;
+        uint32_t col_offset = (uint8_t)lump_data[off]
+            | ((uint8_t)lump_data[off+1] << 8)
+            | ((uint8_t)lump_data[off+2] << 16)
+            | ((uint8_t)lump_data[off+3] << 24);
+        if (col_offset == 0 || col_offset >= lump_data.size()) continue;
+
+        size_t pos = col_offset;
+        while (pos < lump_data.size()) {
+            uint8_t topdelta = (uint8_t)lump_data[pos];
+            if (topdelta == 0xFF) break;
+            if (pos + 4 > lump_data.size()) break;
+
+            uint8_t length = (uint8_t)lump_data[pos + 1];
+            pos += 3;  // skip topdelta, length, unused byte
+
+            int y = topdelta;
+            for (int p = 0; p < length && pos < lump_data.size(); p++) {
+                if (y < height) {
+                    int pixel_idx = y * width + col;
+                    if (pixel_idx < width * height) {
+                        pixels[pixel_idx] = lump_data[pos];
+                    }
+                }
+                pos++;
+                y++;
+            }
+            pos++; // skip trailing unused byte
+        }
+    }
+    return pixels;
+}
+
 auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir) -> void {
     char thumb[256];
     snprintf(thumb, sizeof(thumb), "%s/%s.png", outdir.c_str(), map.c_str());
     if (access(thumb, F_OK) == 0) return;
 
-    pid_t pid = fork();
-    if (pid == -1) return;
-    if (pid != 0) return;
+    std::string lump_name = "Level select pictures/" + map + "P.lmp";
+    std::string lump_data;
+    std::string search_dir = std::string(getenv("HOME") ? getenv("HOME") : "") + "/.srb2/addons";
 
-    std::string cmd =
-        "for pk3 in \"$HOME\"/.srb2/addons/*.pk3; do "
-        "  [ -f \"$pk3\" ] || continue; "
-        "  if unzip -l \"$pk3\" 2>/dev/null | grep -q '" + map + "P.lmp'; then "
-        "    unzip -p \"$pk3\" 'Level select pictures/" + map + "P.lmp' 2>/dev/null | "
-        "    tail -c 16000 2>/dev/null | "
-        "    if command -v magick >/dev/null 2>&1; then "
-        "      magick -size 160x100 -depth 8 GRAY:- -auto-level '" + thumb + "' 2>/dev/null; "
-        "    else "
-        "      convert -size 160x100 -depth 8 GRAY:- -auto-level '" + thumb + "' 2>/dev/null; "
-        "    fi; "
-        "    break; "
-        "  fi; "
-        "done";
-    execl("/bin/sh", "sh", "-c", cmd.c_str(), (char*)NULL);
-    _exit(1);
+    std::string find_cmd = "for pk3 in \"" + search_dir + "\"/*.pk3; do "
+        "[ -f \"$pk3\" ] || continue; "
+        "if unzip -l \"$pk3\" 2>/dev/null | grep -q '" + lump_name + "'; then "
+        "echo \"$pk3\"; break; fi; done";
+
+    FILE* fp = popen(find_cmd.c_str(), "r");
+    if (!fp) return;
+    char pk3_buf[1024];
+    if (!fgets(pk3_buf, sizeof(pk3_buf), fp)) { pclose(fp); return; }
+    pclose(fp);
+    size_t len = strlen(pk3_buf);
+    while (len > 0 && (pk3_buf[len-1] == '\n' || pk3_buf[len-1] == '\r')) pk3_buf[--len] = 0;
+    std::string pk3_path = pk3_buf;
+
+    std::string unzip_cmd = "unzip -p \"" + pk3_path + "\" \"" + lump_name + "\" 2>/dev/null";
+    fp = popen(unzip_cmd.c_str(), "r");
+    if (!fp) return;
+    char buf[4096];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) {
+        lump_data.append(buf, n);
+    }
+    pclose(fp);
+    if (lump_data.size() < 1000) return;
+
+    // Approximate width/height from lump size: ~17448 bytes → 160x100
+    int w = 160, h = 100;
+    if (lump_data.size() > 20000) { w = 320; h = 200; }
+    std::string pixels = bridge_decode_patch(lump_data, w, h);
+    if (pixels.empty()) return;
+
+    // Write PGM and convert
+    std::string pgm_data = "P5\n" + std::to_string(w) + " " + std::to_string(h) + "\n255\n" + pixels;
+    std::string pgm_path = "/tmp/.srb2_thumb.pgm";
+    {
+        std::ofstream pgm(pgm_path, std::ios::binary);
+        pgm.write(pgm_data.c_str(), pgm_data.size());
+    }
+
+    std::string convert_cmd = "if command -v magick >/dev/null 2>&1; then magick '"
+        + pgm_path + "' -auto-level '" + thumb + "'; else convert '"
+        + pgm_path + "' -auto-level '" + thumb + "'; fi 2>/dev/null";
+    if (system(convert_cmd.c_str()) != 0) {/* best effort */}
+    remove(pgm_path.c_str());
 }
