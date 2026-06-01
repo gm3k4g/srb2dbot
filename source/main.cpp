@@ -228,6 +228,22 @@ namespace {
         return script;
     }
 
+    // Auto-detect whether the SRB2 binary supports FIFO pipes.
+    // Reads the server script (srb2b.sh) and checks if the binary
+    // name contains "srb2-fifo" — vanilla SRB2 does not read FIFO
+    // pipes, but srb2-fifo builds do.
+    auto detect_fifo_support() -> bool {
+        std::ifstream script_file;
+        auto script_content = script_get(script_file);
+        std::ifstream infile(script_content[1]);
+        if (!infile.is_open()) return false;
+        std::string line;
+        while (std::getline(infile, line)) {
+            if (line.find("srb2-fifo") != std::string::npos) return true;
+        }
+        return false;
+    }
+
     // TODO: Pass arguments for case insensitive/sensitive search
     auto script_find(const std::string &target_string) -> std::string {
         std::ifstream script_file;
@@ -375,7 +391,9 @@ int main() {
 
     bot.on_log(dpp::utility::cout_logger());
 
-    bot.on_slashcommand([&bot, &service_name](const dpp::slashcommand_t& event) {
+    const bool fifo_available = detect_fifo_support();
+
+    bot.on_slashcommand([&bot, &service_name, fifo_available](const dpp::slashcommand_t& event) {
         //std::cout << "Received slash command: " << event.command.get_command_name() << "\n";
 
         // Gatekeep anyone who potentially tries to run commands without perms.
@@ -641,12 +659,12 @@ int main() {
        // Do something as server.
        else if (event.command.get_command_name() == CMD_SERVER_DO) {
            std::string serv_command = std::get<std::string>(event.get_parameter("server_command"));
-           bool success = pipe_srb2_server_do(serv_command);
            std::string result;
-           if (!success) {
-               result = "```Failed to execute command```";
+           if (!fifo_available) {
+               result = "```FIFO not available — use srb2-fifo binary for pipe commands.```";
            } else {
-               result = "```Success```";
+               bool success = pipe_srb2_server_do(serv_command);
+               result = success ? "```Success```" : "```Failed to execute command```";
            }
            dpp::message msg(event.command.channel_id, result);
            event.reply(msg.set_flags(dpp::m_ephemeral));
@@ -655,12 +673,12 @@ int main() {
        // Says something as the server.
         else if (event.command.get_command_name() == CMD_SERVER_SAY) {
            std::string serv_msg = std::get<std::string>(event.get_parameter("server_message"));
-           bool success = pipe_srb2_server_say(serv_msg);
            std::string result;
-           if (!success) {
-               result = "```Failed to say message.```";
+           if (!fifo_available) {
+               result = "```FIFO not available — use srb2-fifo binary for pipe commands.```";
            } else {
-               result = "```Success```";
+               bool success = pipe_srb2_server_say(serv_msg);
+               result = success ? "```Success```" : "```Failed to say message.```";
            }
            dpp::message msg(event.command.channel_id, result);
            event.reply(msg.set_flags(dpp::m_ephemeral));
@@ -668,14 +686,19 @@ int main() {
 
             // TODO: find a more concrete way of knowing whether
             // the systemctl command succeeded or not
-         else if (event.command.get_command_name() == CMD_KICK_PLAYER) {
+          else if (event.command.get_command_name() == CMD_KICK_PLAYER) {
             std::string player = std::get<std::string>(event.get_parameter("player"));
-            bool kicked_player = pipe_srb2_kick_player(player);
+            bool kicked_player = false;
             std::stringstream result;
-            if (!kicked_player) {
-                result << "```Failed to kick player " << player << " .```\n";
+            if (!fifo_available) {
+                result << "```FIFO not available — use srb2-fifo binary for pipe commands.```\n";
             } else {
-                result << "```Attempted to kick player " << player << " .```\n";
+                kicked_player = pipe_srb2_kick_player(player);
+                if (!kicked_player) {
+                    result << "```Failed to kick player " << player << " .```\n";
+                } else {
+                    result << "```Attempted to kick player " << player << " .```\n";
+                }
             }
             dpp::message msg(event.command.channel_id, result.str());
             event.reply(msg.set_flags(dpp::m_ephemeral));
@@ -690,12 +713,17 @@ int main() {
 
          else if (event.command.get_command_name() == CMD_BAN_PLAYER) {
             std::string player = std::get<std::string>(event.get_parameter("player"));
-            bool banned_player = pipe_srb2_ban_player(player);
+            bool banned_player = false;
             std::stringstream result;
-            if (banned_player) {
-                result << "```Attempted to ban player " << player << " .```\n";
+            if (!fifo_available) {
+                result << "```FIFO not available — use srb2-fifo binary for pipe commands.```\n";
             } else {
-                result << "```Failed to ban player " << player << " .```\n";
+                banned_player = pipe_srb2_ban_player(player);
+                if (banned_player) {
+                    result << "```Attempted to ban player " << player << " .```\n";
+                } else {
+                    result << "```Failed to ban player " << player << " .```\n";
+                }
             }
             dpp::message msg(event.command.channel_id, result.str());
             event.reply(msg.set_flags(dpp::m_ephemeral));
@@ -736,7 +764,7 @@ int main() {
         }
     });
 
-    bot.on_message_create([&bot, bridge_channel_id, bot_id](const dpp::message_create_t& event) {
+    bot.on_message_create([&bot, bridge_channel_id, bot_id, fifo_available](const dpp::message_create_t& event) {
         std::string channel_str = std::to_string(event.msg.channel_id);
         std::string author_str = std::to_string(event.msg.author.id);
         if (channel_str != bridge_channel_id) return;
@@ -755,7 +783,8 @@ int main() {
         }
 
         std::string cmd = "discord_message <" + display_name + "> " + sanitized;
-        bool sent = pipe_srb2_server_do(cmd);
+        bool sent = false;
+        if (fifo_available) sent = pipe_srb2_server_do(cmd);
         if (!sent) {
             // Fallback: write to file for Lua to pick up
             std::string home = dir_srb2_str();
@@ -876,37 +905,6 @@ int main() {
         }
     });
 
-    std::string bridge_dir = srb2_dir + "/luafiles/client/DiscordBot";
-    std::filesystem::create_directories(bridge_dir);
-    std::string messages_path = bridge_dir + "/Messages.txt";
-    {
-        std::ofstream msg_file(messages_path, std::ios::trunc);
-        if (msg_file.is_open()) msg_file << "\n";
-    }
-    {
-        std::ofstream disc_file(bridge_dir + "/discordmessage.txt", std::ios::trunc);
-        if (disc_file.is_open()) disc_file << "\n";
-    }
-
-    // Chat bridge status
-    if (bridge_channel_id != "0") {
-        std::cout << "[bridge] disc -> srb2: channel " << bridge_channel_id
-                  << " (messages forwarded to " << bridge_dir << "/discordmessage.txt)\n";
-        std::cout << "[bridge] srb2 -> disc: polling " << bridge_dir << "/Messages.txt"
-                  << " every 2s" << std::endl;
-
-        // Best-effort dbot_sync at startup. May fail if SRB2 hasn't
-        // created the FIFO yet; the timer callback retries until it
-        // succeeds.
-#ifndef NDEBUG
-        std::cout << "[DEBUG] bridge: sending dbot_sync to SRB2 (best-effort)" << std::endl;
-        pipe_srb2_server_do("dbot_debug on");
-#endif
-        pipe_srb2_server_do("dbot_sync");
-    } else {
-        std::cout << "[bridge] disabled (channel_id not set in secret.json)" << std::endl;
-    }
-
     std::unordered_map<std::string, std::string> guild_emojis;
     bot.on_ready([&bot, guild_id, &guild_emojis](const dpp::ready_t& event) {
         auto guild = dpp::find_guild(guild_id);
@@ -921,17 +919,34 @@ int main() {
     });
 
     std::string home_srb2 = dir_srb2_str();
+
+    std::string bridge_dir = srb2_dir + "/luafiles/client/DiscordBot";
+    std::filesystem::create_directories(bridge_dir);
+    std::string messages_path = bridge_dir + "/Messages.txt";
+    {
+        std::ofstream msg_file(messages_path, std::ios::trunc);
+        if (msg_file.is_open()) msg_file << "\n";
+    }
+    {
+        std::ofstream disc_file(bridge_dir + "/discordmessage.txt", std::ios::trunc);
+        if (disc_file.is_open()) disc_file << "\n";
+    }
+
+    // Chat bridge status
+    std::cout << "[bridge] FIFO pipe support: " << (fifo_available ? "yes" : "no (vanilla SRB2)")
+              << std::endl;
     if (bridge_channel_id != "0") {
         size_t seek_start = 0;
         bool dbot_synced = false;
         int dbot_sync_retries = 0;
         constexpr int DBOT_SYNC_MAX_RETRIES = 15;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
-        bot.start_timer([&bot, messages_path, &seek_start, &dbot_synced, &dbot_sync_retries, bridge_channel_sf, &guild_emojis, home_srb2](dpp::timer) {
+        bot.start_timer([&bot, messages_path, &seek_start, &dbot_synced, &dbot_sync_retries, bridge_channel_sf, &guild_emojis, home_srb2, fifo_available](dpp::timer) {
         // Retry dbot_sync until it succeeds (FIFO may not exist at startup).
-        // Give up after 15 retries (~30s) — the SRB2 server may not have a
-        // FIFO configured (e.g. when run standalone via srb2_dbot.sh).
-        if (!dbot_synced && dbot_sync_retries < DBOT_SYNC_MAX_RETRIES) {
+        // Give up after 15 retries (~30s). Vanilla SRB2 without srb2-fifo
+        // skips this entirely — server state arrives via Lua's servertime==35
+        // emission instead.
+        if (fifo_available && !dbot_synced && dbot_sync_retries < DBOT_SYNC_MAX_RETRIES) {
             ++dbot_sync_retries;
             dbot_synced = pipe_srb2_server_do("dbot_sync");
 #ifndef NDEBUG
