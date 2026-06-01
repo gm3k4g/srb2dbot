@@ -125,6 +125,10 @@ On startup, the C++ bot:
 
 This ensures events are visible within ~2 seconds of bot startup.
 
+### Debug Builds
+
+Debug prints (`[DEBUG]`) in the C++ code are guarded by `#ifndef NDEBUG` and only compile into Debug builds. The Lua script checks `DiscordBot.Data.debug` (default `false`) before printing; it's set to `true` by the `dbot_debug on` FIFO command, which the bot sends at startup in Debug builds only.
+
 ### `cv_messagedelay` Bug (Fixed)
 
 Line 44 of `SRB2DiscordBot.lua` previously compared `cv_messagedelay == 0` — comparing the CVar *table* to 0, which is always false. Fixed to `cv_messagedelay.value == 0`. This restores the immediate message-triggered flush path for users who disable messagedelay.

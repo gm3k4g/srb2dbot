@@ -866,7 +866,10 @@ int main() {
         // Best-effort dbot_sync at startup. May fail if SRB2 hasn't
         // created the FIFO yet; the timer callback retries until it
         // succeeds.
+#ifndef NDEBUG
         std::cout << "[DEBUG] bridge: sending dbot_sync to SRB2 (best-effort)" << std::endl;
+        pipe_srb2_server_do("dbot_debug on");
+#endif
         pipe_srb2_server_do("dbot_sync");
     } else {
         std::cout << "[bridge] disabled (channel_id not set in secret.json)" << std::endl;
@@ -893,14 +896,24 @@ int main() {
         bot.start_timer([&bot, messages_path, &seek_start, &dbot_synced, bridge_channel_sf, &guild_emojis, home_srb2](dpp::timer) {
         // Retry dbot_sync until it succeeds (FIFO may not exist at startup)
         if (!dbot_synced) {
-            std::cout << "[DEBUG] bridge: retrying dbot_sync" << std::endl;
             dbot_synced = pipe_srb2_server_do("dbot_sync");
+#ifndef NDEBUG
+            if (!dbot_synced) {
+                std::cout << "[DEBUG] bridge: retrying dbot_sync" << std::endl;
+            } else {
+                pipe_srb2_server_do("dbot_debug on");
+            }
+#endif
         }
         size_t seek_end = bridge_get_lines(messages_path);
+#ifndef NDEBUG
         std::cout << "[DEBUG] bridge poll: seek_start=" << seek_start << " seek_end=" << seek_end << std::endl;
+#endif
         if (seek_end > seek_start) {
             std::string content = bridge_read_range(messages_path, seek_start, seek_end);
+#ifndef NDEBUG
             std::cout << "[DEBUG] bridge poll: read " << content.size() << " bytes" << std::endl;
+#endif
             if (content.size() > 1) {
                 content = bridge_replace_emojis(content, guild_emojis);
                 std::istringstream lines(content);
@@ -923,10 +936,14 @@ int main() {
                 };
                 while (std::getline(lines, line)) {
                     if (line.empty()) continue;
+#ifndef NDEBUG
                     std::cout << "[DEBUG] bridge line: '" << line.substr(0, 80) << "'" << std::endl;
+#endif
                     auto event = bridge_parse_event(line);
                     if (event) {
+#ifndef NDEBUG
                         std::cout << "[DEBUG] bridge event: type=" << event->type << " fields=" << event->fields.size() << std::endl;
+#endif
                         if (!chat_lines.empty()) {
                             dpp::message chat_msg(bridge_channel_sf, chat_lines);
                             chat_msg.set_allowed_mentions(false, false, false, false, {});
@@ -1074,14 +1091,18 @@ int main() {
                     }
                 }
                 if (!chat_lines.empty()) {
+#ifndef NDEBUG
                     std::cout << "[DEBUG] bridge: sending " << pending_embeds.size() << " embeds + "
                               << (chat_lines.size()) << " chars of chat" << std::endl;
+#endif
                     dpp::message chat_msg(bridge_channel_sf, chat_lines);
                     chat_msg.set_allowed_mentions(false, false, false, false, {});
                     bot.message_create(chat_msg);
                 }
                 if (!pending_embeds.empty()) {
+#ifndef NDEBUG
                     std::cout << "[DEBUG] bridge: sending batch of " << pending_embeds.size() << " embeds" << std::endl;
+#endif
                     dpp::message evt_batch(bridge_channel_sf, "");
                     for (auto& e : pending_embeds) evt_batch.add_embed(e);
                     if (!thumb_path.empty())

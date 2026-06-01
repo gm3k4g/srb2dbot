@@ -15,6 +15,7 @@ DiscordBot.Data.countemeralds = 0
 DiscordBot.Data.servertime = 0
 DiscordBot.Data.round_active = false
 DiscordBot.Data.current_map = nil
+DiscordBot.Data.debug = false
 
 DiscordBot.Commands = {}
 DiscordBot.Commands.cv_joinquit = CV_RegisterVar({name = "dbot_joinquit", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
@@ -27,7 +28,7 @@ DiscordBot.Messages = {}
 DiscordBot.Functions = {}
 DiscordBot.Functions.flush_msgsrb2 = function()
     if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 != ''
-        print("[DEBUG] flush_msgsrb2: writing "..string.len(DiscordBot.Data.msgsrb2).." bytes to Messages.txt")
+        if DiscordBot.Data.debug then print("[DEBUG] flush_msgsrb2: writing "..string.len(DiscordBot.Data.msgsrb2).." bytes to Messages.txt") end
         local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a+")
         if logmsg then
             logmsg:write(DiscordBot.Data.msgsrb2)
@@ -216,7 +217,7 @@ end)
 
 COM_AddCommand("dbot_sync", function(player)
 	if player != server then return end
-	print("[DEBUG] dbot_sync: re-emitting server state (map="..tostring(DiscordBot.Data.current_map)..", round_active="..tostring(DiscordBot.Data.round_active)..")")
+	if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: re-emitting server state (map="..tostring(DiscordBot.Data.current_map)..", round_active="..tostring(DiscordBot.Data.round_active)..")") end
 	DiscordBot.Data.msgsrb2 = ''
 	emit_server_start()
 	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.round_active
@@ -235,7 +236,12 @@ COM_AddCommand("dbot_sync", function(player)
 	end
 	DiscordBot.Functions.flush_msgsrb2()
 end, COM_LOCAL)
- 
+
+COM_AddCommand("dbot_debug", function(player, arg)
+	if player != server then return end
+	DiscordBot.Data.debug = (arg == "on")
+end, COM_LOCAL)
+
 local function bot_function()
 	DiscordBot.Data.servertime = DiscordBot.Data.servertime + 1
 	if (leveltime % 70) == 35
