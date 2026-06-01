@@ -27,6 +27,7 @@ DiscordBot.Messages = {}
 DiscordBot.Functions = {}
 DiscordBot.Functions.flush_msgsrb2 = function()
     if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 != ''
+        print("[DEBUG] flush_msgsrb2: writing "..string.len(DiscordBot.Data.msgsrb2).." bytes to Messages.txt")
         local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a+")
         if logmsg then
             logmsg:write(DiscordBot.Data.msgsrb2)
@@ -215,6 +216,7 @@ end)
 
 COM_AddCommand("dbot_sync", function(player)
 	if player != server then return end
+	print("[DEBUG] dbot_sync: re-emitting server state (map="..tostring(DiscordBot.Data.current_map)..", round_active="..tostring(DiscordBot.Data.round_active)..")")
 	DiscordBot.Data.msgsrb2 = ''
 	emit_server_start()
 	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.round_active
@@ -484,7 +486,8 @@ local function get_gametype_name(gt)
 		local name = G_GetGametypeName(gt)
 		if name and name ~= "" then return name end
 	end
-	-- Fallback table if SRB2 API is unavailable
+	-- Fallback table (base SRB2 constants only; GT_BATTLE/GT_TEAMBATTLE
+	-- are from battle mod and may not exist in vanilla SRB2)
 	local names = {
 		[GT_COOP] = "Co-op",
 		[GT_COMPETITION] = "Competition",
@@ -494,9 +497,10 @@ local function get_gametype_name(gt)
 		[GT_TAG] = "Tag",
 		[GT_HIDEANDSEEK] = "Hide & Seek",
 		[GT_CTF] = "CTF",
-		[GT_BATTLE] = "Arena",
-		[GT_TEAMBATTLE] = "Team Arena",
 	}
+	-- Add WAD-defined constants safely (they won't exist in base SRB2)
+	if GT_BATTLE then names[GT_BATTLE] = "Arena" end
+	if GT_TEAMBATTLE then names[GT_TEAMBATTLE] = "Team Arena" end
 	return names[gt] or "Unknown"
 end
 
@@ -597,8 +601,13 @@ local function emit_server_start()
 		end
 	end
 	local mapstr = map_num_to_mapstr(gamemap)
+	-- SERVER_START always gets prepended first
 	local event_line = "[EVENT:SERVER_START]|"..sn.."|"..mapstr.."|"..maptitle.."\n"
 	DiscordBot.Data.msgsrb2 = event_line..DiscordBot.Data.msgsrb2
+	-- Also emit a ROUND_START since the first MapLoad skips it
+	local gtname = get_gametype_name(gametype)
+	local round_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
+	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..round_line
 	DiscordBot.Functions.flush_msgsrb2()
 	DiscordBot.Data.round_active = true
 	DiscordBot.Data.current_map = gamemap
