@@ -36,16 +36,19 @@ Discord → D++ library → main.cpp (command router) → 3 paths:
 ## Directory Structure
 
 ```
-source/         — Source files
-  main.cpp      — Bot init, command handlers, POSIX-dependent anon-namespace functions
-  utils.cpp     — Pure utility functions (sanitize_filename, link_filename_str)
-  script.cpp    — Script manipulation logic (pure string I/O, testable)
+  source/         — Source files
+    main.cpp      — Bot init, command handlers, POSIX-dependent anon-namespace functions
+    utils.cpp     — Pure utility functions (sanitize_filename, link_filename_str)
+    script.cpp    — Script manipulation logic (pure string I/O, testable)
+    bridge.cpp    — Chat bridge sanitization, file polling, emoji conversion
+    version.h.cmake — CMake template for project version and command name constants
 include/srb2dbot/
-  utils.hpp     — Utility declarations
-  script.hpp    — Script helper declarations
+    utils.hpp     — Utility declarations
+    script.hpp    — Script helper declarations
+    bridge.hpp    — Bridge helper declarations
 test/
   CMakeLists.txt
-  source/srb2dbot_test.cpp  — 28 tests
+  source/srb2dbot_test.cpp  — 66 tests (14 test functions, ~66 CHECK assertions)
 cmake/          — CMake modules, presets, dev-mode, linting
 doc/            — HTML documentation
 ```

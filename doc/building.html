@@ -92,7 +92,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -Dsrb2dbot_DEVELOPER_MODE=ON
 cmake --build build -j$(nproc)</code></pre>
 
 <h2>Testing</h2>
-<p>The project includes <strong>52 unit tests</strong> covering utility functions, filename sanitization, script manipulation, chat bridge message sanitization, file polling, emoji conversion, and integration-level bridge cycle simulation.</p>
+<p>The project includes <strong>66 unit tests</strong> covering utility functions, filename sanitization, script manipulation, chat bridge message sanitization, file polling, emoji conversion, event parsing, and integration-level bridge cycle simulation.</p>
 <pre><code># Build with tests
 BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh
 

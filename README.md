@@ -73,7 +73,7 @@ Create `secret.json` from the template and fill in these fields:
 
 ## Testing
 
-52 unit tests covering utilities, filename sanitization, script manipulation, chat bridge functions, and integration-level polling simulation:
+66 unit tests covering utilities, filename sanitization, script manipulation, chat bridge functions (sanitization, file polling, emoji conversion, event parsing), and integration-level polling simulation:
 
 ```bash
 BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh

@@ -1,12 +1,8 @@
-// TODO: Could be a good idea to make it so that
-// instead of showing ```Succesfully blah blah```
-// you use discord's built-ins such as cards or embeds
-// or whatever to display the information in a more
-// formatted way.
-// TODO: Make admin commands invisible to anyone but you
-// (ephemeral replies?)
-// TODO: Reading chat logs and printing them in channel
+// TODO: Replace code-block replies with Discord embeds/cards
 // TODO: Game stats command
+// TODO: Configurable script name via CLI parameter (currently hardcoded srb2b.sh)
+// TODO: Implement CLI argument parsing
+// TODO: Case-insensitive search option for find_line
 
 #include <dpp/appcommand.h>
 #include <dpp/dpp.h>
