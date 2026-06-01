@@ -75,7 +75,7 @@ Create `secret.json` from the template and fill in these fields:
 
 ## Testing
 
-66 unit tests covering utilities, filename sanitization, script manipulation, chat bridge functions (sanitization, file polling, emoji conversion, event parsing), and integration-level polling simulation:
+77 tests (66 unit + 11 end-to-end pipeline tests) covering utilities, filename sanitization, script manipulation, chat bridge functions (sanitization, file polling, emoji conversion, event parsing), polling lifecycle, and full event pipeline simulation (dbot_sync replay, ROUND_END with teams, CTF batch detection, bot restart recovery):
 
 ```bash
 BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh

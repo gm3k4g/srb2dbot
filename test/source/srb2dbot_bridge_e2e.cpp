@@ -190,12 +190,134 @@ void test_bridge_full_cycle() {
     std::remove(msg_tmp.c_str());
 }
 
+void test_bridge_event_pipeline() {
+    std::string msg_tmp = "/tmp/srb2dbot_e2e_pipeline_msg.txt";
+
+    std::unordered_map<std::string, std::string> emojis;
+    emojis["smile"] = "111";
+
+    // Simulate events as they would appear from SRB2's Lua flush_msgsrb2()
+    //
+    // After dbot_sync at startup:
+    //   1. Bot truncates Messages.txt, writes "\n"
+    //   2. Sends dbot_sync FIFO command
+    //   3. Lua re-emits SERVER_START + ROUND_START if round active
+    //   4. flush_msgsrb2() writes events to Messages.txt immediately
+    //
+    // Then during gameplay, each event is flushed immediately:
+    //   5. ROUND_END events with team scores
+    //   6. PLAYER_JOIN events
+    //   7. CTF events
+
+    TEST("E2E: pipeline simulates dbot_sync startup replay");
+    {
+        std::ofstream f(msg_tmp, std::ios::trunc);
+        f << "\n";  // Bot init line
+    }
+    size_t seek = 0;
+
+    // After dbot_sync: Lua re-emits SERVER_START + ROUND_START
+    {
+        std::ofstream f(msg_tmp, std::ios::app);
+        f << "[EVENT:SERVER_START]|Test Server|MAP01|Greenflower Zone\n";
+    }
+    {
+        std::ofstream f(msg_tmp, std::ios::app);
+        f << "[EVENT:ROUND_START]|Co-op|MAP01|Greenflower Zone Act 1\n";
+    }
+
+    // Bot poll 1: pick up startup events
+    size_t lines = bridge_get_lines(msg_tmp);
+    CHECK(lines == 3);  // header + 2 events
+    std::string content = bridge_read_range(msg_tmp, seek, lines);
+    CHECK(content.find("SERVER_START") != std::string::npos);
+    CHECK(content.find("ROUND_START") != std::string::npos);
+    CHECK(content.find("Test Server") != std::string::npos);
+    CHECK(content.find("Co-op") != std::string::npos);
+    seek = lines;
+    PASS();
+
+    TEST("E2E: pipeline simulates ROUND_END with team scores");
+    {
+        std::ofstream f(msg_tmp, std::ios::app);
+        f << "[EVENT:ROUND_END]|CTF|MAP01|MAPNAME:Greenflower Zone|TEAM:Red:3|RED:Sonic:2|RED:Tails:1|TEAM:Blue:1|BLUE:Knuckles:1|SPEC:Watcher\n";
+    }
+    lines = bridge_get_lines(msg_tmp);
+    CHECK(lines == 4);
+    content = bridge_read_range(msg_tmp, seek, lines);
+    CHECK(content.find("ROUND_END") != std::string::npos);
+    CHECK(content.find("TEAM:Red:3") != std::string::npos);
+    CHECK(content.find("TEAM:Blue:1") != std::string::npos);
+    CHECK(content.find("SPEC:Watcher") != std::string::npos);
+    seek = lines;
+    PASS();
+
+    TEST("E2E: pipeline simulates PLAYER_JOIN event");
+    {
+        std::ofstream f(msg_tmp, std::ios::app);
+        f << "[EVENT:PLAYER_JOIN]|NewPlayer\n";
+    }
+    lines = bridge_get_lines(msg_tmp);
+    content = bridge_read_range(msg_tmp, seek, lines);
+    CHECK(content.find("PLAYER_JOIN") != std::string::npos);
+    CHECK(content.find("NewPlayer") != std::string::npos);
+    seek = lines;
+    PASS();
+
+    TEST("E2E: pipeline detects CTF events in batch");
+    {
+        std::ofstream f(msg_tmp, std::ios::app);
+        f << "[EVENT:CTF_CAPTURE]|Sonic|Blue\n";
+        f << "[EVENT:CTF_DROP]|Tails\n";
+        f << "[EVENT:CTF_PICKUP]|Knuckles\n";
+        f << "[EVENT:CTF_RETURN]|Amy\n";
+    }
+    lines = bridge_get_lines(msg_tmp);
+    content = bridge_read_range(msg_tmp, seek, lines);
+    CHECK(content.find("CTF_CAPTURE") != std::string::npos);
+    CHECK(content.find("CTF_DROP") != std::string::npos);
+    CHECK(content.find("CTF_PICKUP") != std::string::npos);
+    CHECK(content.find("CTF_RETURN") != std::string::npos);
+    CHECK(content.find("Sonic") != std::string::npos);
+    CHECK(content.find("Blue") != std::string::npos);
+    content = bridge_replace_emojis(content, emojis);
+    CHECK(content.find("CTF_CAPTURE") != std::string::npos);  // emoji doesn't affect event tags
+    seek = lines;
+    PASS();
+
+    // Simulate bot restart: Messages.txt truncated, dbot_sync called
+    TEST("E2E: pipeline handles bot restart with dbot_sync");
+    {
+        std::ofstream f(msg_tmp, std::ios::trunc);
+        f << "\n";  // fresh init line
+    }
+    seek = 0;
+    // Lua re-emits current state
+    {
+        std::ofstream f(msg_tmp, std::ios::app);
+        f << "[EVENT:SERVER_START]|Restarted Server|MAP03|Azure Temple\n";
+        f << "[EVENT:ROUND_START]|Match|MAP03|Azure Temple Act 2\n";
+    }
+    lines = bridge_get_lines(msg_tmp);
+    CHECK(lines == 3);
+    content = bridge_read_range(msg_tmp, seek, lines);
+    CHECK(content.find("SERVER_START") != std::string::npos);
+    CHECK(content.find("ROUND_START") != std::string::npos);
+    CHECK(content.find("Restarted Server") != std::string::npos);
+    CHECK(content.find("Match") != std::string::npos);
+    CHECK(content.find("Azure Temple") != std::string::npos);
+    PASS();
+
+    std::remove(msg_tmp.c_str());
+}
+
 auto main() -> int {
     std::cout << "=== srb2dbot bridge E2E test suite ===\n\n";
 
     test_discord_to_srb2_e2e();
     test_srb2_to_discord_e2e();
     test_bridge_full_cycle();
+    test_bridge_event_pipeline();
 
     std::cout << "\n=== " << failures << " test(s) failed ===\n";
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;

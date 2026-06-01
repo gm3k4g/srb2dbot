@@ -49,7 +49,8 @@ include/srb2dbot/
     bridge.hpp    — Bridge helper declarations
 test/
   CMakeLists.txt
-  source/srb2dbot_test.cpp  — 66 tests (14 test functions, ~66 CHECK assertions)
+  source/srb2dbot_test.cpp       — 66 tests (14 test functions, ~66 CHECK assertions)
+  source/srb2dbot_bridge_e2e.cpp — 11 end-to-end pipeline tests (polling lifecycle, event pipeline, bot restart)
 cmake/          — CMake modules, presets, dev-mode, linting
 doc/            — HTML documentation
 ```

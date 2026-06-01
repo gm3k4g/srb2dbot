@@ -55,10 +55,13 @@ SRB2_PID=$!
 sleep 8
 check "server process running" kill -0 $SRB2_PID
 
-# ── Wait for auto-events (SERVER_START at tick 35, written at tick 105) ─
-echo "Waiting for server boot events (~12s for tick 105)..."
-sleep 12
+# ── Wait for auto-events (SERVER_START at tick 35, immediate flush) ─
+echo "Waiting for server boot events (~4s)..."
+sleep 2
 
+# With the flush_msgsrb2 fix, events are written immediately instead of
+# waiting for the leveltime%70==35 gate. On bot startup, dbot_sync is
+# sent to request re-emission of current state.
 check "SERVER_START event fired" grep -q "SERVER_START" "$MSGFILE"
 check "ROUND_START event fired" grep -q "ROUND_START" "$MSGFILE"
 check "SERVER_START appears first" grep -q "SERVER_START" "$MSGFILE"

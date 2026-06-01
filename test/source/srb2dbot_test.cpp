@@ -490,13 +490,15 @@ void test_bridge_parse_event() {
     ev = bridge_parse_event("[EVENT:ROUND_END]|CTF|TEAM:Red:3|RED:Alpha:2|RED:Beta:1|TEAM:Blue:1|BLUE:Gamma:1");
     CHECK(ev.has_value());
     CHECK(ev->type == "ROUND_END");
-    CHECK(ev->fields.size() == 5);
+    CHECK(ev->fields.size() == 6);
     size_t col2 = ev->fields[1].find(':');
     CHECK(ev->fields[1].substr(0, col2) == "TEAM");
     col2 = ev->fields[2].find(':');
     CHECK(ev->fields[2].substr(0, col2) == "RED");
     col2 = ev->fields[4].find(':');
-    CHECK(ev->fields[4].substr(0, col2) == "BLUE");
+    CHECK(ev->fields[4].substr(0, col2) == "TEAM");
+    col2 = ev->fields[5].find(':');
+    CHECK(ev->fields[5].substr(0, col2) == "BLUE");
     PASS();
 }
 
