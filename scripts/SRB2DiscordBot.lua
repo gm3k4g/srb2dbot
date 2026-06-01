@@ -25,6 +25,16 @@ DiscordBot.Commands.cv_messagedelay = CV_RegisterVar({name = "dbot_messagedelay"
 DiscordBot.Messages = {}
 
 DiscordBot.Functions = {}
+DiscordBot.Functions.flush_msgsrb2 = function()
+    if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 != ''
+        local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a+")
+        if logmsg then
+            logmsg:write(DiscordBot.Data.msgsrb2)
+            logmsg:close()
+        end
+        DiscordBot.Data.msgsrb2 = ''
+    end
+end
 DiscordBot.Functions.spamchatbug = function(player, msg, joinquit) 
 	local checked = false
 	if DiscordBot.Commands.cv_nospamchat.value == 0 and not joinquit
@@ -41,7 +51,7 @@ DiscordBot.Functions.spamchatbug = function(player, msg, joinquit)
 		DiscordBot.Messages[player.name] = DiscordBot.Data.servertime
 	end
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..msg
-	if DiscordBot.Commands.cv_messagedelay == 0
+	if DiscordBot.Commands.cv_messagedelay.value == 0
 		COM_BufInsertText(server, "server_log msg")
 		COM_BufInsertText(server, "server_log discord")
 		COM_BufInsertText(server, "server_log console")
@@ -203,6 +213,27 @@ COM_AddCommand("discord_message", function(player, ...)
 	chatprint("\x89".."[Discord]".."\x80"..msg, true)
 end)
 
+COM_AddCommand("dbot_sync", function(player)
+	if player != server then return end
+	DiscordBot.Data.msgsrb2 = ''
+	emit_server_start()
+	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.round_active
+		local mapname = mapheaderinfo[DiscordBot.Data.current_map]
+		local maptitle = "Unknown"
+		if mapname and mapname.lvlttl
+			maptitle = mapname.lvlttl
+			if mapname.actnum and mapname.actnum > 0
+				maptitle = maptitle.." Act "..mapname.actnum
+			end
+		end
+		local gtname = get_gametype_name(gametype)
+		local mapstr = map_num_to_mapstr(DiscordBot.Data.current_map)
+		local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
+		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
+	end
+	DiscordBot.Functions.flush_msgsrb2()
+end, COM_LOCAL)
+ 
 local function bot_function()
 	DiscordBot.Data.servertime = DiscordBot.Data.servertime + 1
 	if (leveltime % 70) == 35
@@ -295,14 +326,7 @@ local function bot_function()
 		end
 		COM_BufInsertText(server, "server_log discord")
 		COM_BufInsertText(server, "server_log console")
-		if DiscordBot.Data.msgsrb2 != ''
-			local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a+")
-			if logmsg then
-				logmsg:write(DiscordBot.Data.msgsrb2)
-				logmsg:close()
-			end
-			DiscordBot.Data.msgsrb2 = ''
-		end
+		DiscordBot.Functions.flush_msgsrb2()
 		if DiscordBot.Data.log != ''
 			COM_BufInsertText(server, "server_log logcom")
 			DiscordBot.Data.log = ''
@@ -382,6 +406,7 @@ addHook("PlayerThink", function(player)
 			if text
 				DiscordBot.Functions.spamchatbug(player, text, true)
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."\n"
+				DiscordBot.Functions.flush_msgsrb2()
 				player.logjoin = true
 			end
 		end
@@ -423,6 +448,7 @@ addHook("PlayerQuit", function(player, reason)
 		if text
 			DiscordBot.Functions.spamchatbug(player, text, true)
 			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."\n"
+			DiscordBot.Functions.flush_msgsrb2()
 		end
 	end
 	/*
@@ -498,6 +524,7 @@ addHook("MapLoad", function(map)
 		local mapstr = map_num_to_mapstr(map)
 		local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
+	DiscordBot.Functions.flush_msgsrb2()
 	DiscordBot.Data.round_active = true
 	DiscordBot.Data.current_map = map
 end)
@@ -555,6 +582,7 @@ local ok, err = pcall(addHook, "IntermissionThink", function()
 	event_line = event_line..specs
 	event_line = event_line.."\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
+	DiscordBot.Functions.flush_msgsrb2()
 end)
 
 local function emit_server_start()
@@ -571,6 +599,7 @@ local function emit_server_start()
 	local mapstr = map_num_to_mapstr(gamemap)
 	local event_line = "[EVENT:SERVER_START]|"..sn.."|"..mapstr.."|"..maptitle.."\n"
 	DiscordBot.Data.msgsrb2 = event_line..DiscordBot.Data.msgsrb2
+	DiscordBot.Functions.flush_msgsrb2()
 	DiscordBot.Data.round_active = true
 	DiscordBot.Data.current_map = gamemap
 end

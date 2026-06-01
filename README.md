@@ -37,7 +37,9 @@ cp secret.json.default secret.json
 
 The bot communicates with SRB2 through a **named FIFO pipe** (`~/.srb2/srb2_servers.d/srb2b.d/srb2b.fifo`) for console commands, and **systemd** for service lifecycle management. Script editing operates on a bash config file validated with `bash -n` before each write.
 
-The **chat bridge** forwards Discord messages to SRB2 via `~/.srb2/luafiles/client/DiscordBot/discordmessage.txt`, and polls `Messages.txt` every second to relay SRB2 chat back to Discord with emoji conversion and mention suppression. Gametype names use SRB2's internal `G_GetGametypeName` API, ensuring exact 1-to-1 in-game names (e.g. "Co-op", "Arena") and automatic support for custom WAD gametypes (e.g. "Survival").
+The **chat bridge** forwards Discord messages to SRB2 via `~/.srb2/luafiles/client/DiscordBot/discordmessage.txt`, and polls `Messages.txt` every 2 seconds to relay SRB2 chat back to Discord with emoji conversion and mention suppression. Gametype names use SRB2's internal `G_GetGametypeName` API, ensuring exact 1-to-1 in-game names (e.g. "Co-op", "Arena") and automatic support for custom WAD gametypes (e.g. "Survival").
+
+Events are written to `Messages.txt` immediately when they occur (SERVER_START, ROUND_START/END, player join/quit) via a shared helper, rather than waiting for the periodic flush cycle. On bot startup, a `dbot_sync` command is sent to the SRB2 server to request re-emission of the current server state, ensuring events are visible within the next poll cycle even after a restart.
 
 ## Configuration
 

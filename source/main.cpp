@@ -862,6 +862,11 @@ int main() {
                   << " (messages forwarded to " << bridge_dir << "/discordmessage.txt)\n";
         std::cout << "[bridge] srb2 -> disc: polling " << bridge_dir << "/Messages.txt"
                   << " every 2s" << std::endl;
+
+        // Request current server state from the Lua script.
+        // Without this, past events (SERVER_START, ROUND_START) are lost
+        // because Messages.txt was just truncated above.
+        pipe_srb2_server_do("dbot_sync");
     } else {
         std::cout << "[bridge] disabled (channel_id not set in secret.json)" << std::endl;
     }
@@ -879,10 +884,11 @@ int main() {
         }
     });
 
-    size_t seek_start = 0;
-    dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
     std::string home_srb2 = dir_srb2_str();
-    bot.start_timer([&bot, messages_path, &seek_start, bridge_channel_sf, &guild_emojis, home_srb2](dpp::timer) {
+    if (bridge_channel_id != "0") {
+        size_t seek_start = 0;
+        dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
+        bot.start_timer([&bot, messages_path, &seek_start, bridge_channel_sf, &guild_emojis, home_srb2](dpp::timer) {
         size_t seek_end = bridge_get_lines(messages_path);
         if (seek_end > seek_start) {
             std::string content = bridge_read_range(messages_path, seek_start, seek_end);
@@ -1072,6 +1078,7 @@ int main() {
             seek_start = seek_end;
         }
     }, 2);
+    }
 
     bot.start(dpp::st_wait);
 }

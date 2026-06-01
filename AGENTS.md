@@ -96,6 +96,38 @@ Gametype names in bridge events are resolved through SRB2's internal `G_GetGamet
 2. **Automatic WAD support** — custom gametypes registered via `G_AddGametype()` in WAD Lua scripts or SOC `Gametype` blocks are resolved automatically (e.g. "Survival" from battle mod)
 3. **Safe fallback** — if `G_GetGametypeName` is unavailable, a corrected lookup table is used
 
+## Event Delivery Pipeline
+
+Events flow from SRB2 → Discord through this pipeline:
+
+```
+SRB2 Lua hook → DiscordBot.Data.msgsrb2 → flush_msgsrb2() → Messages.txt
+                                                                      ↓
+Discord embed ← main.cpp event handler ← bridge_parse_event() ← bot poll timer (2s)
+```
+
+### Flush Paths
+
+| Path | Location | Trigger | Behavior |
+|---|---|---|---|
+| **Immediate (primary)** | `DiscordBot.Functions.flush_msgsrb2()` | Called after every event emission (SERVER_START, ROUND_START/END, PLAYER_JOIN/QUIT) | Opens file, writes buffer, closes, clears buffer |
+| **Periodic (fallback)** | `bot_function()` in `SRB2DiscordBot.lua:298` | Every 70 tics (~2s) inside `leveltime%70==35` gate | Same as immediate, acts as redundancy |
+| **Message-triggered** | `server_log msg` on line 105 | `spamchatbug()` when `cv_messagedelay.value == 0` | Writes buffer but does NOT clear it (buffer cleared by flush_msgsrb2 instead) |
+
+### Bot Startup Sync
+
+On startup, the C++ bot:
+1. Truncates `Messages.txt` (deletes stale events from previous session)
+2. Sends `dbot_sync` FIFO command to SRB2
+3. Lua script's `dbot_sync` handler calls `emit_server_start()` + re-emits ROUND_START if a round is active
+4. Calls `flush_msgsrb2()` immediately so the bot sees current state on its next poll
+
+This ensures events are visible within ~2 seconds of bot startup.
+
+### `cv_messagedelay` Bug (Fixed)
+
+Line 44 of `SRB2DiscordBot.lua` previously compared `cv_messagedelay == 0` — comparing the CVar *table* to 0, which is always false. Fixed to `cv_messagedelay.value == 0`. This restores the immediate message-triggered flush path for users who disable messagedelay.
+
 ## Known Issues
 
 From the previous audit:

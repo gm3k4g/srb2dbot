@@ -184,6 +184,10 @@ cp secret.json.default secret.json
     Gametype names in events use SRB2's internal <code>G_GetGametypeName</code> API,
     ensuring exact 1-to-1 names ("Co-op", "Arena") and automatic support for
     custom gametypes from WAD files (e.g. "Survival").
+    Events are flushed to <code>Messages.txt</code> immediately when they occur
+    rather than waiting for the periodic poll cycle. On bot startup, a
+    <code>dbot_sync</code> command requests current server state re-emission,
+    so events appear within ~2 seconds even after a restart.
 </p>
 
 <h2>Features at a Glance</h2>
