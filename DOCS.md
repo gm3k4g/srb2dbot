@@ -9,7 +9,7 @@ Documentation is written in pure HTML under the `doc/` directory and updated to 
 | [index.html](doc/index.html) | Project overview, quick start, features at a glance, security model, dependencies |
 | [commands.html](doc/commands.html) | Complete slash command reference with parameters and behavior |
 | [building.html](doc/building.html) | Build instructions for NixOS and Linux, dependency installation, CMake presets |
-| [architecture.html](doc/architecture.html) | Directory structure, runtime pipeline, key files, anonymous namespace dependencies, security architecture, CI pipeline |
+| [architecture.html](doc/architecture.html) | Directory structure, runtime pipeline, key files, anonymous namespace dependencies, security architecture, CI pipeline, gametype resolution |
 
 ## Updating Documentation
 

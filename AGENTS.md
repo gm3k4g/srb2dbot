@@ -27,10 +27,11 @@ cd build && ctest --output-on-failure
 ## Architecture
 
 ```
-Discord → D++ library → main.cpp (command router) → 3 paths:
+Discord → D++ library → main.cpp (command router) → 4 paths:
   1. Script path: bash config file I/O + validation (fork/exec bash -n)
   2. WAD path: directory listing, file download via HTTP
   3. Server pipe: FIFO write for console commands + systemctl for lifecycle
+  4. Chat bridge: shared text file I/O + polling for real-time message relay
 ```
 
 ## Directory Structure
@@ -83,6 +84,17 @@ From `source/main.cpp` comments:
 - [ ] Configurable script name via CLI parameter (currently hardcoded `srb2b.sh`)
 - [ ] Implement CLI argument parsing
 - [ ] Case-insensitive search option for `find_line`
+
+## Gametype System
+
+Gametype names in bridge events are resolved through SRB2's internal `G_GetGametypeName()` Lua API in `scripts/SRB2DiscordBot.lua:451`. This ensures:
+
+1. **1-to-1 accuracy** with SRB2's in-game names:
+   - `GT_COOP` → `"Co-op"` (not "Cooperative")
+   - `GT_BATTLE` → `"Arena"` (not "Battle")
+   - `GT_TEAMBATTLE` → `"Team Arena"` (not "Team Battle")
+2. **Automatic WAD support** — custom gametypes registered via `G_AddGametype()` in WAD Lua scripts or SOC `Gametype` blocks are resolved automatically (e.g. "Survival" from battle mod)
+3. **Safe fallback** — if `G_GetGametypeName` is unavailable, a corrected lookup table is used
 
 ## Known Issues
 

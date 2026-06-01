@@ -181,6 +181,9 @@ cp secret.json.default secret.json
     Discord messages are sanitized (ASCII-filtered, links replaced) and forwarded to SRB2.
     SRB2 chat is polled every second and posted to Discord with emoji conversion
     and mention suppression.
+    Gametype names in events use SRB2's internal <code>G_GetGametypeName</code> API,
+    ensuring exact 1-to-1 names ("Co-op", "Arena") and automatic support for
+    custom gametypes from WAD files (e.g. "Survival").
 </p>
 
 <h2>Features at a Glance</h2>

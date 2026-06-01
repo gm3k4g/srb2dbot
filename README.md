@@ -31,13 +31,13 @@ cp secret.json.default secret.json
 | **WAD Management** | `list_wads`, `search_wads`, `addfile_upload`, `addfile_link` |
 | **Server Control** | `restart_server`, `stop_server`, `server_do` |
 | **Player Management** | `server_say`, `kick_player`, `ban_player` |
-| **Chat Bridge** | Real-time Discord↔SRB2 message relay via shared text files |
+| **Chat Bridge** | Real-time Discord↔SRB2 message relay — gametype-aware, resolves WAD custom gametypes via `G_GetGametypeName` |
 
 ## How It Works
 
 The bot communicates with SRB2 through a **named FIFO pipe** (`~/.srb2/srb2_servers.d/srb2b.d/srb2b.fifo`) for console commands, and **systemd** for service lifecycle management. Script editing operates on a bash config file validated with `bash -n` before each write.
 
-The **chat bridge** forwards Discord messages to SRB2 via `~/.srb2/luafiles/client/DiscordBot/discordmessage.txt`, and polls `Messages.txt` every second to relay SRB2 chat back to Discord with emoji conversion and mention suppression.
+The **chat bridge** forwards Discord messages to SRB2 via `~/.srb2/luafiles/client/DiscordBot/discordmessage.txt`, and polls `Messages.txt` every second to relay SRB2 chat back to Discord with emoji conversion and mention suppression. Gametype names use SRB2's internal `G_GetGametypeName` API, ensuring exact 1-to-1 in-game names (e.g. "Co-op", "Arena") and automatic support for custom WAD gametypes (e.g. "Survival").
 
 ## Configuration
 

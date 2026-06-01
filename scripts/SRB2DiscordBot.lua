@@ -449,17 +449,29 @@ addHook("NetVars", function(n)
 end)
 
 local function get_gametype_name(gt)
-	if gt == GT_COOP then return "Cooperative" end
-	if gt == GT_COMPETITION then return "Competition" end
-	if gt == GT_RACE then return "Race" end
-	if gt == GT_MATCH then return "Match" end
-	if gt == GT_TEAMMATCH then return "Team Match" end
-	if gt == GT_TAG then return "Tag" end
-	if gt == GT_HIDEANDSEEK then return "Hide & Seek" end
-	if gt == GT_CTF then return "CTF" end
-	if gt == GT_BATTLE then return "Battle" end
-	if gt == GT_TEAMBATTLE then return "Team Battle" end
-	return "Unknown"
+	-- Use SRB2's internal gametype name when available. This resolves
+	-- all built-in gametypes with their exact 1-to-1 SRB2 names
+	-- (Co-op, Competition, Match, Team Match, Tag, Hide & Seek, CTF,
+	-- Arena, Team Arena) plus any custom gametypes added by WAD files
+	-- via G_AddGametype or SOC Gametype blocks (e.g. Survival).
+	if G_GetGametypeName then
+		local name = G_GetGametypeName(gt)
+		if name and name ~= "" then return name end
+	end
+	-- Fallback table if SRB2 API is unavailable
+	local names = {
+		[GT_COOP] = "Co-op",
+		[GT_COMPETITION] = "Competition",
+		[GT_RACE] = "Race",
+		[GT_MATCH] = "Match",
+		[GT_TEAMMATCH] = "Team Match",
+		[GT_TAG] = "Tag",
+		[GT_HIDEANDSEEK] = "Hide & Seek",
+		[GT_CTF] = "CTF",
+		[GT_BATTLE] = "Arena",
+		[GT_TEAMBATTLE] = "Team Arena",
+	}
+	return names[gt] or "Unknown"
 end
 
 local function map_num_to_mapstr(n)
