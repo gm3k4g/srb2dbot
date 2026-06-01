@@ -108,9 +108,11 @@ namespace {
 
         int fd = open(fifo.c_str(), O_WRONLY|O_NONBLOCK);
         if (fd == -1) {
+#ifndef NDEBUG
             if (errno != ENOENT && errno != ENXIO) {
                 perror("open");
             }
+#endif
             return false;
         }
 
@@ -123,7 +125,9 @@ namespace {
                     usleep(1000);
                     continue;
                 }
+#ifndef NDEBUG
                 perror("write");
+#endif
                 close(fd);
                 return false;
             }
@@ -244,7 +248,9 @@ namespace {
 
         pid_t pid = fork();
         if (pid == -1) {
+#ifndef NDEBUG
             perror("fork");
+#endif
             return false;
         }
         if (pid == 0) {
@@ -340,7 +346,13 @@ int main() {
     std::filesystem::create_directories(srb2_dir + "/addons");
 
     std::string guild_id_str = data["guild_id"].get<std::string>();
-    auto guild_id = std::stol(guild_id_str);
+    dpp::snowflake guild_id = 0;
+    try {
+        guild_id = std::stoll(guild_id_str);
+    } catch (const std::exception&) {
+        std::cerr << "ERROR: Invalid guild_id in secret.json\n";
+        return EXIT_FAILURE;
+    }
 
     std::string bot_token = data["bot_token"].get<std::string>();
 
