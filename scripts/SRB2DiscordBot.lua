@@ -186,23 +186,29 @@ COM_AddCommand("server_log", function(player, arg, text)
 	elseif arg == "discord"
 		local d_msg = io.openlocal("client/DiscordBot/discordmessage.txt", "r")
 		if d_msg
-			local d_msgread = nil
-			local partmsg = ''
-			d_msgread = d_msg:read("*a") or $
-			d_msg:close()
-			if string.len(d_msgread) > 220
-				partmsg = string.sub(d_msgread,221 , 440)
-				d_msgread = string.sub(d_msgread,1 , 220)
-			end
-			if d_msgread != ""
-				COM_BufInsertText(server, "discord_message "..d_msgread)
-				local d_msg = io.openlocal("client/DiscordBot/discordmessage.txt", "w")
-				if partmsg == ''
-					d_msg:write("")
+			local clear = false
+			while true do
+				local line = ''
+				line = d_msg:read("*l") or $
+				if line == "" then break end
+				if #line > 220
+					COM_BufInsertText(server, "discord_message "..string.sub(line, 1, 220))
+					local remainder = string.sub(line, 221)
+					if #remainder > 0
+						COM_BufInsertText(server, "discord_message "..remainder)
+					end
 				else
-					d_msg:write("\""..partmsg.."\"")
+					COM_BufInsertText(server, "discord_message "..line)
 				end
-				d_msg:close()
+				clear = true
+			end
+			d_msg:close()
+			if clear == true
+				local d_clear = io.openlocal("client/DiscordBot/discordmessage.txt", "w")
+				if d_clear then
+					d_clear:write("")
+					d_clear:close()
+				end
 			end
 		end
 	end
