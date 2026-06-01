@@ -197,7 +197,6 @@ auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir)
 
     // Write PGM and convert
     // Apply SRB2 palette: convert indexed pixels to 24-bit RGB
-    // Apply SRB2 palette: convert indexed pixels to 24-bit RGB
     std::string rgb_pixels(w * h * 3, '\0');
     static const uint8_t palette[768] = {
         0xff, 0xff, 0xff, 0xf6, 0xf6, 0xf6, 0xed, 0xed, 0xed, 0xe4, 0xe4, 0xe4,

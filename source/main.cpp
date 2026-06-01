@@ -99,7 +99,7 @@ namespace {
 
         int fd = open(fifo.c_str(), O_WRONLY|O_NONBLOCK);
         if (fd == -1) {
-            if (errno != ENOENT) {
+            if (errno != ENOENT && errno != ENXIO) {
                 perror("open");
             }
             return false;

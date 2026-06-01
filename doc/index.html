@@ -179,7 +179,7 @@ cp secret.json.default secret.json
     The <strong>chat bridge</strong> relays messages between Discord and SRB2
     in real time via shared text files in <code>~/.srb2/luafiles/client/DiscordBot/</code>.
     Discord messages are sanitized (ASCII-filtered, links replaced) and forwarded to SRB2.
-    SRB2 chat is polled every second and posted to Discord with emoji conversion
+    SRB2 chat is polled every 2 seconds and posted to Discord with emoji conversion
     and mention suppression.
     Gametype names in events use SRB2's internal <code>G_GetGametypeName</code> API,
     ensuring exact 1-to-1 names ("Co-op", "Arena") and automatic support for
