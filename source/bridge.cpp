@@ -65,7 +65,6 @@ auto bridge_read_range(const std::string& path, std::size_t start, std::size_t e
     std::ifstream file(path);
     if (!file.is_open()) return "";
     std::string result;
-    result.reserve(1024);
     std::string line;
     std::size_t line_number = 0;
     while (std::getline(file, line)) {
@@ -73,7 +72,6 @@ auto bridge_read_range(const std::string& path, std::size_t start, std::size_t e
         if (line_number > start && line_number <= end) {
             result += line;
             result += '\n';
-            if (result.size() > 1000) break;
         }
         if (line_number > end) break;
     }

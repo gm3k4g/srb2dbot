@@ -117,6 +117,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 			local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a")
 			logmsg:write(DiscordBot.Data.msgsrb2)
 			logmsg:close()
+			DiscordBot.Data.msgsrb2 = ''
 		end
 	elseif arg == "logcom"
 		if DiscordBot.Data.log

@@ -1124,6 +1124,14 @@ int main() {
                 }
             }
             seek_start = seek_end;
+            // Truncate to prevent unbounded file growth.
+            // Bridge polls every 2s; Lua writes on server tics (~28ms).
+            // The collision window is negligible.
+            {
+                std::ofstream trunc(messages_path, std::ios::trunc);
+                trunc.close();
+            }
+            seek_start = 0;
         }
     }, 2);
     }
