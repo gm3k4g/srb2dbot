@@ -82,7 +82,7 @@ DiscordBot.Functions.statsofserver = function()
 			local iconskin = ':unknown:'
 			local pffinished = ':black_large_square:'
 			local admin = ':black_large_square:'
-			if player.cmd.latency then ping = player.cmd.latency * 13 end
+			if player.ping then ping = player.ping end
 			if (ping < 32) then statms = ':ping_blue:'
 			elseif (ping < 64) then statms = ':ping_green:'
 			elseif (ping < 128) then statms = ':ping_yellow:'
@@ -492,9 +492,10 @@ end)
 local function get_gametype_name(gt)
 	-- Use SRB2's internal gametype name when available. This resolves
 	-- all built-in gametypes with their exact 1-to-1 SRB2 names
-	-- (Co-op, Competition, Match, Team Match, Tag, Hide & Seek, CTF,
-	-- Arena, Team Arena) plus any custom gametypes added by WAD files
-	-- via G_AddGametype or SOC Gametype blocks (e.g. Survival).
+	-- (Co-op, Competition, Match, Team Match, Tag, Hide & Seek, CTF)
+	-- plus any custom gametypes added by WAD files via G_AddGametype
+	-- or SOC Gametype blocks (e.g. Survival, or Arena/Team Arena
+	-- from battle mod / SRB2 Kart).
 	if G_GetGametypeName then
 		local name = G_GetGametypeName(gt)
 		if name and name ~= "" then return name end
@@ -561,7 +562,7 @@ local ok, err = pcall(addHook, "IntermissionThink", function()
 		end
 	end
 	local event_line = "[EVENT:ROUND_END]|"..gtname.."|"..mapstr.."|MAPNAME:"..maptitle
-	if gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE
+	if gametype == GT_CTF or gametype == GT_TEAMMATCH or (GT_TEAMBATTLE and gametype == GT_TEAMBATTLE)
 		local reds = ""
 		local blues = ""
 		for player in players.iterate do
@@ -581,7 +582,7 @@ local ok, err = pcall(addHook, "IntermissionThink", function()
 		event_line = event_line.."|TEAM:Blue:"..GetTeamScore(2)
 		event_line = event_line..blues
 	end
-	if gametype == GT_COMPETITION or gametype == GT_MATCH or gametype == GT_BATTLE or gametype == GT_RACE
+	if gametype == GT_COMPETITION or gametype == GT_MATCH or (GT_BATTLE and gametype == GT_BATTLE) or gametype == GT_RACE
 		for player in players.iterate do
 			if player and player.spectator != true
 				local pname = string.gsub(player.name, "|", "")
