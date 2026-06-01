@@ -726,12 +726,17 @@ int main() {
             display_name = event.msg.author.username;
         }
 
-        std::string home = dir_srb2_str();
-        std::string bridge_path = home + "/luafiles/client/DiscordBot";
-        std::filesystem::create_directories(bridge_path);
-        std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
-        if (disc_file.is_open()) {
-            disc_file << "<" << display_name << "> " << sanitized << "\n";
+        std::string cmd = "discord_message <" + display_name + "> " + sanitized;
+        bool sent = pipe_srb2_server_do(cmd);
+        if (!sent) {
+            // Fallback: write to file for Lua to pick up
+            std::string home = dir_srb2_str();
+            std::string bridge_path = home + "/luafiles/client/DiscordBot";
+            std::filesystem::create_directories(bridge_path);
+            std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
+            if (disc_file.is_open()) {
+                disc_file << "<" << display_name << "> " << sanitized << "\n";
+            }
         }
     });
 
