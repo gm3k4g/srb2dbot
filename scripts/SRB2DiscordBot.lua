@@ -404,7 +404,7 @@ addHook("PlayerThink", function(player)
 	if player.playtime != nil then player.playtime = $ + 1 end
 	if not player.oldname then player.oldname = player.name end
 	if player.name != player.oldname
-	string.gsub(player.name, "`", "")
+	player.name = string.gsub(player.name, "`", "")
 		local text = "["..#player.."]"..":pencil2:**"..string.gsub(player.oldname, "*", "").."** renamed to **"..string.gsub(player.name, "*", "").."**:pencil2:\n"
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..text
 		player.oldname = player.name

@@ -35,7 +35,7 @@ const size_t MAX_WAD_SIZE = 100ULL * 1024 * 1024;
 namespace {
     auto dir_srb2_str() -> std::string {
         struct passwd *pw = getpwuid(getuid());
-        std::string homedir = pw->pw_dir;
+        std::string homedir = pw ? pw->pw_dir : "/tmp";
 
         std::string script_path = homedir;
         std::string srb2_home = "/.srb2"; // TODO: Look at -h parameter (to look at a different srb2 directory)
@@ -50,10 +50,15 @@ namespace {
         std::stringstream wads_list;
         wads_list << "Showing all files in " << wads_dir << ":\n\n";
         int i = 1;
-        for (const auto& entry : std::filesystem::directory_iterator(wads_dir)) {
-            wads_list << i << " " << entry.path().filename() << "\n";
-            i+=1;
+        try {
+            for (const auto& entry : std::filesystem::directory_iterator(wads_dir)) {
+                wads_list << i << " " << entry.path().filename() << "\n";
+                i+=1;
+            }
+        } catch (const std::filesystem::filesystem_error&) {
+            wads_list << "(directory not found or inaccessible)\n";
         }
+        if (i == 1) wads_list << "(empty)\n";
 
         return wads_list.str();
     }
@@ -65,18 +70,22 @@ namespace {
         std::stringstream wads_list;
         wads_list << "Showing all matches in " << wads_dir << ":\n\n";
         int i = 1;
-        for (const auto& entry : std::filesystem::directory_iterator(wads_dir)) {
-            std::string line = entry.path().filename();
-            if (line.find(target_string) != std::string::npos) {
-                wads_list << i << " " << entry.path().filename() << "\n";
-                i += 1;
+        try {
+            for (const auto& entry : std::filesystem::directory_iterator(wads_dir)) {
+                std::string line = entry.path().filename();
+                if (line.find(target_string) != std::string::npos) {
+                    wads_list << i << " " << entry.path().filename() << "\n";
+                    i += 1;
+                }
             }
+        } catch (const std::filesystem::filesystem_error&) {
+            wads_list << "(directory not found or inaccessible)\n";
         }
+        if (i == 1) wads_list << "(no matches)\n";
 
         return wads_list.str();
     }
 
-    // TODO: Maybe clearing the pipe is unnecessary now? (fixed garbage characters)
     // TODO: Pipe name will be taken by config name
     // e.g. "srb2b" -- "srb2b.fifo"
     auto pipe_get() -> std::string {
@@ -168,7 +177,6 @@ namespace {
         return success;
     }
 
-    // TODO: Separate into script_get_path and script_get_str
     // returns: [0]: Script name [1]: Script absolute path
     auto script_get(std::ifstream& script_file) -> std::array<std::string, 2> {
         std::string script_path = dir_srb2_str();
@@ -228,7 +236,6 @@ namespace {
         return script_find_str(buf.str(), target_string);
     }
 
-    // TODO: Validate bash command as string before writing it
     auto script_validate() -> bool {
         std::ifstream script_buf;
         auto script_content = script_get(script_buf);
@@ -519,6 +526,9 @@ int main() {
             std::stringstream result;
             if (!script_added_line) {
                 result << "```Couldn't add line!```";
+            } else if (!script_validate()) {
+                result << "```Script written but bash validation failed. Check syntax and undo with /remove_line "
+                       << line_num << ".```";
             } else {
                 auto script_contents = script_get_str();
                 auto inspect = script_inspect(script_contents[1], line_num);
@@ -535,6 +545,8 @@ int main() {
             std::stringstream result;
             if (!script_removed_line) {
                 result << "```Couldn't remove line!```";
+            } else if (!script_validate()) {
+                result << "```Script written but bash validation failed. Check syntax.```";
             } else {
                 auto script_contents = script_get_str();
                 auto inspect = script_inspect(script_contents[1], line_num);
@@ -557,6 +569,8 @@ int main() {
             std::stringstream result;
             if (!script_changed_line) {
                 result << "```Couldn't change line!```";
+            } else if (!script_validate()) {
+                result << "```Script written but bash validation failed. Check syntax and undo with /change_line.```";
             } else {
                 auto script_contents = script_get_str();
                 auto inspect = script_inspect(script_contents[1], line_num);
@@ -576,6 +590,8 @@ int main() {
             std::stringstream result;
             if (!script_moved_line) {
                 result << "```Couldn't move line!```";
+            } else if (!script_validate()) {
+                result << "```Script written but bash validation failed. Check syntax and undo with /move_line.```";
             } else {
                 auto script_contents = script_get_str();
                 auto inspect = script_inspect(script_contents[1], new_line);
@@ -752,9 +768,6 @@ int main() {
 
         if (dpp::run_once<struct register_bot_commands>()) {
 
-            // TODO: When the function implementations are created,
-            // move these comments to their respective functions.
-            //
             dpp::slashcommand   get_script(CMD_GET_SCRIPT, "Gets the entire srb2 script and uploads it to the user.", bot.me.id);
             get_script
                 .set_default_permissions(PERMS);

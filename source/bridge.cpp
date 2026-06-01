@@ -30,7 +30,7 @@ auto sanitize_message_for_srb2(const std::string& content) -> std::string {
     while (link_pos < no_links.size()) {
         link_pos = no_links.find("http://", link_pos);
         if (link_pos == std::string::npos) {
-            link_pos = no_links.find("https://", 0);
+            link_pos = no_links.find("https://", link_pos);
             if (link_pos == std::string::npos) break;
         }
 
