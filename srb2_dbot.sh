@@ -51,5 +51,5 @@ exec srb2 \
     -port "$PORT" \
     -room "$ROOM" \
     -servername "$SERVERNAME" \
-    -file "$LUA_WAD" \
-    </dev/null
+    -file "$LUA_WAD"
+    #</dev/null
