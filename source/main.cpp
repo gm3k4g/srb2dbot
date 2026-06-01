@@ -99,7 +99,9 @@ namespace {
 
         int fd = open(fifo.c_str(), O_WRONLY|O_NONBLOCK);
         if (fd == -1) {
-            perror("open");
+            if (errno != ENOENT) {
+                perror("open");
+            }
             return false;
         }
 
@@ -892,14 +894,19 @@ int main() {
     if (bridge_channel_id != "0") {
         size_t seek_start = 0;
         bool dbot_synced = false;
+        int dbot_sync_retries = 0;
+        constexpr int DBOT_SYNC_MAX_RETRIES = 15;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
-        bot.start_timer([&bot, messages_path, &seek_start, &dbot_synced, bridge_channel_sf, &guild_emojis, home_srb2](dpp::timer) {
-        // Retry dbot_sync until it succeeds (FIFO may not exist at startup)
-        if (!dbot_synced) {
+        bot.start_timer([&bot, messages_path, &seek_start, &dbot_synced, &dbot_sync_retries, bridge_channel_sf, &guild_emojis, home_srb2](dpp::timer) {
+        // Retry dbot_sync until it succeeds (FIFO may not exist at startup).
+        // Give up after 15 retries (~30s) — the SRB2 server may not have a
+        // FIFO configured (e.g. when run standalone via srb2_dbot.sh).
+        if (!dbot_synced && dbot_sync_retries < DBOT_SYNC_MAX_RETRIES) {
+            ++dbot_sync_retries;
             dbot_synced = pipe_srb2_server_do("dbot_sync");
 #ifndef NDEBUG
             if (!dbot_synced) {
-                std::cout << "[DEBUG] bridge: retrying dbot_sync" << std::endl;
+                std::cout << "[DEBUG] bridge: retrying dbot_sync (" << dbot_sync_retries << "/" << DBOT_SYNC_MAX_RETRIES << ")" << std::endl;
             } else {
                 pipe_srb2_server_do("dbot_debug on");
             }
