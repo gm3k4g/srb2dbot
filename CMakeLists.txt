@@ -37,7 +37,7 @@ set(SOURCES
     source/bridge.cpp
 )
 
-message(STATUS,"CMake project is building in: ${CMAKE_BUILD_TYPE}")
+message(STATUS "CMake project is building in: ${CMAKE_BUILD_TYPE}")
 
 # ---- Declare executable ----
 add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})

@@ -803,7 +803,7 @@ int main() {
         bot.guild_commands_get(bot.me.id, [&bot, guild_id](const dpp::confirmation_callback_t& cb){
             auto commands = std::get<dpp::slashcommand_map>(cb.value);
             for (auto& [id, cmd] : commands) {
-                bot.guild_command_delete(bot.me.id, guild_id);
+                bot.guild_command_delete(id, guild_id);
             }
         });
 
@@ -918,8 +918,6 @@ int main() {
         }
     });
 
-    std::string home_srb2 = dir_srb2_str();
-
     std::string bridge_dir = srb2_dir + "/luafiles/client/DiscordBot";
     std::filesystem::create_directories(bridge_dir);
     std::string messages_path = bridge_dir + "/Messages.txt";
@@ -941,7 +939,7 @@ int main() {
         int dbot_sync_retries = 0;
         constexpr int DBOT_SYNC_MAX_RETRIES = 15;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
-        bot.start_timer([&bot, messages_path, &seek_start, &dbot_synced, &dbot_sync_retries, bridge_channel_sf, &guild_emojis, home_srb2, fifo_available](dpp::timer) {
+        bot.start_timer([&bot, messages_path, &seek_start, &dbot_synced, &dbot_sync_retries, bridge_channel_sf, &guild_emojis, srb2_dir, fifo_available](dpp::timer) {
         // Retry dbot_sync until it succeeds (FIFO may not exist at startup).
         // Give up after 15 retries (~30s). Vanilla SRB2 without srb2-fifo
         // skips this entirely — server state arrives via Lua's servertime==35
@@ -977,7 +975,7 @@ int main() {
 
                 auto attach_thumb = [&](dpp::embed& e, const std::string& map) {
                     if (!thumb_path.empty()) return;
-                    std::string tpath = home_srb2 + "/luafiles/client/DiscordBot/thumbnails/" + map + ".png";
+                    std::string tpath = srb2_dir + "/luafiles/client/DiscordBot/thumbnails/" + map + ".png";
                     std::ifstream test(tpath);
                     if (test.is_open()) {
                         test.close();
@@ -1015,7 +1013,7 @@ int main() {
                             if (event->fields.size() >= 2) {
                                 attach_thumb(embed, event->fields[1]);
                                 if (thumb_path.empty())
-                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
+                                    bridge_extract_thumbnail(event->fields[1], srb2_dir + "/luafiles/client/DiscordBot/thumbnails");
                             }
                         } else if (event->type == "ROUND_END") {
                             std::string gt = event->fields.size() >= 1 ? event->fields[0] : "Round";
@@ -1078,7 +1076,7 @@ int main() {
                             if (event->fields.size() >= 2) {
                                 attach_thumb(embed, event->fields[1]);
                                 if (thumb_path.empty())
-                                    bridge_extract_thumbnail(event->fields[1], home_srb2 + "/luafiles/client/DiscordBot/thumbnails");
+                                    bridge_extract_thumbnail(event->fields[1], srb2_dir + "/luafiles/client/DiscordBot/thumbnails");
                             }
                         } else if (event->type == "CTF_CAPTURE") {
                             std::string player = event->fields.size() >= 1 ? event->fields[0] : "Someone";

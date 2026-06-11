@@ -1,8 +1,11 @@
 #include "srb2dbot/bridge.hpp"
+#include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fcntl.h>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -154,37 +157,112 @@ auto bridge_decode_patch(const std::string& lump_data, int width, int height) ->
 }
 
 auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir) -> void {
+    auto is_safe_map_name = [](const std::string& name) -> bool {
+        if (name.empty()) return false;
+        for (char c : name) {
+            if (!std::isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '-') {
+                return false;
+            }
+        }
+        return true;
+    };
+    if (!is_safe_map_name(map)) return;
+
     char thumb[256];
     snprintf(thumb, sizeof(thumb), "%s/%s.png", outdir.c_str(), map.c_str());
     if (access(thumb, F_OK) == 0) return;
 
     std::string lump_name = "Level select pictures/" + map + "P.lmp";
     std::string lump_data;
-    std::string search_dir = std::string(getenv("HOME") ? getenv("HOME") : "") + "/.srb2/addons";
+    const char* home = getenv("HOME");
+    if (!home) return;
+    std::string search_dir = std::string(home) + "/.srb2/addons";
 
-    std::string find_cmd = "for pk3 in \"" + search_dir + "\"/*.pk3; do "
-        "[ -f \"$pk3\" ] || continue; "
-        "if unzip -l \"$pk3\" 2>/dev/null | grep -q '" + lump_name + "'; then "
-        "echo \"$pk3\"; break; fi; done";
+    std::string pk3_path;
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator(search_dir)) {
+            if (!entry.is_regular_file()) continue;
+            if (entry.path().extension() != ".pk3") continue;
 
-    FILE* fp = popen(find_cmd.c_str(), "r");
-    if (!fp) return;
-    char pk3_buf[1024];
-    if (!fgets(pk3_buf, sizeof(pk3_buf), fp)) { pclose(fp); return; }
-    pclose(fp);
-    size_t len = strlen(pk3_buf);
-    while (len > 0 && (pk3_buf[len-1] == '\n' || pk3_buf[len-1] == '\r')) pk3_buf[--len] = 0;
-    std::string pk3_path = pk3_buf;
+            int pipefd[2];
+            if (pipe(pipefd) == -1) continue;
 
-    std::string unzip_cmd = "unzip -p \"" + pk3_path + "\" \"" + lump_name + "\" 2>/dev/null";
-    fp = popen(unzip_cmd.c_str(), "r");
-    if (!fp) return;
-    char buf[4096];
-    size_t n;
-    while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) {
-        lump_data.append(buf, n);
+            pid_t pid = fork();
+            if (pid == -1) {
+                close(pipefd[0]);
+                close(pipefd[1]);
+                continue;
+            }
+            if (pid == 0) {
+                close(pipefd[0]);
+                dup2(pipefd[1], STDOUT_FILENO);
+                close(pipefd[1]);
+                int devnull = open("/dev/null", O_WRONLY);
+                if (devnull != -1) {
+                    dup2(devnull, STDERR_FILENO);
+                    close(devnull);
+                }
+                execlp("unzip", "unzip", "-l", entry.path().c_str(), (char*)nullptr);
+                _exit(EXIT_FAILURE);
+            }
+            close(pipefd[1]);
+
+            char buf[4096];
+            ssize_t n;
+            bool found = false;
+            while ((n = read(pipefd[0], buf, sizeof(buf))) > 0) {
+                if (std::string_view(buf, n).find(lump_name) != std::string_view::npos) {
+                    found = true;
+                    break;
+                }
+            }
+            close(pipefd[0]);
+            int status;
+            waitpid(pid, &status, 0);
+
+            if (found) {
+                pk3_path = entry.path().string();
+                break;
+            }
+        }
+    } catch (const std::filesystem::filesystem_error&) {
+        return;
     }
-    pclose(fp);
+    if (pk3_path.empty()) return;
+
+    {
+        int pipefd[2];
+        if (pipe(pipefd) == -1) return;
+
+        pid_t pid = fork();
+        if (pid == -1) {
+            close(pipefd[0]);
+            close(pipefd[1]);
+            return;
+        }
+        if (pid == 0) {
+            close(pipefd[0]);
+            dup2(pipefd[1], STDOUT_FILENO);
+            close(pipefd[1]);
+            int devnull = open("/dev/null", O_WRONLY);
+            if (devnull != -1) {
+                dup2(devnull, STDERR_FILENO);
+                close(devnull);
+            }
+            execlp("unzip", "unzip", "-p", pk3_path.c_str(), lump_name.c_str(), (char*)nullptr);
+            _exit(EXIT_FAILURE);
+        }
+        close(pipefd[1]);
+
+        char buf[4096];
+        ssize_t n;
+        while ((n = read(pipefd[0], buf, sizeof(buf))) > 0) {
+            lump_data.append(buf, n);
+        }
+        close(pipefd[0]);
+        int status;
+        waitpid(pid, &status, 0);
+    }
     if (lump_data.size() < 1000) return;
 
     // Approximate width/height from lump size: ~17448 bytes → 160x100
@@ -276,9 +354,16 @@ auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir)
         pgm.write(ppm_data.c_str(), ppm_data.size());
     }
 
-    std::string convert_cmd = "if command -v magick >/dev/null 2>&1; then magick '"
-        + ppm_path + "' -auto-level '" + thumb + "'; else convert '"
-        + ppm_path + "' -auto-level '" + thumb + "'; fi 2>/dev/null";
-    if (system(convert_cmd.c_str()) != 0) {/* best effort */}
+    {
+        pid_t pid = fork();
+        if (pid == -1) { remove(ppm_path.c_str()); return; }
+        if (pid == 0) {
+            execlp("magick", "magick", ppm_path.c_str(), "-auto-level", thumb, (char*)nullptr);
+            execlp("convert", "convert", ppm_path.c_str(), "-auto-level", thumb, (char*)nullptr);
+            _exit(EXIT_FAILURE);
+        }
+        int status;
+        waitpid(pid, &status, 0);
+    }
     remove(ppm_path.c_str());
 }
