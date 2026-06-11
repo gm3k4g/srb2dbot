@@ -1,0 +1,74 @@
+#include "srb2dbot/module.hpp"
+#include "srb2dbot/bridge.hpp"
+#include "srb2dbot/server.hpp"
+#include <dpp/dpp.h>
+#include <fstream>
+#include <filesystem>
+
+class ChatRelayModule : public Module {
+public:
+    auto name() const -> std::string_view override { return "chat_relay"; }
+    auto description() const -> std::string_view override { return "Relay chat messages between Discord and SRB2"; }
+
+    explicit ChatRelayModule(bool fifo_enabled) : fifo_available_(fifo_enabled) {}
+
+    // ChatRelay provides no slash commands
+    auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override {
+        return {};
+    }
+
+    auto handle_message(const dpp::message_create_t& event) -> bool override {
+        // Only process if bridge channel is configured
+        if (bridge_channel_sf_.empty()) return false;
+        if (!bridge_channel_sf_.has_value()) return false;
+
+        dpp::snowflake channel_id = bridge_channel_sf_.value();
+        if (event.msg.channel_id != channel_id) return false;
+
+        std::string author_str = std::to_string(event.msg.author.id);
+        if (author_str == bot_id_) return false;
+        if (event.msg.author.is_bot()) return false;
+
+        std::string content = event.msg.content;
+        if (content.empty()) return false;
+
+        std::string sanitized = sanitize_message_for_srb2(content);
+        if (sanitized.size() <= 1) return false;
+
+        std::string display_name = event.msg.author.global_name;
+        if (display_name.empty()) {
+            display_name = event.msg.author.username;
+        }
+
+        std::string cmd = "discord_message <" + display_name + "> " + sanitized;
+        bool sent = false;
+        if (fifo_available_) sent = pipe_srb2_server_do(cmd);
+
+        if (!sent) {
+            std::string home = dir_srb2_str();
+            std::string bridge_path = home + "/luafiles/client/DiscordBot";
+            std::filesystem::create_directories(bridge_path);
+            std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
+            if (disc_file.is_open()) {
+                disc_file << "<" << display_name << "> " << sanitized << "\n";
+            }
+        }
+        return true;
+    }
+
+    void configure(dpp::snowflake bridge_channel, const std::string& bot_id) {
+        if (bridge_channel != 0) {
+            bridge_channel_sf_ = bridge_channel;
+        }
+        bot_id_ = bot_id;
+    }
+
+private:
+    bool fifo_available_;
+    std::optional<dpp::snowflake> bridge_channel_sf_;
+    std::string bot_id_;
+};
+
+auto create_relay_module(bool fifo_available) -> std::unique_ptr<Module> {
+    return std::make_unique<ChatRelayModule>(fifo_available);
+}

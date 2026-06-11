@@ -35,6 +35,15 @@ set(SOURCES
     source/utils.cpp
     source/script.cpp
     source/bridge.cpp
+    source/server.cpp
+    source/module.cpp
+    source/modules/script_module.cpp
+    source/modules/wad_module.cpp
+    source/modules/server_module.cpp
+    source/modules/player_module.cpp
+    source/modules/relay_module.cpp
+    source/modules/events_module.cpp
+    source/modules/thumbnails_module.cpp
 )
 
 message(STATUS "CMake project is building in: ${CMAKE_BUILD_TYPE}")
