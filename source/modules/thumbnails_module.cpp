@@ -5,7 +5,7 @@
 
 class MapThumbnailsModule : public Module {
 public:
-    auto name() const -> std::string_view override { return "map_thumbnails"; }
+    auto name() const -> std::string_view override { return "map_thumbnails_card"; }
     auto description() const -> std::string_view override { return "Auto-extract and attach map thumbnails from PK3 files"; }
 
     explicit MapThumbnailsModule(std::string srb2_dir) : srb2_dir_(std::move(srb2_dir)) {}

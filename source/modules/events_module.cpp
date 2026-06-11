@@ -7,7 +7,7 @@
 
 class GameEventsModule : public Module {
 public:
-    auto name() const -> std::string_view override { return "game_events"; }
+    auto name() const -> std::string_view override { return "game_events_card"; }
     auto description() const -> std::string_view override { return "Display SRB2 game events as Discord embeds"; }
 
     GameEventsModule() = default;

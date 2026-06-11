@@ -6,7 +6,7 @@
         "server_control": true,
         "player_management": true,
         "chat_relay": true,
-        "game_events": true,
-        "map_thumbnails": true
+        "game_events_card": true,
+        "map_thumbnails_card": true
     }
 }

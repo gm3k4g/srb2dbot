@@ -59,8 +59,8 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
     try_add("server_control",   [&]{ return create_server_module(ctx.fifo_available); });
     try_add("player_management",[&]{ return create_player_module(ctx.fifo_available); });
     try_add("chat_relay",       [&]{ return create_relay_module(ctx.bridge_channel_id, ctx.bot_id, ctx.fifo_available); });
-    try_add("game_events",      [&]{ return create_events_module(); });
-    try_add("map_thumbnails",   [&]{ return create_thumbnails_module(ctx.srb2_dir); });
+    try_add("game_events_card",     [&]{ return create_events_module(); });
+    try_add("map_thumbnails_card",  [&]{ return create_thumbnails_module(ctx.srb2_dir); });
 
     return true;
 }
