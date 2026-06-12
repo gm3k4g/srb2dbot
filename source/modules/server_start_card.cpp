@@ -20,6 +20,7 @@ public:
         if (ch == 0) return;
         dpp::embed embed;
         embed.set_title(msg_.empty() ? ":green_circle: The server has started" : msg_);
+        embed.set_url(PROJECT_URL);
         embed.set_description(PROJECT_DESCRIPTION);
         embed.add_field("Version", PROJECT_VERSION_MAJOR "." PROJECT_VERSION_MINOR, true);
         embed.add_field("Author", PROJECT_AUTHOR, true);
