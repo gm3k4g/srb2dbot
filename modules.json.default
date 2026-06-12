@@ -20,7 +20,8 @@
             },
             "round_start_card": {
                 "enabled": true,
-                "message": ":map: Map is now {map_num}: {map_title} - {gametype}"
+                "message": ":map: Map is now {map_num}: {map_title} - {gametype}",
+                "thumbnails": true
             },
             "round_end_card": {
                 "enabled": true,
@@ -45,8 +46,7 @@
             "ban_player_card": {
                 "enabled": true,
                 "message": "Player Banned"
-            },
-            "map_thumbnails_card": true
+            }
         }
     }
 }

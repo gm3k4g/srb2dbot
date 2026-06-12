@@ -53,7 +53,6 @@ set(SOURCES
     source/modules/kick_player_card.cpp
     source/modules/ban_player_card.cpp
     source/modules/server_start_card.cpp
-    source/modules/thumbnails_module.cpp
 )
 
 message(STATUS "CMake project is building in: ${CMAKE_BUILD_TYPE}")
