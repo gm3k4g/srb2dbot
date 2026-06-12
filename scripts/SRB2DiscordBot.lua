@@ -35,6 +35,7 @@ DiscordBot.Data.skin_colors = {
 	[14] = "804040",
 	[15] = "808000",
 }
+DiscordBot.Functions = {}
 DiscordBot.Functions.get_skin_color = function(player)
 	if DiscordBot.Data.skin_colors[player.skincolor]
 		return DiscordBot.Data.skin_colors[player.skincolor]
