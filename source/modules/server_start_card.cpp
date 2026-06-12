@@ -1,5 +1,6 @@
 #include "srb2dbot/module.hpp"
 #include "srb2dbot/utils.hpp"
+#include "version.h"
 #include <dpp/dpp.h>
 
 class ServerStartCardModule : public Module {
@@ -19,6 +20,9 @@ public:
         if (ch == 0) return;
         dpp::embed embed;
         embed.set_title(msg_.empty() ? ":green_circle: The server has started" : msg_);
+        embed.set_description(PROJECT_DESCRIPTION);
+        embed.add_field("Version", PROJECT_VERSION_MAJOR "." PROJECT_VERSION_MINOR, true);
+        embed.add_field("Author", PROJECT_AUTHOR, true);
         embed.set_color(0x57F287);
         embed.set_timestamp(std::time(nullptr));
         bot.message_create(dpp::message(ch, "").add_embed(embed));
