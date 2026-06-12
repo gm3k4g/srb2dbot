@@ -226,7 +226,6 @@ COM_AddCommand("dbot_sync", function(player)
 	if player != server then return end
 	if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: re-emitting server state (map="..tostring(DiscordBot.Data.current_map)..", round_active="..tostring(DiscordBot.Data.round_active)..")") end
 	DiscordBot.Data.msgsrb2 = ''
-	emit_server_start()
 	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.round_active
 		local mapname = mapheaderinfo[DiscordBot.Data.current_map]
 		local maptitle = "Unknown"
@@ -601,36 +600,4 @@ local ok, err = pcall(addHook, "IntermissionThink", function()
 	event_line = event_line.."\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
 	DiscordBot.Functions.flush_msgsrb2()
-end)
-
-local function emit_server_start()
-	local cv_servername = CV_FindVar("servername")
-	local sn = cv_servername.string or "SRB2 Server"
-	local mapname = mapheaderinfo[gamemap]
-	local maptitle = "Unknown"
-	if mapname and mapname.lvlttl
-		maptitle = mapname.lvlttl
-		if mapname.actnum and mapname.actnum > 0
-			maptitle = maptitle.." Act "..mapname.actnum
-		end
-	end
-	local mapstr = map_num_to_mapstr(gamemap)
-	-- SERVER_START always gets prepended first
-	local event_line = "[EVENT:SERVER_START]|"..sn.."|"..mapstr.."|"..maptitle.."\n"
-	DiscordBot.Data.msgsrb2 = event_line..DiscordBot.Data.msgsrb2
-	-- Also emit a ROUND_START since the first MapLoad skips it
-	local gtname = get_gametype_name(gametype)
-	local round_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
-	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..round_line
-	DiscordBot.Functions.flush_msgsrb2()
-	DiscordBot.Data.round_active = true
-	DiscordBot.Data.current_map = gamemap
-end
-
-addHook("ThinkFrame", function()
-	if not DiscordBot.Data.servertime then return end
-	if DiscordBot.Data.servertime == 1 then return end
-	if DiscordBot.Data.servertime == 35
-		emit_server_start()
-	end
 end)
