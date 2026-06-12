@@ -26,22 +26,10 @@
                 "enabled": false,
                 "message": "{map_num}: {map_title} - {gametype}"
             },
-            "ctf_capture_card": {
-                "enabled": false,
-                "message": "Flag Captured!"
-            },
-            "ctf_drop_card": {
-                "enabled": false,
-                "message": "Flag Dropped"
-            },
-            "ctf_pickup_card": {
-                "enabled": false,
-                "message": "Flag Taken"
-            },
-            "ctf_return_card": {
-                "enabled": false,
-                "message": "Flag Returned"
-            },
+            "ctf_capture_card": false,
+            "ctf_drop_card": false,
+            "ctf_pickup_card": false,
+            "ctf_return_card": false,
             "player_join_card": {
                 "enabled": false,
                 "message": "Player Joined"
