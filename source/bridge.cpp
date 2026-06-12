@@ -11,6 +11,7 @@
 #include <string>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <unordered_map>
 #include <vector>
 
@@ -156,6 +157,128 @@ auto bridge_decode_patch(const std::string& lump_data, int width, int height) ->
     return pixels;
 }
 
+auto bridge_get_map_source(const std::string& map) -> std::string {
+    static std::unordered_map<std::string, std::string> cache;
+    {
+        auto it = cache.find(map);
+        if (it != cache.end()) return it->second;
+    }
+
+    auto pk3s = bridge_get_loaded_pk3s();
+    // Search last-loaded first (override order)
+    for (auto it = pk3s.rbegin(); it != pk3s.rend(); ++it) {
+        auto& pk3 = *it;
+        std::string lump_name = "Level select pictures/" + map + "P.lmp";
+
+        int pipefd[2];
+        if (pipe(pipefd) == -1) continue;
+        pid_t pid = fork();
+        if (pid == -1) { close(pipefd[0]); close(pipefd[1]); continue; }
+        if (pid == 0) {
+            close(pipefd[0]);
+            dup2(pipefd[1], STDOUT_FILENO);
+            close(pipefd[1]);
+            int devnull = open("/dev/null", O_WRONLY);
+            if (devnull != -1) { dup2(devnull, STDERR_FILENO); close(devnull); }
+            execlp("unzip", "unzip", "-l", pk3.c_str(), (char*)nullptr);
+            _exit(EXIT_FAILURE);
+        }
+        close(pipefd[1]);
+        char buf[4096];
+        ssize_t n;
+        bool found = false;
+        while ((n = read(pipefd[0], buf, sizeof(buf))) > 0) {
+            if (std::string_view(buf, n).find(lump_name) != std::string_view::npos) {
+                found = true; break;
+            }
+        }
+        close(pipefd[0]);
+        int status;
+        waitpid(pid, &status, 0);
+        if (found) {
+            std::string name = std::filesystem::path(pk3).filename().string();
+            if (name.empty()) name = pk3;
+            cache[map] = name;
+            return name;
+        }
+    }
+    cache[map] = "srb2.pk3 (vanilla)";
+    return cache[map];
+}
+
+static auto get_loaded_pk3s_impl() -> std::vector<std::string> {
+    std::vector<std::string> pk3s;
+    const char* home = getenv("HOME");
+    if (!home) return pk3s;
+    std::string log_path = std::string(home) + "/.srb2/latest-log.txt";
+    std::ifstream log(log_path);
+    if (!log.is_open()) return pk3s;
+
+    std::string line;
+    std::string prefix = "Added file ";
+    while (std::getline(log, line)) {
+        if (line.rfind(prefix, 0) != 0) continue;
+        std::string path = line.substr(prefix.size());
+        // Extract filename part, keep last .pk3
+        if (path.size() < 4) continue;
+        std::string ext = path.substr(path.size() - 4);
+        if (ext != ".pk3" && ext != ".wad") continue;
+        pk3s.push_back(path);
+    }
+    return pk3s;
+}
+
+auto bridge_get_loaded_pk3s() -> const std::vector<std::string>& {
+    static std::vector<std::string> cached;
+    static time_t last_mtime = 0;
+    const char* home = getenv("HOME");
+    if (!home) return cached;
+
+    std::string log_path = std::string(home) + "/.srb2/latest-log.txt";
+    struct stat st;
+    if (stat(log_path.c_str(), &st) != 0) return cached;
+
+    // Refresh cache if log file was modified
+    if (st.st_mtime > last_mtime || cached.empty()) {
+        cached = get_loaded_pk3s_impl();
+        last_mtime = st.st_mtime;
+    }
+    return cached;
+}
+
+auto bridge_find_pk3_for_lump(const std::string& lump_name) -> std::string {
+    auto pk3s = bridge_get_loaded_pk3s();
+    for (auto it = pk3s.rbegin(); it != pk3s.rend(); ++it) {
+        int pipefd[2];
+        if (pipe(pipefd) == -1) continue;
+        pid_t pid = fork();
+        if (pid == -1) { close(pipefd[0]); close(pipefd[1]); continue; }
+        if (pid == 0) {
+            close(pipefd[0]);
+            dup2(pipefd[1], STDOUT_FILENO);
+            close(pipefd[1]);
+            int devnull = open("/dev/null", O_WRONLY);
+            if (devnull != -1) { dup2(devnull, STDERR_FILENO); close(devnull); }
+            execlp("unzip", "unzip", "-l", it->c_str(), (char*)nullptr);
+            _exit(EXIT_FAILURE);
+        }
+        close(pipefd[1]);
+        char buf[4096];
+        ssize_t n;
+        bool found = false;
+        while ((n = read(pipefd[0], buf, sizeof(buf))) > 0) {
+            if (std::string_view(buf, n).find(lump_name) != std::string_view::npos) {
+                found = true; break;
+            }
+        }
+        close(pipefd[0]);
+        int status;
+        waitpid(pid, &status, 0);
+        if (found) return *it;
+    }
+    return "";
+}
+
 auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir) -> void {
     auto is_safe_map_name = [](const std::string& name) -> bool {
         if (name.empty()) return false;
@@ -173,106 +296,43 @@ auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir)
     if (access(thumb, F_OK) == 0) return;
 
     std::string lump_name = "Level select pictures/" + map + "P.lmp";
-    std::string lump_data;
-    const char* home = getenv("HOME");
-    if (!home) return;
-    std::string search_dir = std::string(home) + "/.srb2/addons";
-
-    std::string pk3_path;
-    try {
-        for (const auto& entry : std::filesystem::directory_iterator(search_dir)) {
-            if (!entry.is_regular_file()) continue;
-            if (entry.path().extension() != ".pk3") continue;
-
-            int pipefd[2];
-            if (pipe(pipefd) == -1) continue;
-
-            pid_t pid = fork();
-            if (pid == -1) {
-                close(pipefd[0]);
-                close(pipefd[1]);
-                continue;
-            }
-            if (pid == 0) {
-                close(pipefd[0]);
-                dup2(pipefd[1], STDOUT_FILENO);
-                close(pipefd[1]);
-                int devnull = open("/dev/null", O_WRONLY);
-                if (devnull != -1) {
-                    dup2(devnull, STDERR_FILENO);
-                    close(devnull);
-                }
-                execlp("unzip", "unzip", "-l", entry.path().c_str(), (char*)nullptr);
-                _exit(EXIT_FAILURE);
-            }
-            close(pipefd[1]);
-
-            char buf[4096];
-            ssize_t n;
-            bool found = false;
-            while ((n = read(pipefd[0], buf, sizeof(buf))) > 0) {
-                if (std::string_view(buf, n).find(lump_name) != std::string_view::npos) {
-                    found = true;
-                    break;
-                }
-            }
-            close(pipefd[0]);
-            int status;
-            waitpid(pid, &status, 0);
-
-            if (found) {
-                pk3_path = entry.path().string();
-                break;
-            }
-        }
-    } catch (const std::filesystem::filesystem_error&) {
-        return;
-    }
+    std::string pk3_path = bridge_find_pk3_for_lump(lump_name);
     if (pk3_path.empty()) return;
 
+    std::string lump_data;
     {
         int pipefd[2];
         if (pipe(pipefd) == -1) return;
-
         pid_t pid = fork();
-        if (pid == -1) {
-            close(pipefd[0]);
-            close(pipefd[1]);
-            return;
-        }
+        if (pid == -1) { close(pipefd[0]); close(pipefd[1]); return; }
         if (pid == 0) {
             close(pipefd[0]);
             dup2(pipefd[1], STDOUT_FILENO);
             close(pipefd[1]);
             int devnull = open("/dev/null", O_WRONLY);
-            if (devnull != -1) {
-                dup2(devnull, STDERR_FILENO);
-                close(devnull);
-            }
+            if (devnull != -1) { dup2(devnull, STDERR_FILENO); close(devnull); }
             execlp("unzip", "unzip", "-p", pk3_path.c_str(), lump_name.c_str(), (char*)nullptr);
             _exit(EXIT_FAILURE);
         }
         close(pipefd[1]);
-
         char buf[4096];
         ssize_t n;
-        while ((n = read(pipefd[0], buf, sizeof(buf))) > 0) {
+        while ((n = read(pipefd[0], buf, sizeof(buf))) > 0)
             lump_data.append(buf, n);
-        }
         close(pipefd[0]);
         int status;
         waitpid(pid, &status, 0);
     }
+
     if (lump_data.size() < 1000) return;
 
-    // Approximate width/height from lump size: ~17448 bytes → 160x100
+    // Approximate width/height from lump size
     int w = 160, h = 100;
     if (lump_data.size() > 20000) { w = 320; h = 200; }
     std::string pixels = bridge_decode_patch(lump_data, w, h);
     if (pixels.empty()) return;
 
-    // Write PGM and convert
-    // Apply SRB2 palette: convert indexed pixels to 24-bit RGB
+    // Apply SRB2 palette
     std::string rgb_pixels(w * h * 3, '\0');
     static const uint8_t palette[768] = {
         0xff, 0xff, 0xff, 0xf6, 0xf6, 0xf6, 0xed, 0xed, 0xed, 0xe4, 0xe4, 0xe4,
@@ -353,7 +413,6 @@ auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir)
         std::ofstream pgm(ppm_path, std::ios::binary);
         pgm.write(ppm_data.c_str(), ppm_data.size());
     }
-
     {
         pid_t pid = fork();
         if (pid == -1) { remove(ppm_path.c_str()); return; }

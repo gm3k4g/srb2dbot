@@ -3,6 +3,7 @@
 #include "srb2dbot/server.hpp"
 #include "srb2dbot/utils.hpp"
 #include <dpp/dpp.h>
+#include <ctime>
 #include <fstream>
 #include <optional>
 
@@ -22,11 +23,15 @@ public:
         std::string gt = event.fields.size() >= 1 ? event.fields[0] : "Round";
         std::string map_num = event.fields.size() >= 2 ? event.fields[1] : "?";
         std::string map_title = event.fields.size() >= 3 ? event.fields[2] : "Unknown";
+
         embed.set_title(msg_.empty()
-            ? ":map: Map is now " + map_num + ": " + map_title + " - " + gt
+            ? ":map: " + map_title
             : substitute_placeholders(msg_, {{"gametype", gt}, {"map_num", map_num}, {"map_title", map_title}}));
+        embed.add_field("Map", map_num, true);
+        embed.add_field("Gametype", gt, true);
+        embed.add_field("Source", bridge_get_map_source(map_num), false);
         embed.set_color(0x57F287);
-        map_name_ = map_num;
+        embed.set_timestamp(std::time(nullptr));
         return embed;
     }
 
@@ -50,7 +55,6 @@ private:
     std::string msg_;
     bool thumbs_enabled_;
     std::string srb2_dir_;
-    std::string map_name_;
 
     auto ensure_thumbnail(const std::string& map_name) -> std::string {
         std::string thumb_dir = srb2_dir_ + "/luafiles/client/DiscordBot/thumbnails";
