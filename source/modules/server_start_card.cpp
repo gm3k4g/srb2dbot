@@ -1,12 +1,14 @@
 #include "srb2dbot/module.hpp"
+#include "srb2dbot/utils.hpp"
 #include <dpp/dpp.h>
 
 class ServerStartCardModule : public Module {
 public:
     auto name() const -> std::string_view override { return "server_start_card"; }
-    auto description() const -> std::string_view override { return "Discord embed card when the bot starts or SRB2 server starts"; }
+    auto description() const -> std::string_view override { return "Discord embed card when the bot starts"; }
 
-    explicit ServerStartCardModule(dpp::snowflake channel) : channel_(channel) {}
+    explicit ServerStartCardModule(dpp::snowflake channel, std::string msg)
+        : channel_(channel), msg_(std::move(msg)) {}
 
     auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override {
         return {};
@@ -16,7 +18,7 @@ public:
         dpp::snowflake ch = channel_ != 0 ? channel_ : bridge_channel;
         if (ch == 0) return;
         dpp::embed embed;
-        embed.set_title(":green_circle: The server has started");
+        embed.set_title(msg_.empty() ? ":green_circle: The server has started" : msg_);
         embed.set_color(0x57F287);
         embed.set_timestamp(std::time(nullptr));
         bot.message_create(dpp::message(ch, "").add_embed(embed));
@@ -24,8 +26,9 @@ public:
 
 private:
     dpp::snowflake channel_;
+    std::string msg_;
 };
 
-auto create_server_start_card_module(dpp::snowflake channel) -> std::unique_ptr<Module> {
-    return std::make_unique<ServerStartCardModule>(channel);
+auto create_server_start_card_module(dpp::snowflake channel, const std::string& msg) -> std::unique_ptr<Module> {
+    return std::make_unique<ServerStartCardModule>(channel, msg);
 }

@@ -1,5 +1,6 @@
 #include "srb2dbot/module.hpp"
 #include "srb2dbot/bridge.hpp"
+#include "srb2dbot/utils.hpp"
 #include <dpp/dpp.h>
 #include <ctime>
 #include <optional>
@@ -8,6 +9,7 @@ class RoundEndCardModule : public Module {
 public:
     auto name() const -> std::string_view override { return "round_end_card"; }
     auto description() const -> std::string_view override { return "Discord embed with round results and player scores"; }
+    explicit RoundEndCardModule(std::string msg) : msg_(std::move(msg)) {}
     auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override { return {}; }
     auto handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed> override {
         if (event.type != "ROUND_END") return std::nullopt;
@@ -25,7 +27,6 @@ public:
             if (colon == std::string::npos) continue;
             std::string key = event.fields[i].substr(0, colon);
             std::string val = event.fields[i].substr(colon + 1);
-
             if (key == "MAPNAME") { map_title = val;
             } else if (key == "TEAM" && val == "Red") { if (++i < event.fields.size()) red_score = event.fields[i]; has_teams = true;
             } else if (key == "TEAM" && val == "Blue") { if (++i < event.fields.size()) blue_score = event.fields[i]; has_teams = true;
@@ -35,7 +36,9 @@ public:
             } else if (key == "SPEC") { spectators += val + "\n"; }
         }
 
-        embed.set_title(map_num + ": " + map_title + " - " + gt);
+        embed.set_title(msg_.empty()
+            ? map_num + ": " + map_title + " - " + gt
+            : substitute_placeholders(msg_, {{"gametype", gt}, {"map_num", map_num}, {"map_title", map_title}}));
         if (has_teams) {
             embed.add_field("Red Team  " + red_score, red_team.empty() ? "_no players_" : red_team, true);
             embed.add_field("Blue Team  " + blue_score, blue_team.empty() ? "_no players_" : blue_team, true);
@@ -45,8 +48,10 @@ public:
         embed.set_timestamp(std::time(nullptr));
         return embed;
     }
+private:
+    std::string msg_;
 };
 
-auto create_round_end_card_module() -> std::unique_ptr<Module> {
-    return std::make_unique<RoundEndCardModule>();
+auto create_round_end_card_module(const std::string& msg) -> std::unique_ptr<Module> {
+    return std::make_unique<RoundEndCardModule>(msg);
 }

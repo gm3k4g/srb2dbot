@@ -14,17 +14,50 @@
         },
         "auto": {
             "_note": "Auto modules — run automatically from game events",
-            "server_start_card": true,
-            "round_start_card": true,
-            "round_end_card": true,
-            "ctf_capture_card": true,
-            "ctf_drop_card": true,
-            "ctf_pickup_card": true,
-            "ctf_return_card": true,
-            "player_join_card": true,
-            "player_quit_card": true,
-            "kick_player_card": true,
-            "ban_player_card": true,
+            "server_start_card": {
+                "enabled": true,
+                "message": ":green_circle: The server has started"
+            },
+            "round_start_card": {
+                "enabled": true,
+                "message": ":map: Map is now {map_num}: {map_title} - {gametype}"
+            },
+            "round_end_card": {
+                "enabled": true,
+                "message": "{map_num}: {map_title} - {gametype}"
+            },
+            "ctf_capture_card": {
+                "enabled": true,
+                "message": "Flag Captured!"
+            },
+            "ctf_drop_card": {
+                "enabled": true,
+                "message": "Flag Dropped"
+            },
+            "ctf_pickup_card": {
+                "enabled": true,
+                "message": "Flag Taken"
+            },
+            "ctf_return_card": {
+                "enabled": true,
+                "message": "Flag Returned"
+            },
+            "player_join_card": {
+                "enabled": true,
+                "message": "Player Joined"
+            },
+            "player_quit_card": {
+                "enabled": true,
+                "message": "Player Left"
+            },
+            "kick_player_card": {
+                "enabled": true,
+                "message": "Player Kicked"
+            },
+            "ban_player_card": {
+                "enabled": true,
+                "message": "Player Banned"
+            },
             "map_thumbnails_card": true
         }
     }

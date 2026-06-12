@@ -13,17 +13,17 @@ auto create_wad_module(dpp::cluster& bot) -> std::unique_ptr<Module>;
 auto create_server_module(bool fifo) -> std::unique_ptr<Module>;
 auto create_player_module(bool fifo) -> std::unique_ptr<Module>;
 auto create_relay_module(const std::string& bridge_channel, const std::string& bot_id, bool fifo) -> std::unique_ptr<Module>;
-auto create_round_start_card_module() -> std::unique_ptr<Module>;
-auto create_round_end_card_module() -> std::unique_ptr<Module>;
-auto create_ctf_capture_card_module() -> std::unique_ptr<Module>;
-auto create_ctf_drop_card_module() -> std::unique_ptr<Module>;
-auto create_ctf_pickup_card_module() -> std::unique_ptr<Module>;
-auto create_ctf_return_card_module() -> std::unique_ptr<Module>;
-auto create_player_join_card_module() -> std::unique_ptr<Module>;
-auto create_player_quit_card_module() -> std::unique_ptr<Module>;
-auto create_kick_player_card_module() -> std::unique_ptr<Module>;
-auto create_ban_player_card_module() -> std::unique_ptr<Module>;
-auto create_server_start_card_module(dpp::snowflake channel) -> std::unique_ptr<Module>;
+auto create_round_start_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_round_end_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_ctf_capture_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_ctf_drop_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_ctf_pickup_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_ctf_return_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_player_join_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_player_quit_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_kick_player_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_ban_player_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_server_start_card_module(dpp::snowflake channel, const std::string& msg) -> std::unique_ptr<Module>;
 auto create_thumbnails_module(const std::string& srb2_dir) -> std::unique_ptr<Module>;
 
 auto ModuleRegistry::load_from_config(const std::string& config_path, const RegistryContext& ctx) -> bool {
@@ -37,18 +37,18 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         modules_.push_back(create_server_module(ctx.fifo_available));
         modules_.push_back(create_player_module(ctx.fifo_available));
         modules_.push_back(create_relay_module(ctx.bridge_channel_id, ctx.bot_id, ctx.fifo_available));
-        modules_.push_back(create_round_start_card_module());
-        modules_.push_back(create_round_end_card_module());
-        modules_.push_back(create_ctf_capture_card_module());
-        modules_.push_back(create_ctf_drop_card_module());
-        modules_.push_back(create_ctf_pickup_card_module());
-        modules_.push_back(create_ctf_return_card_module());
-        modules_.push_back(create_player_join_card_module());
-        modules_.push_back(create_player_quit_card_module());
-        modules_.push_back(create_kick_player_card_module());
-        modules_.push_back(create_ban_player_card_module());
+        modules_.push_back(create_round_start_card_module(""));
+        modules_.push_back(create_round_end_card_module(""));
+        modules_.push_back(create_ctf_capture_card_module(""));
+        modules_.push_back(create_ctf_drop_card_module(""));
+        modules_.push_back(create_ctf_pickup_card_module(""));
+        modules_.push_back(create_ctf_return_card_module(""));
+        modules_.push_back(create_player_join_card_module(""));
+        modules_.push_back(create_player_quit_card_module(""));
+        modules_.push_back(create_kick_player_card_module(""));
+        modules_.push_back(create_ban_player_card_module(""));
         dpp::snowflake ch = ctx.bridge_channel_id != "0" ? std::stoull(ctx.bridge_channel_id) : 0;
-        modules_.push_back(create_server_start_card_module(ch));
+        modules_.push_back(create_server_start_card_module(ch, ""));
         return true;
     }
 
@@ -66,12 +66,40 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         // Search across all categories (slash_commands, chat, auto)
         for (auto& [key, val] : mods.items()) {
             if (val.contains(name)) {
-                enabled = val[name].get<bool>();
+                auto& entry = val[name];
+                if (entry.is_object()) {
+                    enabled = entry.value("enabled", true);
+                } else {
+                    enabled = entry.get<bool>();
+                }
                 break;
             }
         }
         if (enabled) {
             modules_.push_back(factory());
+            std::cout << "[module] " << name << " enabled" << std::endl;
+        } else {
+            std::cout << "[module] " << name << " disabled" << std::endl;
+        }
+    };
+
+    auto try_add_msg = [&](std::string_view name, auto&& factory) {
+        bool enabled = true;
+        std::string msg;
+        for (auto& [key, val] : mods.items()) {
+            if (val.contains(name)) {
+                auto& entry = val[name];
+                if (entry.is_object()) {
+                    enabled = entry.value("enabled", true);
+                    msg = entry.value("message", "");
+                } else {
+                    enabled = entry.get<bool>();
+                }
+                break;
+            }
+        }
+        if (enabled) {
+            modules_.push_back(factory(msg));
             std::cout << "[module] " << name << " enabled" << std::endl;
         } else {
             std::cout << "[module] " << name << " disabled" << std::endl;
@@ -84,17 +112,17 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
     try_add("player_management",[&]{ return create_player_module(ctx.fifo_available); });
     try_add("chat_relay",       [&]{ return create_relay_module(ctx.bridge_channel_id, ctx.bot_id, ctx.fifo_available); });
     dpp::snowflake bridge_sf = ctx.bridge_channel_id != "0" ? std::stoull(ctx.bridge_channel_id) : 0;
-    try_add("server_start_card",    [&]{ return create_server_start_card_module(bridge_sf); });
-    try_add("round_start_card",     [&]{ return create_round_start_card_module(); });
-    try_add("round_end_card",       [&]{ return create_round_end_card_module(); });
-    try_add("ctf_capture_card",     [&]{ return create_ctf_capture_card_module(); });
-    try_add("ctf_drop_card",        [&]{ return create_ctf_drop_card_module(); });
-    try_add("ctf_pickup_card",      [&]{ return create_ctf_pickup_card_module(); });
-    try_add("ctf_return_card",      [&]{ return create_ctf_return_card_module(); });
-    try_add("player_join_card",     [&]{ return create_player_join_card_module(); });
-    try_add("player_quit_card",     [&]{ return create_player_quit_card_module(); });
-    try_add("kick_player_card",     [&]{ return create_kick_player_card_module(); });
-    try_add("ban_player_card",      [&]{ return create_ban_player_card_module(); });
+    try_add_msg("server_start_card", [&](auto& msg){ return create_server_start_card_module(bridge_sf, msg); });
+    try_add_msg("round_start_card",     [&](auto& msg){ return create_round_start_card_module(msg); });
+    try_add_msg("round_end_card",       [&](auto& msg){ return create_round_end_card_module(msg); });
+    try_add_msg("ctf_capture_card",     [&](auto& msg){ return create_ctf_capture_card_module(msg); });
+    try_add_msg("ctf_drop_card",        [&](auto& msg){ return create_ctf_drop_card_module(msg); });
+    try_add_msg("ctf_pickup_card",      [&](auto& msg){ return create_ctf_pickup_card_module(msg); });
+    try_add_msg("ctf_return_card",      [&](auto& msg){ return create_ctf_return_card_module(msg); });
+    try_add_msg("player_join_card",     [&](auto& msg){ return create_player_join_card_module(msg); });
+    try_add_msg("player_quit_card",     [&](auto& msg){ return create_player_quit_card_module(msg); });
+    try_add_msg("kick_player_card",     [&](auto& msg){ return create_kick_player_card_module(msg); });
+    try_add_msg("ban_player_card",      [&](auto& msg){ return create_ban_player_card_module(msg); });
     try_add("map_thumbnails_card",  [&]{ return create_thumbnails_module(ctx.srb2_dir); });
 
     return true;

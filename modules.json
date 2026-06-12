@@ -14,17 +14,50 @@
         },
         "auto": {
             "_note": "Auto modules — run automatically from game events",
-            "server_start_card": true,
-            "round_start_card": false,
-            "round_end_card": false,
-            "ctf_capture_card": false,
-            "ctf_drop_card": false,
-            "ctf_pickup_card": false,
-            "ctf_return_card": false,
-            "player_join_card": false,
-            "player_quit_card": false,
-            "kick_player_card": false,
-            "ban_player_card": false,
+            "server_start_card": {
+                "enabled": true,
+                "message": ":green_circle: The server has started"
+            },
+            "round_start_card": {
+                "enabled": false,
+                "message": ":map: Map is now {map_num}: {map_title} - {gametype}"
+            },
+            "round_end_card": {
+                "enabled": false,
+                "message": "{map_num}: {map_title} - {gametype}"
+            },
+            "ctf_capture_card": {
+                "enabled": false,
+                "message": "Flag Captured!"
+            },
+            "ctf_drop_card": {
+                "enabled": false,
+                "message": "Flag Dropped"
+            },
+            "ctf_pickup_card": {
+                "enabled": false,
+                "message": "Flag Taken"
+            },
+            "ctf_return_card": {
+                "enabled": false,
+                "message": "Flag Returned"
+            },
+            "player_join_card": {
+                "enabled": false,
+                "message": "Player Joined"
+            },
+            "player_quit_card": {
+                "enabled": false,
+                "message": "Player Left"
+            },
+            "kick_player_card": {
+                "enabled": false,
+                "message": "Player Kicked"
+            },
+            "ban_player_card": {
+                "enabled": false,
+                "message": "Player Banned"
+            },
             "map_thumbnails_card": false
         }
     }
