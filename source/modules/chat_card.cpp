@@ -35,7 +35,7 @@ private:
                 if (end && *end == '\0' && c > 0) return c;
             }
         }
-        return 0x2F3136;
+        return 0x57F287;
     }
 };
 
