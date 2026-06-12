@@ -1,12 +1,13 @@
 {
     "_note": "Toggle modules on/off. Set false to disable a module.",
     "modules": {
-        "script_editor": true,
-        "wad_manager": true,
-        "server_control": true,
-        "player_management": true,
-        "chat_relay": true,
-        "game_events_card": true,
-        "map_thumbnails_card": true
+        "server_start_card": true,
+        "script_editor": false,
+        "wad_manager": false,
+        "server_control": false,
+        "player_management": false,
+        "chat_relay": false,
+        "game_events_card": false,
+        "map_thumbnails_card": false
     }
 }

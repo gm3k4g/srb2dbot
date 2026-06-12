@@ -14,6 +14,7 @@ auto create_server_module(bool fifo) -> std::unique_ptr<Module>;
 auto create_player_module(bool fifo) -> std::unique_ptr<Module>;
 auto create_relay_module(const std::string& bridge_channel, const std::string& bot_id, bool fifo) -> std::unique_ptr<Module>;
 auto create_events_module() -> std::unique_ptr<Module>;
+auto create_server_start_card_module() -> std::unique_ptr<Module>;
 auto create_thumbnails_module(const std::string& srb2_dir) -> std::unique_ptr<Module>;
 
 auto ModuleRegistry::load_from_config(const std::string& config_path, const RegistryContext& ctx) -> bool {
@@ -28,6 +29,7 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         modules_.push_back(create_player_module(ctx.fifo_available));
         modules_.push_back(create_relay_module(ctx.bridge_channel_id, ctx.bot_id, ctx.fifo_available));
         modules_.push_back(create_events_module());
+        modules_.push_back(create_server_start_card_module());
         modules_.push_back(create_thumbnails_module(ctx.srb2_dir));
         return true;
     }
@@ -59,6 +61,7 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
     try_add("server_control",   [&]{ return create_server_module(ctx.fifo_available); });
     try_add("player_management",[&]{ return create_player_module(ctx.fifo_available); });
     try_add("chat_relay",       [&]{ return create_relay_module(ctx.bridge_channel_id, ctx.bot_id, ctx.fifo_available); });
+    try_add("server_start_card",    [&]{ return create_server_start_card_module(); });
     try_add("game_events_card",     [&]{ return create_events_module(); });
     try_add("map_thumbnails_card",  [&]{ return create_thumbnails_module(ctx.srb2_dir); });
 

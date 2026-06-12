@@ -43,6 +43,7 @@ set(SOURCES
     source/modules/player_module.cpp
     source/modules/relay_module.cpp
     source/modules/events_module.cpp
+    source/modules/server_start_card.cpp
     source/modules/thumbnails_module.cpp
 )
 

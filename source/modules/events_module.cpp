@@ -19,12 +19,6 @@ public:
     auto handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed> override {
         dpp::embed embed;
 
-        if (event.type == "SERVER_START") {
-            embed.set_title(":green_circle: The server has started");
-            embed.set_color(0x57F287);
-            return embed;
-        }
-
         if (event.type == "ROUND_START") {
             std::string gt = event.fields.size() >= 1 ? event.fields[0] : "Round";
             std::string map_num = event.fields.size() >= 2 ? event.fields[1] : "?";
