@@ -26,10 +26,10 @@
                 "enabled": true,
                 "message": "{map_num}: {map_title} - {gametype}"
             },
-            "ctf_capture_card": true,
-            "ctf_drop_card": true,
-            "ctf_pickup_card": true,
-            "ctf_return_card": true,
+            "flag_capture_card": true,
+            "flag_drop_card": true,
+            "flag_pickup_card": true,
+            "flag_return_card": true,
             "player_join_card": {
                 "enabled": true,
                 "message": "Player Joined"

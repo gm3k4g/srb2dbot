@@ -5,7 +5,7 @@
 
 class CtfCaptureCardModule : public Module {
 public:
-    auto name() const -> std::string_view override { return "ctf_capture_card"; }
+    auto name() const -> std::string_view override { return "flag_capture_card"; }
     auto description() const -> std::string_view override { return "Discord embed when a flag is captured"; }
     auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override { return {}; }
     auto handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed> override {
@@ -20,6 +20,6 @@ public:
     }
 };
 
-auto create_ctf_capture_card_module() -> std::unique_ptr<Module> {
+auto create_flag_capture_card_module() -> std::unique_ptr<Module> {
     return std::make_unique<CtfCaptureCardModule>();
 }

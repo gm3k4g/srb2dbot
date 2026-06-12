@@ -44,10 +44,10 @@ set(SOURCES
     source/modules/relay_module.cpp
     source/modules/round_start_card.cpp
     source/modules/round_end_card.cpp
-    source/modules/ctf_capture_card.cpp
-    source/modules/ctf_drop_card.cpp
-    source/modules/ctf_pickup_card.cpp
-    source/modules/ctf_return_card.cpp
+    source/modules/flag_capture_card.cpp
+    source/modules/flag_drop_card.cpp
+    source/modules/flag_pickup_card.cpp
+    source/modules/flag_return_card.cpp
     source/modules/player_join_card.cpp
     source/modules/player_quit_card.cpp
     source/modules/kick_player_card.cpp
