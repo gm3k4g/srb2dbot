@@ -180,7 +180,22 @@ int main() {
                             }
                             auto embed_opt = registry.handle_bridge_event(*event);
                             if (embed_opt.has_value()) {
-                                pending_embeds.push_back(*embed_opt);
+                                auto attach = registry.get_bridge_attachment(*event);
+                                if (attach.has_value()) {
+                                    // Flush pending, then send thumbnailed embed individually
+                                    if (!pending_embeds.empty()) {
+                                        dpp::message evt_batch(bridge_channel_sf, "");
+                                        for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                                        bot.message_create(evt_batch);
+                                        pending_embeds.clear();
+                                    }
+                                    dpp::message thumb_msg(bridge_channel_sf, "");
+                                    thumb_msg.add_embed(*embed_opt);
+                                    thumb_msg.add_file(attach->first, attach->second);
+                                    bot.message_create(thumb_msg);
+                                } else {
+                                    pending_embeds.push_back(*embed_opt);
+                                }
                             } else if (event->type == "MAP_CHANGE") {
                                 // Old-format event; skip or handle minimally
                             } else {

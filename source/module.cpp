@@ -104,6 +104,14 @@ auto ModuleRegistry::handle_bridge_event(const BridgeEvent& event) -> std::optio
     return std::nullopt;
 }
 
+auto ModuleRegistry::get_bridge_attachment(const BridgeEvent& event) -> std::optional<std::pair<std::string, std::string>> {
+    for (auto& mod : modules_) {
+        auto result = mod->get_bridge_attachment(event);
+        if (result.has_value()) return result;
+    }
+    return std::nullopt;
+}
+
 auto ModuleRegistry::on_ready(dpp::cluster& bot, dpp::snowflake bridge_channel) -> void {
     for (auto& mod : modules_) {
         mod->on_ready(bot, bridge_channel);
