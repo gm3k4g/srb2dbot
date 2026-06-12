@@ -2,6 +2,7 @@
 #include "srb2dbot/bridge.hpp"
 #include <dpp/dpp.h>
 #include <optional>
+#include <cstdlib>
 
 class ChatCardModule : public Module {
 public:
@@ -18,18 +19,23 @@ public:
         if (message.empty()) return std::nullopt;
 
         dpp::embed embed;
-        embed.set_author(player, "", "");
-        embed.set_description(message);
-        embed.set_color(name_color(player));
+        embed.set_title(player);
+        embed.set_description("**" + player + "** " + message);
+        embed.set_color(parse_color(event));
         return embed;
     }
 
 private:
-    static auto name_color(const std::string& name) -> uint32_t {
-        if (name.find("~Server") != std::string::npos) return 0xFEE75C;
-        uint32_t h = 0x2F3136;
-        for (char c : name) h = h * 33 + static_cast<uint32_t>(c);
-        return 0x2F3136 + (h % 0xCD5C5C);
+    static auto parse_color(const BridgeEvent& event) -> uint32_t {
+        if (event.fields.size() >= 4) {
+            std::string hex = event.fields[3];
+            if (!hex.empty()) {
+                char* end = nullptr;
+                uint32_t c = std::strtoul(hex.c_str(), &end, 16);
+                if (end && *end == '\0' && c > 0) return c;
+            }
+        }
+        return 0x2F3136;
     }
 };
 

@@ -17,6 +17,31 @@ DiscordBot.Data.round_active = false
 DiscordBot.Data.current_map = nil
 DiscordBot.Data.debug = false
 
+DiscordBot.Data.skin_colors = {
+	[0] = "FFFFFF",
+	[1] = "E00000",
+	[2] = "00C000",
+	[3] = "4000FF",
+	[4] = "F0F000",
+	[5] = "FF8000",
+	[6] = "A000FF",
+	[7] = "00E8E8",
+	[8] = "FF80C0",
+	[9] = "D0A070",
+	[10] = "C080FF",
+	[11] = "008080",
+	[12] = "804000",
+	[13] = "A0A0A0",
+	[14] = "804040",
+	[15] = "808000",
+}
+DiscordBot.Functions.get_skin_color = function(player)
+	if DiscordBot.Data.skin_colors[player.skincolor]
+		return DiscordBot.Data.skin_colors[player.skincolor]
+	end
+	return "2F3136"
+end
+
 DiscordBot.Commands = {}
 DiscordBot.Commands.cv_joinquit = CV_RegisterVar({name = "dbot_joinquit", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_autopause = CV_RegisterVar({name = "dbot_autopause", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
@@ -377,14 +402,14 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		*/
 		if server == player
 			if isdedicatedserver == true
-				text = "[EVENT:CHAT]|["..#player.."]|**<~Server>**|"..message.."\n"
+				text = "[EVENT:CHAT]|["..#player.."]|**<~Server>**|"..message.."|FEE75C\n"
 				DiscordBot.Functions.spamchatbug(player, text)
 				chatprint("<\x82~\x80Server>".." "..message)
 				return true
 			end
 		end
-		text = "[EVENT:CHAT]|["..#player.."]|**<"..player.name..">**|"..message.."\n"
-		if IsPlayerAdmin(player) then text = "["..#player.."]".."**<@"..player.name..">**".." "..message.."\n" end
+		text = "[EVENT:CHAT]|["..#player.."]|**<"..player.name..">**|"..message.."|"..DiscordBot.Functions.get_skin_color(player).."\n"
+		if IsPlayerAdmin(player) then text = "[EVENT:CHAT]|["..#player.."]|**<@"..player.name..">**|"..message.."|"..DiscordBot.Functions.get_skin_color(player).."\n" end
 		if text
 			sendit = DiscordBot.Functions.spamchatbug(player, text)
 			if sendit == true
