@@ -100,9 +100,9 @@ int main() {
         }
     });
 
-    // ── Guild emoji loader ──
+    // ── Guild emoji loader + module on_ready notification ──
     std::unordered_map<std::string, std::string> guild_emojis;
-    bot.on_ready([&bot, guild_id, &guild_emojis](const dpp::ready_t&) {
+    bot.on_ready([&bot, guild_id, &guild_emojis, &registry, bridge_channel_id](const dpp::ready_t&) {
         auto guild = dpp::find_guild(guild_id);
         if (guild) {
             for (const auto& emoji_id : guild->emojis) {
@@ -111,6 +111,10 @@ int main() {
                     guild_emojis[emoji->name] = std::to_string(emoji_id);
                 }
             }
+        }
+        if (dpp::run_once<struct notify_modules_ready>()) {
+            dpp::snowflake ch = bridge_channel_id != "0" ? std::stoull(bridge_channel_id) : 0;
+            if (ch != 0) registry.on_ready(bot, ch);
         }
     });
 

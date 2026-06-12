@@ -21,6 +21,7 @@ public:
     virtual auto handle_slashcommand(const dpp::slashcommand_t& event) -> bool { return false; }
     virtual auto handle_message(const dpp::message_create_t& event) -> bool { return false; }
     virtual auto handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed> { return std::nullopt; }
+    virtual auto on_ready(dpp::cluster& bot, dpp::snowflake bridge_channel) -> void {}
     virtual auto on_timer_tick(dpp::cluster&) -> void {}
 };
 
@@ -41,6 +42,7 @@ public:
     auto handle_slashcommand(const dpp::slashcommand_t& event) -> bool;
     auto handle_message(const dpp::message_create_t& event) -> bool;
     auto handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed>;
+    auto on_ready(dpp::cluster& bot, dpp::snowflake bridge_channel) -> void;
     auto on_timer_tick(dpp::cluster& bot) -> void;
     auto is_module_enabled(std::string_view name) const -> bool;
 

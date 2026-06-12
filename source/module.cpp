@@ -14,7 +14,7 @@ auto create_server_module(bool fifo) -> std::unique_ptr<Module>;
 auto create_player_module(bool fifo) -> std::unique_ptr<Module>;
 auto create_relay_module(const std::string& bridge_channel, const std::string& bot_id, bool fifo) -> std::unique_ptr<Module>;
 auto create_events_module() -> std::unique_ptr<Module>;
-auto create_server_start_card_module() -> std::unique_ptr<Module>;
+auto create_server_start_card_module(dpp::snowflake channel) -> std::unique_ptr<Module>;
 auto create_thumbnails_module(const std::string& srb2_dir) -> std::unique_ptr<Module>;
 
 auto ModuleRegistry::load_from_config(const std::string& config_path, const RegistryContext& ctx) -> bool {
@@ -29,8 +29,8 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         modules_.push_back(create_player_module(ctx.fifo_available));
         modules_.push_back(create_relay_module(ctx.bridge_channel_id, ctx.bot_id, ctx.fifo_available));
         modules_.push_back(create_events_module());
-        modules_.push_back(create_server_start_card_module());
-        modules_.push_back(create_thumbnails_module(ctx.srb2_dir));
+        dpp::snowflake ch = ctx.bridge_channel_id != "0" ? std::stoull(ctx.bridge_channel_id) : 0;
+        modules_.push_back(create_server_start_card_module(ch));
         return true;
     }
 
@@ -65,7 +65,8 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
     try_add("server_control",   [&]{ return create_server_module(ctx.fifo_available); });
     try_add("player_management",[&]{ return create_player_module(ctx.fifo_available); });
     try_add("chat_relay",       [&]{ return create_relay_module(ctx.bridge_channel_id, ctx.bot_id, ctx.fifo_available); });
-    try_add("server_start_card",    [&]{ return create_server_start_card_module(); });
+    dpp::snowflake bridge_sf = ctx.bridge_channel_id != "0" ? std::stoull(ctx.bridge_channel_id) : 0;
+    try_add("server_start_card",    [&]{ return create_server_start_card_module(bridge_sf); });
     try_add("game_events_card",     [&]{ return create_events_module(); });
     try_add("map_thumbnails_card",  [&]{ return create_thumbnails_module(ctx.srb2_dir); });
 
@@ -101,6 +102,12 @@ auto ModuleRegistry::handle_bridge_event(const BridgeEvent& event) -> std::optio
         if (result.has_value()) return result;
     }
     return std::nullopt;
+}
+
+auto ModuleRegistry::on_ready(dpp::cluster& bot, dpp::snowflake bridge_channel) -> void {
+    for (auto& mod : modules_) {
+        mod->on_ready(bot, bridge_channel);
+    }
 }
 
 auto ModuleRegistry::on_timer_tick(dpp::cluster& bot) -> void {
