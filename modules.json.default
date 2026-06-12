@@ -46,7 +46,9 @@
             "ban_player_card": {
                 "enabled": true,
                 "message": "Player Banned"
-            }
+            },
+            "chat_card": true,
+            "csay_card": true
         }
     }
 }

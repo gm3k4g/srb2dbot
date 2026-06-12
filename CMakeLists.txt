@@ -52,6 +52,8 @@ set(SOURCES
     source/modules/player_quit_card.cpp
     source/modules/kick_player_card.cpp
     source/modules/ban_player_card.cpp
+    source/modules/chat_card.cpp
+    source/modules/csay_card.cpp
     source/modules/server_start_card.cpp
 )
 

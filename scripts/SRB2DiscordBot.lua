@@ -377,13 +377,13 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		*/
 		if server == player
 			if isdedicatedserver == true
-				text = "[CHAT:["..#player.."]**<~Server>** "..message.."]\n"
+				text = "[EVENT:CHAT]|["..#player.."]|**<~Server>**|"..message.."\n"
 				DiscordBot.Functions.spamchatbug(player, text)
 				chatprint("<\x82~\x80Server>".." "..message)
 				return true
 			end
 		end
-		text = "[CHAT:["..#player.."]**<"..player.name..">** "..message.."]\n"
+		text = "[EVENT:CHAT]|["..#player.."]|**<"..player.name..">**|"..message.."\n"
 		if IsPlayerAdmin(player) then text = "["..#player.."]".."**<@"..player.name..">**".." "..message.."\n" end
 		if text
 			sendit = DiscordBot.Functions.spamchatbug(player, text)
@@ -399,7 +399,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	end
 	if type == 3
 		local text = nil
-		text = "[CSAY:"..msg.."]\n"
+		text = "[EVENT:CSAY]|"..msg.."\n"
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..text
 	end
 end)
@@ -410,13 +410,13 @@ addHook("PlayerThink", function(player)
 	if not player.oldname then player.oldname = player.name end
 	if player.name != player.oldname
 	player.name = string.gsub(player.name, "`", "")
-		local text = "[CHAT:["..#player.."]:pencil2:**"..string.gsub(player.oldname, "*", "").."** renamed to **"..string.gsub(player.name, "*", "").."**:pencil2:]\n"
+		local text = "[EVENT:CHAT]|["..#player.."]|System|:pencil2:"..string.gsub(player.oldname, "*", "").." renamed to "..string.gsub(player.name, "*", "")..":pencil2:\n"
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..text
 		player.oldname = player.name
 	end
 	if DiscordBot.Commands.cv_joinquit.value == 1
 		if player.logjoin != true
-			local text = "[CHAT:["..#player.."]:rocket:**"..player.name.."** has joined the game:rocket:]\n"
+			local text = "[EVENT:CHAT]|["..#player.."]|System|:rocket:"..player.name.." has joined the game:rocket:\n"
 			if text
 				DiscordBot.Functions.spamchatbug(player, text, true)
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."\n"
@@ -442,22 +442,22 @@ addHook("PlayerQuit", function(player, reason)
 	if DiscordBot.Commands.cv_joinquit.value == 1
 		player.quitlog = true
 		if reason == KR_KICK
-			text = "[CHAT:["..#player.."]:boot:**"..player.name.."** has been kicked:boot:]\n"
+			text = "[EVENT:CHAT]|["..#player.."]|System|:boot:"..player.name.." has been kicked:boot:\n"
 		end
 		if reason == KR_PINGLIMIT
-			text = "[CHAT:["..#player.."]:red_square:**"..player.name.."** left the game (Ping limit):red_square:]\n"
+			text = "[EVENT:CHAT]|["..#player.."]|System|:red_square:"..player.name.." left the game (Ping limit):red_square:\n"
 		end
 		if reason == KR_SYNCH
-			text = "[CHAT:["..#player.."]:o:**"..player.name.."** left the game (Synch Failure):o:]\n"
+			text = "[EVENT:CHAT]|["..#player.."]|System|:o:"..player.name.." left the game (Synch Failure):o:\n"
 		end
 		if reason == KR_TIMEOUT
-			text = "[CHAT:["..#player.."]:o:**"..player.name.."** left the game (Connection timeout):o:]\n"
+			text = "[EVENT:CHAT]|["..#player.."]|System|:o:"..player.name.." left the game (Connection timeout):o:\n"
 		end
 		if reason == KR_BAN
-			text = "[CHAT:["..#player.."]:hammer:**"..player.name.."** has been banned:hammer:]\n"
+			text = "[EVENT:CHAT]|["..#player.."]|System|:hammer:"..player.name.." has been banned:hammer:\n"
 		end
 		if reason == KR_LEAVE
-			text = "[CHAT:["..#player.."]:door:**"..player.name.."** left the game:door:]\n"
+			text = "[EVENT:CHAT]|["..#player.."]|System|:door:"..player.name.." left the game:door:\n"
 		end
 		if text
 			DiscordBot.Functions.spamchatbug(player, text, true)

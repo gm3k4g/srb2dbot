@@ -18,9 +18,5 @@ struct BridgeEvent {
 
 auto bridge_parse_event(const std::string& line) -> std::optional<BridgeEvent>;
 
-auto bridge_is_chat_line(const std::string& line) -> bool;
-auto bridge_is_csay_line(const std::string& line) -> bool;
-auto bridge_extract_content(const std::string& line) -> std::string;
-
 auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir) -> void;
 auto bridge_decode_patch(const std::string& lump_data, int width, int height) -> std::string;

@@ -165,41 +165,11 @@ int main() {
                     content = bridge_replace_emojis(content, guild_emojis);
                     std::istringstream lines(content);
                     std::string line;
-                    std::string chat_lines;
                     std::vector<dpp::embed> pending_embeds;
 
                     while (std::getline(lines, line)) {
                         if (line.empty()) continue;
-
-                        if (bridge_is_csay_line(line) || bridge_is_chat_line(line)) {
-                            std::string content = bridge_extract_content(line);
-                            if (content.empty()) continue;
-
-                            if (bridge_is_csay_line(line)) {
-                                // Server announcement → embed card
-                                if (!chat_lines.empty()) {
-                                    dpp::message chat_msg(bridge_channel_sf, chat_lines);
-                                    chat_msg.set_allowed_mentions(false, false, false, false, {});
-                                    bot.message_create(chat_msg);
-                                    chat_lines.clear();
-                                }
-                                dpp::embed csay_embed;
-                                csay_embed.set_title(":loudspeaker: Server Announcement");
-                                csay_embed.set_description(content);
-                                csay_embed.set_color(0xFEE75C);
-                                pending_embeds.push_back(csay_embed);
-                            } else {
-                                // Chat message → relay to Discord
-                                chat_lines += content;
-                                chat_lines += '\n';
-                            }
-                        } else if (auto event = bridge_parse_event(line)) {
-                            if (!chat_lines.empty()) {
-                                dpp::message chat_msg(bridge_channel_sf, chat_lines);
-                                chat_msg.set_allowed_mentions(false, false, false, false, {});
-                                bot.message_create(chat_msg);
-                                chat_lines.clear();
-                            }
+                        if (auto event = bridge_parse_event(line)) {
                             auto embed_opt = registry.handle_bridge_event(*event);
                             if (embed_opt.has_value()) {
                                 auto attach = registry.get_bridge_attachment(*event);
@@ -227,13 +197,8 @@ int main() {
                                 bot.message_create(evt_batch);
                                 pending_embeds.clear();
                             }
-                        } 
-                        // Lines not matching [EVENT:], [CHAT:], or [CSAY:] are silently ignored
-                    }
-                    if (!chat_lines.empty()) {
-                        dpp::message chat_msg(bridge_channel_sf, chat_lines);
-                        chat_msg.set_allowed_mentions(false, false, false, false, {});
-                        bot.message_create(chat_msg);
+                        }
+                        // Lines not matching [EVENT:...] are silently ignored
                     }
                     if (!pending_embeds.empty()) {
                         dpp::message evt_batch(bridge_channel_sf, "");

@@ -24,6 +24,8 @@ auto create_player_quit_card_module(const std::string& msg) -> std::unique_ptr<M
 auto create_kick_player_card_module(const std::string& msg) -> std::unique_ptr<Module>;
 auto create_ban_player_card_module(const std::string& msg) -> std::unique_ptr<Module>;
 auto create_server_start_card_module(dpp::snowflake channel, const std::string& msg) -> std::unique_ptr<Module>;
+auto create_chat_card_module() -> std::unique_ptr<Module>;
+auto create_csay_card_module() -> std::unique_ptr<Module>;
 // create_thumbnails_module removed — thumbnails integrated into round_start_card
 
 auto ModuleRegistry::load_from_config(const std::string& config_path, const RegistryContext& ctx) -> bool {
@@ -49,6 +51,8 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         modules_.push_back(create_ban_player_card_module(""));
         dpp::snowflake ch = ctx.bridge_channel_id != "0" ? std::stoull(ctx.bridge_channel_id) : 0;
         modules_.push_back(create_server_start_card_module(ch, ""));
+        modules_.push_back(create_chat_card_module());
+        modules_.push_back(create_csay_card_module());
         return true;
     }
 
@@ -131,6 +135,8 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
     try_add_msg("player_quit_card",     [&](auto& msg){ return create_player_quit_card_module(msg); });
     try_add_msg("kick_player_card",     [&](auto& msg){ return create_kick_player_card_module(msg); });
     try_add_msg("ban_player_card",      [&](auto& msg){ return create_ban_player_card_module(msg); });
+    try_add("chat_card",            [&]{ return create_chat_card_module(); });
+    try_add("csay_card",            [&]{ return create_csay_card_module(); });
 
     return true;
 }

@@ -16,12 +16,12 @@
             "_note": "Auto modules — run automatically from game events",
             "server_start_card": {
                 "enabled": true,
-                "message": ":green_circle: The server has started"
+                "message": ":green_circle: :robot: srb2dbot is up"
             },
             "round_start_card": {
-                "enabled": false,
+                "enabled": true,
                 "message": ":map: Map is now {map_num}: {map_title} - {gametype}",
-                "thumbnails": false
+                "thumbnails": true
             },
             "round_end_card": {
                 "enabled": false,
@@ -46,7 +46,9 @@
             "ban_player_card": {
                 "enabled": false,
                 "message": "Player Banned"
-            }
+            },
+            "chat_card": true,
+            "csay_card": true
         }
     }
 }
