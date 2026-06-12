@@ -253,18 +253,7 @@ COM_AddCommand("dbot_sync", function(player)
 	if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: re-emitting server state (map="..tostring(DiscordBot.Data.current_map)..", round_active="..tostring(DiscordBot.Data.round_active)..")") end
 	DiscordBot.Data.msgsrb2 = ''
 	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.round_active
-		local mapname = mapheaderinfo[DiscordBot.Data.current_map]
-		local maptitle = "Unknown"
-		if mapname and mapname.lvlttl
-			maptitle = mapname.lvlttl
-			if mapname.actnum and mapname.actnum > 0
-				maptitle = maptitle.." Act "..mapname.actnum
-			end
-		end
-		local gtname = get_gametype_name(gametype)
-		local mapstr = map_num_to_mapstr(DiscordBot.Data.current_map)
-		local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
-		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
+		if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: round is active, waiting for next MapLoad to emit ROUND_START") end
 	end
 	DiscordBot.Functions.flush_msgsrb2()
 end, COM_LOCAL)
@@ -550,11 +539,7 @@ local function map_num_to_mapstr(n)
 	return "MAP"..n
 end
 
-addHook("MapLoad", function(map)
-		if DiscordBot.Data.current_map == nil then
-			DiscordBot.Data.current_map = map
-			return
-		end
+	addHook("MapLoad", function(map)
 		local mapname = mapheaderinfo[map]
 		local maptitle = "Unknown Map"
 		if mapname and mapname.lvlttl
@@ -565,12 +550,14 @@ addHook("MapLoad", function(map)
 		end
 		local gtname = get_gametype_name(gametype)
 		local mapstr = map_num_to_mapstr(map)
-		local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
-	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
-	DiscordBot.Functions.flush_msgsrb2()
-	DiscordBot.Data.round_active = true
-	DiscordBot.Data.current_map = map
-end)
+		DiscordBot.Data.current_map = map
+		if DiscordBot.Data.round_active == false
+			DiscordBot.Data.round_active = true
+			local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
+			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
+			DiscordBot.Functions.flush_msgsrb2()
+		end
+	end)
 
 local ok, err = pcall(addHook, "IntermissionThink", function()
 	if not DiscordBot.Data.round_active then return end
