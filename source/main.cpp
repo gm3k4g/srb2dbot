@@ -196,15 +196,8 @@ int main() {
                                 } else {
                                     pending_embeds.push_back(*embed_opt);
                                 }
-                            } else if (event->type == "MAP_CHANGE") {
-                                // Old-format event; skip or handle minimally
-                            } else {
-                                dpp::embed fallback;
-                                fallback.set_title(event->type);
-                                fallback.set_description(line);
-                                fallback.set_color(0x2F3136);
-                                pending_embeds.push_back(fallback);
                             }
+                            // No fallback — if no module produced an embed, the event is silently skipped
                             if (pending_embeds.size() >= 10) {
                                 dpp::message evt_batch(bridge_channel_sf, "");
                                 for (auto& e : pending_embeds) evt_batch.add_embed(e);
