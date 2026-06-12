@@ -42,7 +42,16 @@ set(SOURCES
     source/modules/server_module.cpp
     source/modules/player_module.cpp
     source/modules/relay_module.cpp
-    source/modules/events_module.cpp
+    source/modules/round_start_card.cpp
+    source/modules/round_end_card.cpp
+    source/modules/ctf_capture_card.cpp
+    source/modules/ctf_drop_card.cpp
+    source/modules/ctf_pickup_card.cpp
+    source/modules/ctf_return_card.cpp
+    source/modules/player_join_card.cpp
+    source/modules/player_quit_card.cpp
+    source/modules/kick_player_card.cpp
+    source/modules/ban_player_card.cpp
     source/modules/server_start_card.cpp
     source/modules/thumbnails_module.cpp
 )

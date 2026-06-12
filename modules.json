@@ -15,7 +15,16 @@
         "auto": {
             "_note": "Auto modules — run automatically from game events",
             "server_start_card": true,
-            "game_events_card": false,
+            "round_start_card": false,
+            "round_end_card": false,
+            "ctf_capture_card": false,
+            "ctf_drop_card": false,
+            "ctf_pickup_card": false,
+            "ctf_return_card": false,
+            "player_join_card": false,
+            "player_quit_card": false,
+            "kick_player_card": false,
+            "ban_player_card": false,
             "map_thumbnails_card": false
         }
     }

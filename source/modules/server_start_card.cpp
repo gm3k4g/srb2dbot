@@ -1,7 +1,5 @@
 #include "srb2dbot/module.hpp"
-#include "srb2dbot/bridge.hpp"
 #include <dpp/dpp.h>
-#include <optional>
 
 class ServerStartCardModule : public Module {
 public:
@@ -22,16 +20,6 @@ public:
         embed.set_color(0x57F287);
         embed.set_timestamp(std::time(nullptr));
         bot.message_create(dpp::message(ch, "").add_embed(embed));
-    }
-
-    auto handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed> override {
-        if (event.type == "SERVER_START") {
-            dpp::embed embed;
-            embed.set_title(":green_circle: The server has started");
-            embed.set_color(0x57F287);
-            return embed;
-        }
-        return std::nullopt;
     }
 
 private:
