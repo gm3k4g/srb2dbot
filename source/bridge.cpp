@@ -114,6 +114,25 @@ auto bridge_parse_event(const std::string& line) -> std::optional<BridgeEvent> {
     return event;
 }
 
+auto bridge_is_chat_line(const std::string& line) -> bool {
+    return line.rfind("[CHAT:", 0) == 0;
+}
+
+auto bridge_is_csay_line(const std::string& line) -> bool {
+    return line.rfind("[CSAY:", 0) == 0;
+}
+
+auto bridge_extract_content(const std::string& line) -> std::string {
+    size_t start = line.find(':');
+    if (start == std::string::npos) return line;
+    start++; // skip ':'
+    size_t end = line.rfind(']');
+    if (end != std::string::npos && end > start) {
+        return line.substr(start, end - start);
+    }
+    return line.substr(start);
+}
+
 auto bridge_decode_patch(const std::string& lump_data, int width, int height) -> std::string {
     if (lump_data.size() < 8) return "";
 
