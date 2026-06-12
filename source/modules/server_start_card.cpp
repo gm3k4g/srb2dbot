@@ -22,6 +22,7 @@ public:
         dpp::embed embed;
         embed.set_title(msg_.empty() ? ":green_circle: The server has started" : msg_);
         embed.set_description(PROJECT_DESCRIPTION);
+        embed.set_thumbnail(bot.me.get_avatar_url());
         embed.add_field("Version", version_str(), true);
         embed.add_field("Author", PROJECT_AUTHOR, true);
         embed.add_field("Repository", PROJECT_URL, false);
