@@ -9,12 +9,17 @@ set(PROJECT_AUTHOR "gm3k4g")
 project(
     srb2dbot
     VERSION 0.1
-    DESCRIPTION "Control SRB2 servers via Discord."
+    DESCRIPTION "SRB2 Discord bridge"
     HOMEPAGE_URL "https://github.com/gm3k4g/srb2dbot"
     LANGUAGES CXX
 )
 
 # Let's create a header file to use within the project for our variables.
+execute_process(COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    OUTPUT_VARIABLE PROJECT_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET)
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/source/version.h.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/source/version.h"

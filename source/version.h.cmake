@@ -5,6 +5,7 @@
 #define PROJECT_URL "${PROJECT_HOMEPAGE_URL}"
 #define PROJECT_VERSION_MAJOR "${${PROJECT_NAME}_VERSION_MAJOR}"
 #define PROJECT_VERSION_MINOR "${${PROJECT_NAME}_VERSION_MINOR}"
+#define PROJECT_COMMIT "${PROJECT_COMMIT}"
 
 // Discord command definitions
 #define CMD_GET_SCRIPT "get_script"

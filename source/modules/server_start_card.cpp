@@ -2,6 +2,7 @@
 #include "srb2dbot/utils.hpp"
 #include "version.h"
 #include <dpp/dpp.h>
+#include <string>
 
 class ServerStartCardModule : public Module {
 public:
@@ -21,7 +22,7 @@ public:
         dpp::embed embed;
         embed.set_title(msg_.empty() ? ":green_circle: The server has started" : msg_);
         embed.set_description(PROJECT_DESCRIPTION);
-        embed.add_field("Version", PROJECT_VERSION_MAJOR "." PROJECT_VERSION_MINOR, true);
+        embed.add_field("Version", version_str(), true);
         embed.add_field("Author", PROJECT_AUTHOR, true);
         embed.add_field("Repository", PROJECT_URL, false);
         embed.set_color(0x57F287);
@@ -32,6 +33,16 @@ public:
 private:
     dpp::snowflake channel_;
     std::string msg_;
+
+    static auto version_str() -> std::string {
+        std::string v(PROJECT_VERSION_MAJOR "." PROJECT_VERSION_MINOR);
+        if (v == "." || v.empty()) {
+            std::string c(PROJECT_COMMIT);
+            if (!c.empty()) return "git-" + c;
+            return "unknown";
+        }
+        return v;
+    }
 };
 
 auto create_server_start_card_module(dpp::snowflake channel, const std::string& msg) -> std::unique_ptr<Module> {
