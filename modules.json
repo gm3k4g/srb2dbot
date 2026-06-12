@@ -1,13 +1,22 @@
 {
-    "_note": "Toggle modules on/off. Set false to disable a module.",
+    "_note": "Modules grouped by category: slash_commands, chat, auto.",
     "modules": {
-        "server_start_card": true,
-        "script_editor": false,
-        "wad_manager": false,
-        "server_control": false,
-        "player_management": false,
-        "chat_relay": false,
-        "game_events_card": false,
-        "map_thumbnails_card": false
+        "slash_commands": {
+            "_note": "Slash command modules — register Discord slash commands",
+            "script_editor": false,
+            "wad_manager": false,
+            "server_control": false,
+            "player_management": false
+        },
+        "chat": {
+            "_note": "Chat modules — relay messages between Discord and SRB2",
+            "chat_relay": false
+        },
+        "auto": {
+            "_note": "Auto modules — run automatically from game events",
+            "server_start_card": true,
+            "game_events_card": false,
+            "map_thumbnails_card": false
+        }
     }
 }

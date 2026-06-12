@@ -45,8 +45,12 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
 
     auto try_add = [&](std::string_view name, auto&& factory) {
         bool enabled = true;
-        if (mods.contains(name)) {
-            enabled = mods[name].get<bool>();
+        // Search across all categories (slash_commands, chat, auto)
+        for (auto& [key, val] : mods.items()) {
+            if (val.contains(name)) {
+                enabled = val[name].get<bool>();
+                break;
+            }
         }
         if (enabled) {
             modules_.push_back(factory());
@@ -108,6 +112,10 @@ auto ModuleRegistry::on_timer_tick(dpp::cluster& bot) -> void {
 auto ModuleRegistry::is_module_enabled(std::string_view name) const -> bool {
     if (!config_.contains("modules")) return true;
     auto& mods = config_["modules"];
-    if (!mods.contains(name)) return true;
-    return mods[name].get<bool>();
+    for (auto& [key, val] : mods.items()) {
+        if (val.is_object() && val.contains(name)) {
+            return val[name].get<bool>();
+        }
+    }
+    return true;
 }

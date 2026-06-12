@@ -10,7 +10,13 @@ public:
     auto name() const -> std::string_view override { return "chat_relay"; }
     auto description() const -> std::string_view override { return "Relay chat messages between Discord and SRB2"; }
 
-    explicit ChatRelayModule(bool fifo_enabled) : fifo_available_(fifo_enabled) {}
+    explicit ChatRelayModule(bool fifo_enabled, const std::string& bridge_id = "", const std::string& bot_id_val = "")
+        : fifo_available_(fifo_enabled) {
+        if (!bridge_id.empty() && bridge_id != "0") {
+            bridge_channel_sf_ = std::stoull(bridge_id);
+        }
+        bot_id_ = bot_id_val;
+    }
 
     // ChatRelay provides no slash commands
     auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override {
@@ -18,8 +24,6 @@ public:
     }
 
     auto handle_message(const dpp::message_create_t& event) -> bool override {
-        // Only process if bridge channel is configured
-        if (bridge_channel_sf_.empty()) return false;
         if (!bridge_channel_sf_.has_value()) return false;
 
         dpp::snowflake channel_id = bridge_channel_sf_.value();
@@ -56,12 +60,7 @@ public:
         return true;
     }
 
-    void configure(dpp::snowflake bridge_channel, const std::string& bot_id) {
-        if (bridge_channel != 0) {
-            bridge_channel_sf_ = bridge_channel;
-        }
-        bot_id_ = bot_id;
-    }
+
 
 private:
     bool fifo_available_;
@@ -69,6 +68,6 @@ private:
     std::string bot_id_;
 };
 
-auto create_relay_module(bool fifo_available) -> std::unique_ptr<Module> {
-    return std::make_unique<ChatRelayModule>(fifo_available);
+auto create_relay_module(const std::string& bridge_channel, const std::string& bot_id, bool fifo_available) -> std::unique_ptr<Module> {
+    return std::make_unique<ChatRelayModule>(fifo_available, bridge_channel, bot_id);
 }
