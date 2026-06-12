@@ -36,8 +36,7 @@ LUA_WAD=$(find_wad) || {
     exit 1
 }
 
-cd "$HOME/.srb2"
-mkdir -p luafiles/client/DiscordBot
+mkdir -p "$HOME/.srb2/luafiles/client/DiscordBot"
 
 echo "=== srb2_dbot ==="
 echo "Server: $SERVERNAME"
@@ -46,6 +45,15 @@ echo "Room:   $ROOM"
 echo "Lua:    $LUA_WAD"
 echo ""
 
+echo "[srb2_dbot] Launching srb2dbot..."
+"$SCRIPT_DIR/build/srb2dbot" &
+BOT_PID=$!
+
+echo "[srb2_dbot] Waiting 3 seconds for bot to connect..."
+sleep 3
+
+echo "[srb2_dbot] Starting SRB2 server..."
+cd "$HOME/.srb2"
 exec srb2 \
     -dedicated \
     -port "$PORT" \
