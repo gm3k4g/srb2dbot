@@ -189,6 +189,7 @@ int main() {
                                         bot.message_create(evt_batch);
                                         pending_embeds.clear();
                                     }
+                                    embed_opt->set_image("attachment://" + attach->first);
                                     dpp::message thumb_msg(bridge_channel_sf, "");
                                     thumb_msg.add_embed(*embed_opt);
                                     thumb_msg.add_file(attach->first, attach->second);
