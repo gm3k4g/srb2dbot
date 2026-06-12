@@ -1,7 +1,6 @@
 #include "srb2dbot/module.hpp"
 #include "srb2dbot/bridge.hpp"
 #include <dpp/dpp.h>
-#include <ctime>
 #include <optional>
 
 class ChatCardModule : public Module {
@@ -22,7 +21,6 @@ public:
         embed.set_author(player, "", "");
         embed.set_description(message);
         embed.set_color(name_color(player));
-        embed.set_timestamp(std::time(nullptr));
         return embed;
     }
 
