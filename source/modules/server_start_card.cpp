@@ -36,8 +36,8 @@ private:
     std::string msg_;
 
     static auto version_str() -> std::string {
-        std::string v(PROJECT_VERSION_MAJOR "." PROJECT_VERSION_MINOR);
-        if (v == "." || v.empty()) {
+        std::string v(PROJECT_VERSION_MAJOR "." PROJECT_VERSION_MINOR "." PROJECT_VERSION_PATCH);
+        if (v == ".." || v.empty()) {
             std::string c(PROJECT_COMMIT);
             if (!c.empty()) return "git-" + c;
             return "unknown";
