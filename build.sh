@@ -4,7 +4,7 @@ set -euo pipefail
 # ── defaults ──────────────────────────────────────────────
 BUILD_DIR="build"
 BUILD_TYPE="Debug"
-JOBS="$(nproc)"
+JOBS="2"
 RUN_TESTS=0
 CLEAN=0
 RUN_BOT=0
@@ -28,7 +28,7 @@ Options:
   -h, --help      Show this help message
   -c, --clean     Remove build directory and reconfigure from scratch
   -r, --release   Build in Release mode (default: Debug)
-  -j, --jobs N    Number of parallel build jobs (default: $(nproc))
+  -j, --jobs N    Number of parallel build jobs (default: 2)
   -t, --test      Run tests after building
   --run           Run the bot after building
   -B, --build-dir DIR  Set build directory (default: build)
