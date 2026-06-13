@@ -24,7 +24,8 @@ auto create_player_quit_card_module(const std::string& msg) -> std::unique_ptr<M
 auto create_kick_player_card_module(const std::string& msg) -> std::unique_ptr<Module>;
 auto create_ban_player_card_module(const std::string& msg) -> std::unique_ptr<Module>;
 auto create_server_start_card_module(dpp::snowflake channel, const std::string& msg) -> std::unique_ptr<Module>;
-auto create_chat_card_module() -> std::unique_ptr<Module>;
+auto create_chat_card_module(const std::string& mode) -> std::unique_ptr<Module>;
+auto create_server_chat_card_module(const std::string& mode) -> std::unique_ptr<Module>;
 auto create_csay_card_module() -> std::unique_ptr<Module>;
 // create_thumbnails_module removed — thumbnails integrated into round_start_card
 
@@ -51,7 +52,8 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         modules_.push_back(create_ban_player_card_module(""));
         dpp::snowflake ch = ctx.bridge_channel_id != "0" ? std::stoull(ctx.bridge_channel_id) : 0;
         modules_.push_back(create_server_start_card_module(ch, ""));
-        modules_.push_back(create_chat_card_module());
+        modules_.push_back(create_chat_card_module("card"));
+        modules_.push_back(create_server_chat_card_module("card"));
         modules_.push_back(create_csay_card_module());
         return true;
     }
@@ -135,7 +137,15 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
     try_add_msg("player_quit_card",     [&](auto& msg){ return create_player_quit_card_module(msg); });
     try_add_msg("kick_player_card",     [&](auto& msg){ return create_kick_player_card_module(msg); });
     try_add_msg("ban_player_card",      [&](auto& msg){ return create_ban_player_card_module(msg); });
-    try_add("chat_card",            [&]{ return create_chat_card_module(); });
+    auto chat_mode = [&](std::string_view name) -> std::string {
+        for (auto& [key, val] : mods.items()) {
+            if (val.contains(name) && val[name].is_object())
+                return val[name].value("mode", "card");
+        }
+        return "card";
+    };
+    try_add("chat_card",            [&]{ return create_chat_card_module(chat_mode("chat_card")); });
+    try_add("server_chat_card",     [&]{ return create_server_chat_card_module(chat_mode("server_chat_card")); });
     try_add("csay_card",            [&]{ return create_csay_card_module(); });
 
     return true;
@@ -167,6 +177,14 @@ auto ModuleRegistry::handle_message(const dpp::message_create_t& event) -> bool 
 auto ModuleRegistry::handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed> {
     for (auto& mod : modules_) {
         auto result = mod->handle_bridge_event(event);
+        if (result.has_value()) return result;
+    }
+    return std::nullopt;
+}
+
+auto ModuleRegistry::handle_bridge_plain_message(const BridgeEvent& event) -> std::optional<std::string> {
+    for (auto& mod : modules_) {
+        auto result = mod->handle_bridge_plain_message(event);
         if (result.has_value()) return result;
     }
     return std::nullopt;

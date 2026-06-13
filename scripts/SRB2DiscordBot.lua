@@ -392,7 +392,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		*/
 		if server == player
 			if isdedicatedserver == true
-				text = "[EVENT:CHAT]|["..#player.."]|**<~Server>**|"..message.."|FEE75C\n"
+				text = "[EVENT:SERVER_CHAT]|"..message.."|FEE75C\n"
 				DiscordBot.Functions.spamchatbug(player, text)
 				chatprint("<\x82~\x80Server>".." "..message)
 				return true

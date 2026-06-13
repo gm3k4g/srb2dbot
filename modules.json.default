@@ -10,7 +10,15 @@
         },
         "chat": {
             "_note": "Chat modules — relay messages between Discord and SRB2",
-            "chat_relay": true
+            "chat_relay": true,
+            "chat_card": {
+                "enabled": true,
+                "mode": "card"
+            },
+            "server_chat_card": {
+                "enabled": true,
+                "mode": "card"
+            }
         },
         "auto": {
             "_note": "Auto modules — run automatically from game events",
@@ -47,7 +55,6 @@
                 "enabled": true,
                 "message": "Player Banned"
             },
-            "chat_card": true,
             "csay_card": true
         }
     }
