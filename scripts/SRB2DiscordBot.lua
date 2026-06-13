@@ -51,7 +51,6 @@ DiscordBot.Commands.cv_messagedelay = CV_RegisterVar({name = "dbot_messagedelay"
 
 DiscordBot.Messages = {}
 
-DiscordBot.Functions = {}
 DiscordBot.Functions.flush_msgsrb2 = function()
     if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 != ''
         if DiscordBot.Data.debug then print("[DEBUG] flush_msgsrb2: writing "..string.len(DiscordBot.Data.msgsrb2).." bytes to Messages.txt") end
