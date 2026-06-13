@@ -189,14 +189,6 @@ int main() {
                                 } else {
                                     pending_embeds.push_back(*embed_opt);
                                 }
-                            } else {
-                                // Check for plain text message (mode: message)
-                                auto text_opt = registry.handle_bridge_plain_message(*event);
-                                if (text_opt.has_value()) {
-                                    dpp::message msg(bridge_channel_sf, *text_opt);
-                                    msg.set_allowed_mentions(false, false, false, false, {});
-                                    bot.message_create(msg);
-                                }
                             }
                             // No fallback — if no module produced an embed, the event is silently skipped
                             if (pending_embeds.size() >= 10) {
