@@ -37,14 +37,8 @@
             "flag_drop_card": true,
             "flag_pickup_card": true,
             "flag_return_card": true,
-            "player_join_card": {
-                "enabled": true,
-                "message": "Player Joined"
-            },
-            "player_quit_card": {
-                "enabled": true,
-                "message": "Player Left"
-            },
+            "player_join_card": true,
+            "player_quit_card": true,
             "kick_player_card": {
                 "enabled": true,
                 "message": "Player Kicked"
