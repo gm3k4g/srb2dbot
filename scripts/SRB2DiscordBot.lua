@@ -499,13 +499,15 @@ addHook("PlayerThink", function(player)
  then
 		if player.logjoin != true
  then
-			local text = "[EVENT:CHAT]|["..#player.."]|System|:rocket:"..player.name.." has joined the game:rocket:\n"
-			if text
+			player.logjoin = true
+			if #player != 0 then
+				local text = "[EVENT:CHAT]|["..#player.."]|System|:rocket:"..player.name.." has joined the game:rocket:\n"
+				if text
  then
-				DiscordBot.Functions.spamchatbug(player, text, true)
-				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
-				DiscordBot.Functions.flush_msgsrb2()
-				player.logjoin = true
+					DiscordBot.Functions.spamchatbug(player, text, true)
+					DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
+					DiscordBot.Functions.flush_msgsrb2()
+				end
 			end
 		end
 	end
@@ -535,6 +537,7 @@ addHook("PlayerJoin", function(playernum)
 end)
 
 addHook("PlayerQuit", function(player, reason)
+	if #player == 0 then return end
 	local text = nil
 	if DiscordBot.Commands.cv_joinquit.value == 1
  then
