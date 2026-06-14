@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <algorithm>
 #include <csignal>
+#include <streambuf>
 
 #include "version.h"
 #include "srb2dbot/utils.hpp"
@@ -22,6 +23,26 @@
 using json = nlohmann::json;
 
 const auto PERMS = dpp::p_ban_members;
+
+// TeeBuf: writes to both stdout and a log file simultaneously
+static std::ofstream g_log_file;
+class TeeBuf : public std::streambuf {
+    std::streambuf* cout_buf_;
+public:
+    explicit TeeBuf(std::streambuf* cout_buf) : cout_buf_(cout_buf) {}
+protected:
+    int overflow(int c) override {
+        if (c == EOF) return EOF;
+        if (cout_buf_->sputc(c) == EOF) return EOF;
+        if (g_log_file.is_open()) g_log_file.put(c);
+        return c;
+    }
+    int sync() override {
+        cout_buf_->pubsync();
+        if (g_log_file.is_open()) g_log_file.flush();
+        return 0;
+    }
+};
 
 int main() {
     std::ifstream secret("secret.json");
@@ -67,8 +88,8 @@ int main() {
     char ts[64];
     std::strftime(ts, sizeof(ts), "%Y-%m-%d_%H-%M-%S", std::localtime(&now));
     std::string log_name = log_dir + "/" + ts + ".txt";
-    auto log_stream = std::make_shared<std::ofstream>(log_name, std::ios::app);
-    if (log_stream->is_open()) {
+    g_log_file.open(log_name, std::ios::app);
+    if (g_log_file.is_open()) {
         std::string symlink_name = std::string(getenv("HOME")) + "/Desktop/srb2dbot/latest-log.txt";
         std::filesystem::remove(symlink_name);
         std::filesystem::create_symlink(log_name, symlink_name);
@@ -82,6 +103,8 @@ int main() {
             old_logs.erase(old_logs.begin());
         }
     }
+    static TeeBuf teebuf(std::cout.rdbuf());
+    std::cout.rdbuf(&teebuf);
     // ── Single-instance lock ──
     std::string pid_path = std::string(getenv("HOME")) + "/Desktop/srb2dbot/srb2dbot.pid";
     {
@@ -113,13 +136,10 @@ int main() {
     signal(SIGQUIT, [](int) { std::exit(0); });
 
     dpp::cluster bot(bot_token, dpp::i_default_intents | dpp::i_message_content);
-    bot.on_log([log_stream](const dpp::log_t& event) {
+    bot.on_log([](const dpp::log_t& event) {
         // Skip Discord Gateway heartbeat noise only, keep everything else (including error JSON)
         if (event.message.find("\"op\":1") != std::string::npos) return;
         std::cout << event.message << std::endl;
-        if (log_stream && log_stream->is_open()) {
-            *log_stream << event.message << std::endl;
-        }
     });
 
     const bool fifo_available = detect_fifo_support();
