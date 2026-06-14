@@ -57,6 +57,7 @@ public:
                 disc_file << "<" << display_name << "> " << sanitized << "\n";
             }
         }
+        std::cout << "[bridge] Discord→SRB2: <" << display_name << "> " << sanitized << std::endl;
         return true;
     }
 
