@@ -65,12 +65,12 @@
             "kick_player_card": {
                 "_note": "Available fields: {player}, {node}, {reason}",
                 "enabled": false,
-                "message": "Player Kicked"
+                "message": "{player} was kicked. Reason: {reason} (player {node})"
             },
             "ban_player_card": {
                 "_note": "Available fields: {player}, {node}, {reason}",
                 "enabled": false,
-                "message": "Player Banned"
+                "message": "{player} was banned. Reason: {reason} (player {node})"
             }
         }
     }

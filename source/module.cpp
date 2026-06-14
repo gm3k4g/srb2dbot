@@ -76,7 +76,7 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
                 if (entry.is_object()) {
                     enabled = entry.value("enabled", true);
                 } else {
-                    enabled = entry.get<bool>();
+                    enabled = entry.template get<bool>();
                 }
                 break;
             }
@@ -99,7 +99,7 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
                     enabled = entry.value("enabled", true);
                     msg = entry.value("message", "");
                 } else {
-                    enabled = entry.get<bool>();
+                    enabled = entry.template get<bool>();
                 }
                 break;
             }
@@ -122,7 +122,7 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
                     enabled = entry.value("enabled", true);
                     fmt = entry.value("format", "");
                 } else {
-                    enabled = entry.get<bool>();
+                    enabled = entry.template get<bool>();
                 }
                 break;
             }

@@ -3,7 +3,8 @@
 #include "version.h"
 #include <dpp/dpp.h>
 #include <sstream>
-#include <cstdlib>
+#include <unistd.h>
+#include <sys/wait.h>
 
 class ServerControlModule : public Module {
 public:
@@ -33,7 +34,7 @@ public:
         if (cmd == CMD_SERVER_DO) {
             std::string serv_cmd = std::get<std::string>(event.get_parameter("server_command"));
             if (!fifo_available_) {
-                result = "```FIFO not available  -  use srb2-fifo binary for pipe commands.```";
+                result = "```FIFO not available - use srb2-fifo binary for pipe commands.```";
             } else {
                 bool success = pipe_srb2_server_do(serv_cmd);
                 result = success ? "```Success```" : "```Failed to execute command```";
@@ -43,16 +44,14 @@ public:
         }
 
         if (cmd == CMD_RESTART_SERVER) {
-            std::string sys_cmd = "systemctl restart " + service_name_ + " --user";
-            int ret = std::system(sys_cmd.c_str());
+            int ret = run_systemctl("restart");
             result = (ret == 0) ? "```Server was succesfully restarted!```\n" : "```Failed to restart server```\n";
             event.reply(dpp::message(event.command.channel_id, result).set_flags(dpp::m_ephemeral));
             return true;
         }
 
         if (cmd == CMD_STOP_SERVER) {
-            std::string sys_cmd = "systemctl stop " + service_name_ + " --user";
-            int ret = std::system(sys_cmd.c_str());
+            int ret = run_systemctl("stop");
             result = (ret == 0) ? "```Server was stopped.```\n" : "```Failed to stop server```\n";
             event.reply(dpp::message(event.command.channel_id, result).set_flags(dpp::m_ephemeral));
             return true;
@@ -64,6 +63,18 @@ public:
 private:
     bool fifo_available_;
     std::string service_name_ = "srb2@srb2b";
+
+    auto run_systemctl(const std::string& verb) -> int {
+        pid_t pid = fork();
+        if (pid == -1) return -1;
+        if (pid == 0) {
+            execlp("systemctl", "systemctl", verb.c_str(), service_name_.c_str(), "--user", (char*)nullptr);
+            _exit(EXIT_FAILURE);
+        }
+        int status;
+        waitpid(pid, &status, 0);
+        return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+    }
 };
 
 auto create_server_module(bool fifo_available) -> std::unique_ptr<Module> {

@@ -408,10 +408,15 @@ auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir)
     }
 
     std::string ppm_data = "P6\n" + std::to_string(w) + " " + std::to_string(h) + "\n255\n" + rgb_pixels;
-    std::string ppm_path = "/tmp/.srb2_thumb.ppm";
+    char temp_path[] = "/tmp/.srb2_thumb_XXXXXX";
+    int fd = mkstemp(temp_path);
+    if (fd == -1) return;
+    std::string ppm_path(temp_path);
     {
-        std::ofstream pgm(ppm_path, std::ios::binary);
-        pgm.write(ppm_data.c_str(), ppm_data.size());
+        FILE* f = fdopen(fd, "wb");
+        if (!f) { remove(ppm_path.c_str()); return; }
+        fwrite(ppm_data.c_str(), 1, ppm_data.size(), f);
+        fclose(f);
     }
     {
         pid_t pid = fork();

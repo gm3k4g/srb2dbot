@@ -105,8 +105,8 @@ private:
             }
             std::string wad_dir = dir_srb2_str();
             wad_dir.append("/addons/").append(filename);
-            std::ofstream buffer(wad_dir);
-            buffer << resp.body;
+            std::ofstream buffer(wad_dir, std::ios::binary);
+            buffer.write(resp.body.data(), resp.body.size());
 
             std::string prefix = from_url ? " from URL" : "";
             bot_.interaction_response_create(

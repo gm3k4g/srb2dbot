@@ -43,6 +43,9 @@ public:
         if (display_name.empty()) {
             display_name = event.msg.author.username;
         }
+        for (auto& c : display_name) {
+            if (c == '<' || c == '>' || c == '|' || c == '\\' || c == '"') c = '_';
+        }
 
         std::string cmd = "discord_message <" + display_name + "> " + sanitized;
         bool sent = false;
