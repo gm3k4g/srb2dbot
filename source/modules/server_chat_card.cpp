@@ -13,7 +13,7 @@ public:
         if (event.type != "SERVER_CHAT") return std::nullopt;
         if (event.fields.size() < 2) return std::nullopt;
 
-        std::string message = event.fields[1];
+        std::string message = event.fields[0];
         if (message.empty()) return std::nullopt;
 
         dpp::embed embed;

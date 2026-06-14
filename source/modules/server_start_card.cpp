@@ -28,7 +28,9 @@ public:
         embed.add_field("Repository", PROJECT_URL, false);
         embed.set_color(0x57F287);
         embed.set_timestamp(std::time(nullptr));
-        bot.message_create(dpp::message(ch, "").add_embed(embed));
+        bot.message_create(dpp::message(ch, "").add_embed(embed), [](const dpp::confirmation_callback_t& cb) {
+            if (cb.is_error()) std::cout << "[server_start_card] message_create error: " << cb.get_error().human_readable << std::endl;
+        });
     }
 
 private:

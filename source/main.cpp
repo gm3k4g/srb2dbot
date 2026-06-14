@@ -210,14 +210,18 @@ int main() {
                                     if (!pending_embeds.empty()) {
                                         dpp::message evt_batch(bridge_channel_sf, "");
                                         for (auto& e : pending_embeds) evt_batch.add_embed(e);
-                                        bot.message_create(evt_batch);
+                                        bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
+                                            if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
+                                        });
                                         pending_embeds.clear();
                                     }
                                     embed_opt->set_image("attachment://" + attach->first);
                                     dpp::message thumb_msg(bridge_channel_sf, "");
                                     thumb_msg.add_embed(*embed_opt);
                                     thumb_msg.add_file(attach->first, attach->second);
-                                    bot.message_create(thumb_msg);
+                                    bot.message_create(thumb_msg, [](const dpp::confirmation_callback_t& cb) {
+                                        if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
+                                    });
                                 } else {
                                     pending_embeds.push_back(*embed_opt);
                                 }
@@ -226,7 +230,9 @@ int main() {
                             if (pending_embeds.size() >= 10) {
                                 dpp::message evt_batch(bridge_channel_sf, "");
                                 for (auto& e : pending_embeds) evt_batch.add_embed(e);
-                                bot.message_create(evt_batch);
+                                bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
+                                    if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
+                                });
                                 pending_embeds.clear();
                             }
                         }
@@ -235,15 +241,12 @@ int main() {
                     if (!pending_embeds.empty()) {
                         dpp::message evt_batch(bridge_channel_sf, "");
                         for (auto& e : pending_embeds) evt_batch.add_embed(e);
-                        bot.message_create(evt_batch);
+                        bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
+                            if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
+                        });
                     }
                 }
                 seek_start = seek_end;
-                {
-                    std::ofstream trunc(messages_path, std::ios::trunc);
-                    trunc.close();
-                }
-                seek_start = 0;
             }
         }, 2);
     }
