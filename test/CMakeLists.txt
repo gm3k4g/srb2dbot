@@ -27,4 +27,8 @@ target_compile_features(srb2dbot_bridge_e2e PRIVATE cxx_std_26)
 
 add_test(NAME srb2dbot_bridge_e2e COMMAND srb2dbot_bridge_e2e)
 
+add_test(NAME srb2dbot_lua_hooks
+    COMMAND ${CMAKE_SOURCE_DIR}/scripts/run_lua_tests.sh
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 add_folders(Test)
