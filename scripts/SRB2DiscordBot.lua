@@ -443,12 +443,12 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		local text = nil
 		local message = msg
 		local sendit = false
-		/*
+		--[[ /*
 		message = string.gsub(message, "@owners", "<@&1007014838326796298>")
 		message = string.gsub(message, "@moderators", "<@&1007015806716096645>")
 		message = string.gsub(message, "@Owners", "<@&1007014838326796298>")
 		message = string.gsub(message, "@Moderators", "<@&1007015806716096645>")
-		*/
+		*/ --]]
 		if server == player then
 			if isdedicatedserver == true then
 				text = "[EVENT:SERVER_CHAT]|"..message.."|FEE75C\n"
@@ -475,8 +475,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 				return true
 			end
 		end
-	end
-	if type == 3
+	elseif type == 3
  then
 		local text = nil
 		text = "[EVENT:CSAY]|"..msg.."\n"
