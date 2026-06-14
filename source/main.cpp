@@ -83,6 +83,8 @@ int main() {
     }
     dpp::cluster bot(bot_token, dpp::i_default_intents | dpp::i_message_content);
     bot.on_log([log_stream](const dpp::log_t& event) {
+        // Skip Discord Gateway heartbeat noise (raw JSON payloads, op:1)
+        if (event.message.empty() || event.message[0] == '{') return;
         std::cout << event.message << std::endl;
         if (log_stream && log_stream->is_open()) {
             *log_stream << event.message << std::endl;
