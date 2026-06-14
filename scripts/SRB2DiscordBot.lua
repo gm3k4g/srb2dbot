@@ -393,6 +393,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 			if isdedicatedserver == true
 				text = "[EVENT:SERVER_CHAT]|"..message.."|FEE75C\n"
 				DiscordBot.Functions.spamchatbug(player, text)
+				DiscordBot.Functions.flush_msgsrb2()
 				chatprint("<\x82~\x80Server>".." "..message)
 				return true
 			end
@@ -402,6 +403,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		if text
 			sendit = DiscordBot.Functions.spamchatbug(player, text)
 			if sendit == true
+				DiscordBot.Functions.flush_msgsrb2()
 				return false
 			end
 			if sendit == false
@@ -415,6 +417,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		local text = nil
 		text = "[EVENT:CSAY]|"..msg.."\n"
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..text
+		DiscordBot.Functions.flush_msgsrb2()
 	end
 end)
 
