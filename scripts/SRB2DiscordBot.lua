@@ -503,13 +503,24 @@ addHook("PlayerThink", function(player)
 			if text
  then
 				DiscordBot.Functions.spamchatbug(player, text, true)
-				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."\n"
+				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
 				DiscordBot.Functions.flush_msgsrb2()
 				player.logjoin = true
 			end
 		end
 	end
 end, MT_PLAYER)
+
+local function reason_to_string(r)
+	if r == KR_KICK then return "Kicked"
+	elseif r == KR_PINGLIMIT then return "Ping limit"
+	elseif r == KR_SYNCH then return "Synch failure"
+	elseif r == KR_TIMEOUT then return "Timeout"
+	elseif r == KR_BAN then return "Banned"
+	elseif r == KR_IDLE then return "Idle"
+	elseif r == KR_LEAVE then return "Left" end
+	return "Unknown"
+end
 
 addHook("PlayerJoin", function(playernum)
 	--unpause if player has joined the game
@@ -555,7 +566,7 @@ addHook("PlayerQuit", function(player, reason)
 		if text
  then
 			DiscordBot.Functions.spamchatbug(player, text, true)
-			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."\n"
+			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n"
 			DiscordBot.Functions.flush_msgsrb2()
 		end
 	end

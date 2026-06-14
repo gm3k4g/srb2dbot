@@ -40,12 +40,12 @@
             "flag_pickup_card": false,
             "flag_return_card": false,
             "player_join_card": {
-                "_note": "Available fields: {player}",
+                "_note": "Available fields: {player}, {node}",
                 "enabled": true,
                 "message": "Player Joined"
             },
             "player_quit_card": {
-                "_note": "Available fields: {player}",
+                "_note": "Available fields: {player}, {node}, {reason}",
                 "enabled": true,
                 "message": "Player Left"
             },
