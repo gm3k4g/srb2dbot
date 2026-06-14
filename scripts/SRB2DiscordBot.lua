@@ -558,7 +558,11 @@ end
 		end
 	end)
 
-local ok, err = pcall(addHook, "IntermissionThink", function()
+local ok, err = pcall(addHook, "IntermissionThinker", function(stagefailed)
+	DiscordBot.Data.servertime = DiscordBot.Data.servertime + 1
+	COM_BufInsertText(server, "server_log discord")
+	COM_BufInsertText(server, "server_log console")
+	DiscordBot.Functions.flush_msgsrb2()
 	if not DiscordBot.Data.round_active then return end
 	DiscordBot.Data.round_active = false
 

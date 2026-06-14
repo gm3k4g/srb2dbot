@@ -26,7 +26,7 @@
             },
             "round_start_card": {
                 "enabled": true,
-                "message": ":map: Map is now {map_num}: {map_title} - {gametype}",
+                "message": ":map: Map is now {map_title}",
                 "thumbnails": true
             },
             "round_end_card": {
