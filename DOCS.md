@@ -1,4 +1,4 @@
-# DOCS.md — srb2dbot Documentation Index
+# DOCS.md  -  srb2dbot Documentation Index
 
 Documentation is written in pure HTML under the `doc/` directory and updated to reflect the current state of the project.
 
@@ -15,9 +15,9 @@ Documentation is written in pure HTML under the `doc/` directory and updated to 
 
 Documentation files should be updated after any significant change to:
 
-1. **Command set** — additions, removals, or parameter changes → update `commands.html`
-2. **Build system** — new presets, dependency changes → update `building.html`
-3. **Architecture** — file restructuring, new modules, security changes → update `architecture.html`
-4. **Overview** — new features, dependency changes → update `index.html`
+1. **Command set**  -  additions, removals, or parameter changes → update `commands.html`
+2. **Build system**  -  new presets, dependency changes → update `building.html`
+3. **Architecture**  -  file restructuring, new modules, security changes → update `architecture.html`
+4. **Overview**  -  new features, dependency changes → update `index.html`
 
 The table of contents in this file should always reflect the current set of documentation pages.

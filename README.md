@@ -2,7 +2,7 @@
 
 > Control SRB2 servers via Discord.
 
-A Discord bot that remotely manages [Sonic Robo Blast 2](https://www.srb2.org/) game servers through slash commands. Edit server config scripts, manage WAD addon files, send console commands, kick/ban players — all from Discord. Also bridges chat between Discord and SRB2 in real time.
+A Discord bot that remotely manages [Sonic Robo Blast 2](https://www.srb2.org/) game servers through slash commands. Edit server config scripts, manage WAD addon files, send console commands, kick/ban players  -  all from Discord. Also bridges chat between Discord and SRB2 in real time.
 
 ## Quick Start
 
@@ -31,7 +31,9 @@ cp secret.json.default secret.json
 | **WAD Management** | `list_wads`, `search_wads`, `addfile_upload`, `addfile_link` |
 | **Server Control** | `restart_server`, `stop_server`, `server_do` |
 | **Player Management** | `server_say`, `kick_player`, `ban_player` |
-| **Chat Bridge** | Real-time Discord↔SRB2 message relay — gametype-aware, resolves WAD custom gametypes via `G_GetGametypeName` |
+| **Chat Bridge** | Real-time Discord↔SRB2 message relay - gametype-aware, resolves WAD custom gametypes via `G_GetGametypeName` |
+| **Event Cards** | Configurable Discord embeds for player join, quit, kick, ban, flag events, round start/end, chat, server announcements, and map thumbnails |
+| **Module System** | Toggle and customize individual features via `modules.json` - enable/disable cards, set embed titles with placeholder fields |
 
 ## How It Works
 
@@ -60,7 +62,7 @@ Create `secret.json` from the template and fill in these fields:
 | `bot_token` | **Yes** | Discord bot token from the [Developer Portal](https://discord.com/developers/applications) → Bot → Token |
 | `bot_id` | **Yes** | The bot's own Discord user ID. Used by the chat bridge to prevent echoing its own messages back. Find under General Information → Application ID |
 | `guild_id` | **Yes** | Discord server (guild) ID where slash commands are registered and the bot operates |
-| `channel_id` | For bridge | Discord channel ID for chat relay. Messages in this channel are forwarded to SRB2. Optional — if unset or `"0"`, the bridge is disabled |
+| `channel_id` | For bridge | Discord channel ID for chat relay. Messages in this channel are forwarded to SRB2. Optional  -  if unset or `"0"`, the bridge is disabled |
 | `service_name` | For server control | systemd user service name for restart/stop commands. Defaults to `srb2@srb2b` |
 
 **After creating `secret.json`, you must also enable** the Message Content Intent in the Discord Developer Portal under Bot → Privileged Gateway Intents for the chat bridge to read message content.
@@ -69,8 +71,8 @@ Create `secret.json` from the template and fill in these fields:
 
 - **C++26** compiler (GCC 14+ / Clang 18+)
 - **CMake** 3.14+
-- **[D++](https://dpp.dev)** — Discord API library
-- **[nlohmann/json](https://github.com/nlohmann/json)** — JSON parsing
+- **[D++](https://dpp.dev)**  -  Discord API library
+- **[nlohmann/json](https://github.com/nlohmann/json)**  -  JSON parsing
 - **systemd** + **bash** (runtime)
 
 ## Testing
@@ -83,11 +85,11 @@ BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh
 
 ## Documentation
 
-- [Full Documentation](DOCS.md) — table of contents for `doc/`
+- [Full Documentation](DOCS.md)  -  table of contents for `doc/`
 - [Commands Reference](doc/commands.html)
 - [Build Instructions](doc/building.html)
 - [Architecture Overview](doc/architecture.html)
 
 ## Author
 
-**gm3k4g** — [GitHub](https://github.com/gm3k4g/srb2dbot)
+**gm3k4g**  -  [GitHub](https://github.com/gm3k4g/srb2dbot)

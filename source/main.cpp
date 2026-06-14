@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <ctime>
 #include <unistd.h>
 #include <algorithm>
@@ -213,6 +214,32 @@ int main() {
         std::ofstream disc_file(bridge_dir + "/discordmessage.txt", std::ios::trunc);
         if (disc_file.is_open()) disc_file << "\n";
     }
+    {
+        std::ofstream con_file(bridge_dir + "/console.txt", std::ios::trunc);
+        if (con_file.is_open()) con_file << "\n";
+    }
+
+    // Read auto_pause from modules.json and write to console.txt for the Lua script
+    {
+        std::ifstream mod_config("modules.json");
+        if (mod_config.is_open()) {
+            try {
+                auto mod_data = json::parse(mod_config);
+                bool auto_pause = true;
+                auto& mods = mod_data["modules"]["auto"];
+                if (mods.contains("auto_pause")) {
+                    auto& entry = mods["auto_pause"];
+                    if (entry.is_object())
+                        auto_pause = entry.value("enabled", true);
+                    else
+                        auto_pause = entry.get<bool>();
+                }
+                std::ofstream con_file(bridge_dir + "/console.txt", std::ios::app);
+                if (con_file.is_open())
+                    con_file << "dbot_autopause " << (auto_pause ? "1" : "0") << "\n";
+            } catch (const json::parse_error&) {}
+        }
+    }
 
     std::cout << "[bridge] FIFO pipe support: " << (fifo_available ? "yes" : "no (vanilla SRB2)")
               << std::endl;
@@ -221,11 +248,17 @@ int main() {
         size_t seek_start = 0;
         bool dbot_synced = false;
         int dbot_sync_retries = 0;
+        std::unordered_map<std::string, std::time_t> seen_joins;
+        std::unordered_map<std::string, std::time_t> seen_lines;
         constexpr int DBOT_SYNC_MAX_RETRIES = 15;
+        constexpr std::time_t JOIN_DEDUP_WINDOW = 5;
+        constexpr std::time_t LINE_DEDUP_WINDOW = 3;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
 
         bot.start_timer([&bot, &registry, messages_path, &seek_start, &dbot_synced,
-                         &dbot_sync_retries, bridge_channel_sf, &guild_emojis,
+                         &dbot_sync_retries, &seen_joins, &seen_lines, bridge_channel_sf, &guild_emojis,
+
+
                          fifo_available](dpp::timer) {
             if (fifo_available && !dbot_synced && dbot_sync_retries < DBOT_SYNC_MAX_RETRIES) {
                 ++dbot_sync_retries;
@@ -252,16 +285,25 @@ int main() {
 
                     while (std::getline(lines, line)) {
                         if (line.empty()) continue;
+                        {
+                            auto now = std::time(nullptr);
+                            auto it = seen_lines.find(line);
+                            if (it != seen_lines.end() && (now - it->second) < LINE_DEDUP_WINDOW) continue;
+                            seen_lines[line] = now;
+                        }
                         if (auto event = bridge_parse_event(line)) {
+                            if (event->type == "PLAYER_JOIN" && event->fields.size() >= 2) {
+                                std::string key = event->fields[0] + "|" + event->fields[1];
+                                auto now = std::time(nullptr);
+                                auto it = seen_joins.find(key);
+                                if (it != seen_joins.end() && (now - it->second) < JOIN_DEDUP_WINDOW) continue;
+                                seen_joins[key] = now;
+                            } else if (event->type == "PLAYER_QUIT" && event->fields.size() >= 2) {
+                                seen_joins.erase(event->fields[0] + "|" + event->fields[1]);
+                            }
                             auto embed_opt = registry.handle_bridge_event(*event);
                             if (embed_opt.has_value()) {
-                                std::cout << "[bridge] SRB2→Discord: " << event->type;
-                                if (event->type == "PLAYER_JOIN" || event->type == "PLAYER_QUIT" ||
-                                    event->type == "KICK_PLAYER" || event->type == "BAN_PLAYER") {
-                                    std::cout << " fields[0]=" << (event->fields.size() > 0 ? event->fields[0] : "?")
-                                              << " fields[1]=" << (event->fields.size() > 1 ? event->fields[1] : "?");
-                                }
-                                std::cout << std::endl;
+                                std::cout << "[bridge] SRB2→Discord: " << event->type << " raw=" << line << std::endl;
                                 auto attach = registry.get_bridge_attachment(*event);
                                 if (attach.has_value()) {
                                     // Flush pending, then send thumbnailed embed individually
@@ -284,7 +326,7 @@ int main() {
                                     pending_embeds.push_back(*embed_opt);
                                 }
                             }
-                            // No fallback — if no module produced an embed, the event is silently skipped
+                            // No fallback  -  if no module produced an embed, the event is silently skipped
                             if (pending_embeds.size() >= 10) {
                                 dpp::message evt_batch(bridge_channel_sf, "");
                                 for (auto& e : pending_embeds) evt_batch.add_embed(e);
@@ -305,6 +347,21 @@ int main() {
                     }
                 }
                 seek_start = seek_end;
+                {
+                    auto now = std::time(nullptr);
+                    for (auto it = seen_lines.begin(); it != seen_lines.end(); ) {
+                        if (now - it->second >= LINE_DEDUP_WINDOW)
+                            it = seen_lines.erase(it);
+                        else
+                            ++it;
+                    }
+                    for (auto it = seen_joins.begin(); it != seen_joins.end(); ) {
+                        if (now - it->second >= JOIN_DEDUP_WINDOW)
+                            it = seen_joins.erase(it);
+                        else
+                            ++it;
+                    }
+                }
             }
         }, 2);
     }

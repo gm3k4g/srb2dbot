@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Building — srb2dbot</title>
+    <title>Building  -  srb2dbot</title>
     <style>
         :root { --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff; --border: #30363d; --code-bg: #161b22; --heading: #f0f6fc; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,8 +45,8 @@
     <tr><td>CMake</td><td>3.14</td><td></td></tr>
     <tr><td>D++</td><td>10.x</td><td>Discord API library</td></tr>
     <tr><td>nlohmann_json</td><td>3.x</td><td>JSON parsing header</td></tr>
-    <tr><td>systemd</td><td>—</td><td>For service management</td></tr>
-    <tr><td>bash</td><td>—</td><td>Script syntax validation</td></tr>
+    <tr><td>systemd</td><td> - </td><td>For service management</td></tr>
+    <tr><td>bash</td><td> - </td><td>Script syntax validation</td></tr>
 </table>
 
 <h3>Installing Dependencies</h3>
@@ -139,11 +139,11 @@ cd build && ctest --output-on-failure
 <h2>CMake Presets</h2>
 <p>The project provides several CMake presets for CI environments:</p>
 <ul>
-    <li><code>ci-ubuntu</code> — GCC/clang on Ubuntu with clang-tidy and cppcheck</li>
-    <li><code>ci-macos</code> — AppleClang on macOS</li>
-    <li><code>ci-win64</code> — MSVC on Windows</li>
-    <li><code>ci-sanitize</code> — Debug build with ASan and UBSan</li>
-    <li><code>ci-coverage</code> — Coverage build with gcov/lcov</li>
+    <li><code>ci-ubuntu</code>  -  GCC/clang on Ubuntu with clang-tidy and cppcheck</li>
+    <li><code>ci-macos</code>  -  AppleClang on macOS</li>
+    <li><code>ci-win64</code>  -  MSVC on Windows</li>
+    <li><code>ci-sanitize</code>  -  Debug build with ASan and UBSan</li>
+    <li><code>ci-coverage</code>  -  Coverage build with gcov/lcov</li>
 </ul>
 <pre><code>cmake --preset ci-ubuntu
 cmake --build build -j$(nproc)</code></pre>

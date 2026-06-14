@@ -7,6 +7,7 @@ class CsayCardModule : public Module {
 public:
     auto name() const -> std::string_view override { return "csay_card"; }
     auto description() const -> std::string_view override { return "Discord embed for server announcements (/say)"; }
+    explicit CsayCardModule(std::string msg) : msg_(std::move(msg)) {}
     auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override { return {}; }
 
     auto handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed> override {
@@ -14,13 +15,15 @@ public:
         if (event.fields.empty()) return std::nullopt;
 
         dpp::embed embed;
-        embed.set_title(":loudspeaker: Server Announcement");
+        embed.set_title(msg_.empty() ? ":loudspeaker: Server Announcement" : msg_);
         embed.set_description(event.fields[0]);
         embed.set_color(0xFEE75C);
         return embed;
     }
+private:
+    std::string msg_;
 };
 
-auto create_csay_card_module() -> std::unique_ptr<Module> {
-    return std::make_unique<CsayCardModule>();
+auto create_csay_card_module(const std::string& msg) -> std::unique_ptr<Module> {
+    return std::make_unique<CsayCardModule>(msg);
 }

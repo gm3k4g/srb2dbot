@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>srb2dbot — Documentation</title>
+    <title>srb2dbot  -  Documentation</title>
     <style>
         :root {
             --bg: #0d1117;
@@ -102,7 +102,7 @@
 <p>
     A <strong>Discord bot</strong> that remotely controls <strong>Sonic Robo Blast 2</strong> game servers.
     Built with the <strong>D++</strong> library in C++26, it manages server lifecycle, script editing,
-    WAD file uploads, in-game administration, and real-time chat bridging — all through Discord.
+    WAD file uploads, in-game administration, and real-time chat bridging  -  all through Discord.
 </p>
 
 <h2>Quick Start</h2>
@@ -215,7 +215,7 @@ cp secret.json.default secret.json
     </tr>
     <tr>
         <td style="background: var(--accent); color: var(--heading); font-weight: 600; padding: 0.15em 0.6em; border-radius: 12px; font-size: 0.8em;">Chat Bridge</td>
-        <td>—</td>
+        <td> - </td>
         <td>Real-time Discord↔SRB2 message relay via shared text files</td>
     </tr>
 </table>
@@ -223,7 +223,7 @@ cp secret.json.default secret.json
 <h2>Security Model</h2>
 <ul>
     <li>All slash commands require <code>p_ban_members</code> permission</li>
-    <li>Pipe input is sanitized — newlines, carriage returns, and control characters are rejected</li>
+    <li>Pipe input is sanitized  -  newlines, carriage returns, and control characters are rejected</li>
     <li>Script validation uses <code>fork/exec</code> with argument arrays instead of shell string construction</li>
     <li>Uploaded files are capped at <strong>100 MB</strong> with filename path-traversal protection</li>
     <li>Password lines in scripts are redacted automatically</li>
@@ -233,10 +233,10 @@ cp secret.json.default secret.json
 <ul>
     <li><strong>C++26</strong> compiler (GCC 14+ or Clang 18+)</li>
     <li><strong>CMake</strong> 3.14+</li>
-    <li><strong><a href="https://dpp.dev">D++</a></strong> — Discord API library</li>
-    <li><strong><a href="https://github.com/nlohmann/json">nlohmann/json</a></strong> — JSON parsing</li>
-    <li><strong>systemd</strong> — for service management</li>
-    <li><strong>bash</strong> — for script validation</li>
+    <li><strong><a href="https://dpp.dev">D++</a></strong>  -  Discord API library</li>
+    <li><strong><a href="https://github.com/nlohmann/json">nlohmann/json</a></strong>  -  JSON parsing</li>
+    <li><strong>systemd</strong>  -  for service management</li>
+    <li><strong>bash</strong>  -  for script validation</li>
 </ul>
 
 <h2>Test Suite</h2>

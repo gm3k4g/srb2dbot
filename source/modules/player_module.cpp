@@ -35,7 +35,7 @@ public:
             std::string msg = std::get<std::string>(event.get_parameter("server_message"));
             std::string result;
             if (!fifo_available_) {
-                result = "```FIFO not available — use srb2-fifo binary for pipe commands.```";
+                result = "```FIFO not available  -  use srb2-fifo binary for pipe commands.```";
             } else {
                 bool success = pipe_srb2_server_say(msg);
                 result = success ? "```Success```" : "```Failed to say message.```";
@@ -49,7 +49,7 @@ public:
             bool kicked = false;
             std::stringstream result;
             if (!fifo_available_) {
-                result << "```FIFO not available — use srb2-fifo binary for pipe commands.```\n";
+                result << "```FIFO not available  -  use srb2-fifo binary for pipe commands.```\n";
             } else {
                 kicked = pipe_srb2_kick_player(player);
                 result << (kicked ? "```Attempted to kick player " : "```Failed to kick player ")
@@ -68,7 +68,7 @@ public:
             bool banned = false;
             std::stringstream result;
             if (!fifo_available_) {
-                result << "```FIFO not available — use srb2-fifo binary for pipe commands.```\n";
+                result << "```FIFO not available  -  use srb2-fifo binary for pipe commands.```\n";
             } else {
                 banned = pipe_srb2_ban_player(player);
                 result << (banned ? "```Attempted to ban player " : "```Failed to ban player ")

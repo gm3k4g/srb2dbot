@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# test_pipeline.sh — Full end-to-end pipeline test for srb2dbot chat bridge
+# test_pipeline.sh  -  Full end-to-end pipeline test for srb2dbot chat bridge
 # Starts SRB2 server + bot, tests all event types, verifies bidirectional flow.
 
 PASS=0

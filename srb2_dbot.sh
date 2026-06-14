@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# srb2_dbot.sh — minimal SRB2 server with Discord bridge Lua
+# srb2_dbot.sh  -  minimal SRB2 server with Discord bridge Lua
 # Run this alongside srb2dbot to test the chat bridge locally.
 #
 # Usage: ./srb2_dbot.sh [port] [room] [servername] [lua_wad_path]
@@ -15,12 +15,7 @@ SERVERNAME="${3:-srb2dbot test server}"
 find_wad() {
     for loc in \
         "${4:-}" \
-        "$SCRIPT_DIR/scripts/SRB2DiscordBot.wad" \
-        "$SCRIPT_DIR/scripts/SRB2DiscordBot.lua" \
-        "$HOME/.srb2/SRB2DiscordBot.wad" \
-        "$HOME/.srb2/luafiles/client/SRB2DiscordBot.wad" \
-        "$HOME/.srb2/addons/SRB2DiscordBot.wad" \
-        "$SCRIPT_DIR/../CONTENT_SRB2/HOSTING/SCRIPTS/SRB2_DiscordBot/SRB2DiscordBot.wad"
+        "$SCRIPT_DIR/scripts/SRB2DiscordBot.lua"
     do
         [[ -n "$loc" && -f "$loc" ]] && { echo "$loc"; return 0; }
     done
@@ -37,6 +32,9 @@ LUA_WAD=$(find_wad) || {
 }
 
 mkdir -p "$HOME/.srb2/luafiles/client/DiscordBot"
+
+# Deploy script to DOWNLOAD so SRB2 auto-loads it once
+cp "$LUA_WAD" "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot.lua"
 
 echo "=== srb2_dbot ==="
 echo "Server: $SERVERNAME"
@@ -59,5 +57,7 @@ exec srb2 \
     -port "$PORT" \
     -room "$ROOM" \
     -servername "$SERVERNAME" \
-    -file "$LUA_WAD"
+    -file "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot.lua" \
+    -file "$HOME/.srb2/DOWNLOAD/Ba_CommunityPack-v13_2HOTFIX.pk3" \
+    +rejointimeout 0
     #</dev/null

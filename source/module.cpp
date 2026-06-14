@@ -24,16 +24,16 @@ auto create_player_quit_card_module(const std::string& msg) -> std::unique_ptr<M
 auto create_kick_player_card_module(const std::string& msg) -> std::unique_ptr<Module>;
 auto create_ban_player_card_module(const std::string& msg) -> std::unique_ptr<Module>;
 auto create_server_start_card_module(dpp::snowflake channel, const std::string& msg) -> std::unique_ptr<Module>;
-auto create_chat_card_module() -> std::unique_ptr<Module>;
-auto create_server_chat_card_module() -> std::unique_ptr<Module>;
-auto create_csay_card_module() -> std::unique_ptr<Module>;
-// create_thumbnails_module removed — thumbnails integrated into round_start_card
+auto create_chat_card_module(const std::string& fmt) -> std::unique_ptr<Module>;
+auto create_server_chat_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_csay_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+// create_thumbnails_module removed  -  thumbnails integrated into round_start_card
 
 auto ModuleRegistry::load_from_config(const std::string& config_path, const RegistryContext& ctx) -> bool {
     std::ifstream file(config_path);
     if (!file.is_open()) {
         std::cerr << "[module] WARNING: Could not open " << config_path
-                  << " — all modules enabled by default" << std::endl;
+                  << "  -  all modules enabled by default" << std::endl;
         config_ = json::object();
         modules_.push_back(create_script_module());
         modules_.push_back(create_wad_module(ctx.bot));
@@ -52,9 +52,9 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         modules_.push_back(create_ban_player_card_module(""));
         dpp::snowflake ch = ctx.bridge_channel_id != "0" ? std::stoull(ctx.bridge_channel_id) : 0;
         modules_.push_back(create_server_start_card_module(ch, ""));
-        modules_.push_back(create_chat_card_module());
-        modules_.push_back(create_server_chat_card_module());
-        modules_.push_back(create_csay_card_module());
+        modules_.push_back(create_chat_card_module(""));
+        modules_.push_back(create_server_chat_card_module(""));
+        modules_.push_back(create_csay_card_module(""));
         return true;
     }
 
@@ -112,6 +112,29 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         }
     };
 
+    auto try_add_format = [&](std::string_view name, auto&& factory) {
+        bool enabled = true;
+        std::string fmt;
+        for (auto& [key, val] : mods.items()) {
+            if (val.contains(name)) {
+                auto& entry = val[name];
+                if (entry.is_object()) {
+                    enabled = entry.value("enabled", true);
+                    fmt = entry.value("format", "");
+                } else {
+                    enabled = entry.get<bool>();
+                }
+                break;
+            }
+        }
+        if (enabled) {
+            modules_.push_back(factory(fmt));
+            std::cout << "[module] " << name << " enabled" << std::endl;
+        } else {
+            std::cout << "[module] " << name << " disabled" << std::endl;
+        }
+    };
+
     try_add("script_editor",    [&]{ return create_script_module(); });
     try_add("wad_manager",      [&]{ return create_wad_module(ctx.bot); });
     try_add("server_control",   [&]{ return create_server_module(ctx.fifo_available); });
@@ -137,9 +160,9 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
     try_add_msg("player_quit_card",     [&](auto& msg){ return create_player_quit_card_module(msg); });
     try_add_msg("kick_player_card",     [&](auto& msg){ return create_kick_player_card_module(msg); });
     try_add_msg("ban_player_card",      [&](auto& msg){ return create_ban_player_card_module(msg); });
-    try_add("chat_card",            [&]{ return create_chat_card_module(); });
-    try_add("server_chat_card",     [&]{ return create_server_chat_card_module(); });
-    try_add("csay_card",            [&]{ return create_csay_card_module(); });
+    try_add_format("chat_card",            [&](auto& fmt){ return create_chat_card_module(fmt); });
+    try_add_format("server_chat_card",     [&](auto& fmt){ return create_server_chat_card_module(fmt); });
+    try_add_format("csay_card",            [&](auto& fmt){ return create_csay_card_module(fmt); });
 
     return true;
 }

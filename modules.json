@@ -2,24 +2,37 @@
     "_note": "Modules grouped by category: slash_commands, chat, auto.",
     "modules": {
         "slash_commands": {
-            "_note": "Slash command modules — register Discord slash commands",
+            "_note": "Slash command modules  -  register Discord slash commands",
             "script_editor": false,
             "wad_manager": false,
             "server_control": false,
             "player_management": false
         },
         "chat": {
-            "_note": "Chat modules — relay messages between Discord and SRB2",
+            "_note": "Chat modules  -  relay messages between Discord and SRB2",
             "chat_relay": true,
-            "chat_card": true,
-            "server_chat_card": true,
-            "csay_card": {
+            "chat_card": {
+                "_note": "Available fields: {name}, {node}, {skin}",
                 "enabled": true,
-                "message": "Message"
+                "format": ":skin: {name}"
+            },
+            "server_chat_card": {
+                "_note": "Available fields: none (format only)",
+                "enabled": true,
+                "format": ":speaking_head: Server"
+            },
+            "csay_card": {
+                "_note": "Available fields: none (format only)",
+                "enabled": true,
+                "format": "Message"
             }
         },
         "auto": {
-            "_note": "Auto modules — run automatically from game events",
+            "_note": "Auto modules  -  run automatically from game events",
+            "auto_pause": {
+                "_note": "Auto-pause the server when no players are connected",
+                "enabled": false
+            },
             "server_start_card": {
                 "enabled": true,
                 "message": ":green_circle: :robot: srb2dbot is up"

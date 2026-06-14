@@ -11,11 +11,20 @@
         "chat": {
             "_note": "Chat modules — relay messages between Discord and SRB2",
             "chat_relay": true,
-            "chat_card": true,
-            "server_chat_card": true,
-            "csay_card": {
+            "chat_card": {
+                "_note": "Available fields: {name}, {node}, {skin}",
                 "enabled": true,
-                "message": ":loudspeaker: Server Announcement"
+                "format": "{name}"
+            },
+            "server_chat_card": {
+                "_note": "Available fields: none (format only)",
+                "enabled": true,
+                "format": ":loudspeaker: Server"
+            },
+            "csay_card": {
+                "_note": "Available fields: none (format only)",
+                "enabled": true,
+                "format": ":loudspeaker: Server Announcement"
             }
         },
         "auto": {

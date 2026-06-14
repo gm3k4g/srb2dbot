@@ -33,7 +33,7 @@ public:
         if (cmd == CMD_SERVER_DO) {
             std::string serv_cmd = std::get<std::string>(event.get_parameter("server_command"));
             if (!fifo_available_) {
-                result = "```FIFO not available — use srb2-fifo binary for pipe commands.```";
+                result = "```FIFO not available  -  use srb2-fifo binary for pipe commands.```";
             } else {
                 bool success = pipe_srb2_server_do(serv_cmd);
                 result = success ? "```Success```" : "```Failed to execute command```";

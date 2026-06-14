@@ -71,7 +71,7 @@ DEVELOPER_MODE=$([[ "$RUN_TESTS" -eq 1 ]] && echo "ON" || echo "OFF")
 
 # ── banner ────────────────────────────────────────────────
 echo ""
-echo -e "${BOLD}${GREEN}  srb2dbot${NC} — ${BUILD_TYPE} build — $(nproc) jobs"
+echo -e "${BOLD}${GREEN}  srb2dbot${NC}  -  ${BUILD_TYPE} build  -  $(nproc) jobs"
 echo ""
 
 # ── clean if requested ────────────────────────────────────
@@ -83,7 +83,7 @@ fi
 # ── dependency check ──────────────────────────────────────
 if is_nixos; then
     command -v nix-shell &>/dev/null || die "nix-shell not found"
-    info "NixOS detected — using nix-shell"
+    info "NixOS detected  -  using nix-shell"
 else
     command -v cmake &>/dev/null || die "cmake not found. Install it first."
     command -v g++ &>/dev/null || command -v clang++ &>/dev/null || \

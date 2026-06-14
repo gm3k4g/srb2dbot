@@ -1,4 +1,4 @@
-# AGENTS.md — srb2dbot AI Assistant Guide
+# AGENTS.md  -  srb2dbot AI Assistant Guide
 
 ## Project Overview
 
@@ -37,28 +37,28 @@ Discord → D++ library → main.cpp (command router) → 4 paths:
 ## Directory Structure
 
 ```
-  source/         — Source files
-    main.cpp      — Bot init, command handlers, POSIX-dependent anon-namespace functions
-    utils.cpp     — Pure utility functions (sanitize_filename, link_filename_str)
-    script.cpp    — Script manipulation logic (pure string I/O, testable)
-    bridge.cpp    — Chat bridge sanitization, file polling, emoji conversion
-    version.h.cmake — CMake template for project version and command name constants
+  source/          -  Source files
+    main.cpp       -  Bot init, command handlers, POSIX-dependent anon-namespace functions
+    utils.cpp      -  Pure utility functions (sanitize_filename, link_filename_str)
+    script.cpp     -  Script manipulation logic (pure string I/O, testable)
+    bridge.cpp     -  Chat bridge sanitization, file polling, emoji conversion
+    version.h.cmake  -  CMake template for project version and command name constants
 include/srb2dbot/
-    utils.hpp     — Utility declarations
-    script.hpp    — Script helper declarations
-    bridge.hpp    — Bridge helper declarations
+    utils.hpp      -  Utility declarations
+    script.hpp     -  Script helper declarations
+    bridge.hpp     -  Bridge helper declarations
 test/
   CMakeLists.txt
-  source/srb2dbot_test.cpp       — 66 tests (14 test functions, ~66 CHECK assertions)
-  source/srb2dbot_bridge_e2e.cpp — 11 end-to-end pipeline tests (polling lifecycle, event pipeline, bot restart)
-cmake/          — CMake modules, presets, dev-mode, linting
-doc/            — HTML documentation
+  source/srb2dbot_test.cpp        -  66 tests (14 test functions, ~66 CHECK assertions)
+  source/srb2dbot_bridge_e2e.cpp  -  11 end-to-end pipeline tests (polling lifecycle, event pipeline, bot restart)
+cmake/           -  CMake modules, presets, dev-mode, linting
+doc/             -  HTML documentation
 ```
 
 ## Key Conventions
 
-- **Anonymous namespace** in `main.cpp` — functions that depend on POSIX/system APIs (file I/O, pipes, process management) remain here. Pure logic is extracted to `source/utils.cpp` and `source/script.cpp`.
-- **Conventional Commits** — use `fix:`, `feat:`, `refactor:`, `docs:`, `build:` prefixes.
+- **Anonymous namespace** in `main.cpp`  -  functions that depend on POSIX/system APIs (file I/O, pipes, process management) remain here. Pure logic is extracted to `source/utils.cpp` and `source/script.cpp`.
+- **Conventional Commits**  -  use `fix:`, `feat:`, `refactor:`, `docs:`, `build:` prefixes.
 - **New features** should be developed on feature branches.
 - **Tests** go in `test/source/` and are registered in `test/CMakeLists.txt`. Test names are descriptive strings.
 - **Documentation** is updated in `doc/` HTML files after significant changes. `DOCS.md` is the index of documentation pages.
@@ -67,12 +67,12 @@ doc/            — HTML documentation
 
 When modifying the codebase, maintain these invariants:
 
-1. **Pipe input sanitization** — `pipe_srb2_server_do`, `pipe_srb2_server_say`, `pipe_srb2_kick_player`, `pipe_srb2_ban_player` must reject `\n`, `\r`, and control characters (except tab).
-2. **Script validation** — `script_validate()` must use `fork()`/`execlp()` with argument arrays, never `system()` with shell string concatenation.
-3. **Filename sanitization** — `sanitize_filename()` extracts only the filename component, rejects `.` and `..`.
-4. **Upload size cap** — `MAX_WAD_SIZE` constant (100 MB) is enforced in both `addfile_upload` and `addfile_link`.
-5. **JSON parsing** — must use try/catch with proper error messages.
-6. **Password redaction** — lines containing "password" must be redacted in script display/output.
+1. **Pipe input sanitization**  -  `pipe_srb2_server_do`, `pipe_srb2_server_say`, `pipe_srb2_kick_player`, `pipe_srb2_ban_player` must reject `\n`, `\r`, and control characters (except tab).
+2. **Script validation**  -  `script_validate()` must use `fork()`/`execlp()` with argument arrays, never `system()` with shell string concatenation.
+3. **Filename sanitization**  -  `sanitize_filename()` extracts only the filename component, rejects `.` and `..`.
+4. **Upload size cap**  -  `MAX_WAD_SIZE` constant (100 MB) is enforced in both `addfile_upload` and `addfile_link`.
+5. **JSON parsing**  -  must use try/catch with proper error messages.
+6. **Password redaction**  -  lines containing "password" must be redacted in script display/output.
 
 ## Current TODO List
 
@@ -94,8 +94,8 @@ Gametype names in bridge events are resolved through SRB2's internal `G_GetGamet
    - `GT_COOP` → `"Co-op"` (not "Cooperative")
    - `GT_BATTLE` → `"Arena"` (not "Battle")
    - `GT_TEAMBATTLE` → `"Team Arena"` (not "Team Battle")
-2. **Automatic WAD support** — custom gametypes registered via `G_AddGametype()` in WAD Lua scripts or SOC `Gametype` blocks are resolved automatically (e.g. "Survival" from battle mod)
-3. **Safe fallback** — if `G_GetGametypeName` is unavailable, a corrected lookup table is used
+2. **Automatic WAD support**  -  custom gametypes registered via `G_AddGametype()` in WAD Lua scripts or SOC `Gametype` blocks are resolved automatically (e.g. "Survival" from battle mod)
+3. **Safe fallback**  -  if `G_GetGametypeName` is unavailable, a corrected lookup table is used
 
 ## Event Delivery Pipeline
 
@@ -131,7 +131,7 @@ Debug prints (`[DEBUG]`) in the C++ code are guarded by `#ifndef NDEBUG` and onl
 
 ### `cv_messagedelay` Bug (Fixed)
 
-Line 44 of `SRB2DiscordBot.lua` previously compared `cv_messagedelay == 0` — comparing the CVar *table* to 0, which is always false. Fixed to `cv_messagedelay.value == 0`. This restores the immediate message-triggered flush path for users who disable messagedelay.
+Line 44 of `SRB2DiscordBot.lua` previously compared `cv_messagedelay == 0`  -  comparing the CVar *table* to 0, which is always false. Fixed to `cv_messagedelay.value == 0`. This restores the immediate message-triggered flush path for users who disable messagedelay.
 
 ## Known Issues
 
@@ -146,19 +146,19 @@ From the previous audit:
 
 | Command | Category | Parameters |
 |---|---|---|
-| `/get_script` | Script | — |
+| `/get_script` | Script |  -  |
 | `/find_line` | Script | `target_string` |
 | `/inspect_line` | Script | `line_num` |
 | `/insert_line` | Script | `line_num`, `line_contents` |
 | `/remove_line` | Script | `line_num` |
 | `/change_line` | Script | `line_num`, `line_contents` |
 | `/move_line` | Script | `old_line_num`, `new_line_num` |
-| `/list_wads` | WADs | — |
+| `/list_wads` | WADs |  -  |
 | `/search_wads` | WADs | `target_filename` |
 | `/addfile_upload` | WADs | `file` (attachment) |
 | `/addfile_link` | WADs | `file_url` |
-| `/restart_server` | Server | — |
-| `/stop_server` | Server | — |
+| `/restart_server` | Server |  -  |
+| `/stop_server` | Server |  -  |
 | `/server_do` | Server | `server_command` |
 | `/server_say` | Players | `server_message` |
 | `/kick_player` | Players | `player` |

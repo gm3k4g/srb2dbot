@@ -1,3 +1,11 @@
+-- Idempotency guard via CVar: if the script was already loaded (from -file or
+-- elsewhere), don't re-register hooks. CVars are engine-level and survive all
+-- sandboxes, unlike _G checks or file I/O which get blocked in the DOWNLOAD sandbox.
+do
+	local cv = CV_FindVar("dbot_initialized")
+	if cv and cv.value == 1 then return end
+end
+
 rawset(_G, "DiscordBot", {})
 DiscordBot.Data = {}
 DiscordBot.Data.msgsrb2 = ''
@@ -13,48 +21,38 @@ DiscordBot.Data.iconemeralds = ''
 DiscordBot.Data.gametype = nil
 DiscordBot.Data.countemeralds = 0
 DiscordBot.Data.servertime = 0
-DiscordBot.Data.round_active = false
 DiscordBot.Data.current_map = nil
 DiscordBot.Data.debug = false
 
-DiscordBot.Data.skin_colors = {
-	[0] = "FFFFFF",
-	[1] = "E00000",
-	[2] = "00C000",
-	[3] = "4000FF",
-	[4] = "F0F000",
-	[5] = "FF8000",
-	[6] = "A000FF",
-	[7] = "00E8E8",
-	[8] = "FF80C0",
-	[9] = "D0A070",
-	[10] = "C080FF",
-	[11] = "008080",
-	[12] = "804000",
-	[13] = "A0A0A0",
-	[14] = "804040",
-	[15] = "808000",
-}
 DiscordBot.Functions = {}
-DiscordBot.Functions.get_skin_color = function(player)
-	if DiscordBot.Data.skin_colors[player.skincolor]
- then
-		return DiscordBot.Data.skin_colors[player.skincolor]
-	end
-	return "2F3136"
-end
-
 DiscordBot.Commands = {}
 DiscordBot.Commands.cv_joinquit = CV_RegisterVar({name = "dbot_joinquit", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_autopause = CV_RegisterVar({name = "dbot_autopause", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_nospamchat = CV_RegisterVar({name = "dbot_nospamchat", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_messagedelay = CV_RegisterVar({name = "dbot_messagedelay", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 
+-- Read auto_pause from console.txt (written by C++ bot from modules.json)
+DiscordBot.Config = { auto_pause = true }
+do
+	local f = io.openlocal("client/DiscordBot/console.txt", "r")
+	if f then
+		for line in f:lines() do
+			if line:find("^dbot_autopause ") then
+				local val = line:match("^dbot_autopause ([01])$")
+				if val then DiscordBot.Config.auto_pause = (val == "1") end
+			end
+		end
+		f:close()
+	end
+	-- Clear so server_log console doesn't re-process stale commands
+	local f = io.openlocal("client/DiscordBot/console.txt", "w")
+	if f then f:write("") f:close() end
+end
+
 DiscordBot.Messages = {}
 
 DiscordBot.Functions.flush_msgsrb2 = function()
-    if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 != ''
- then
+    if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 ~= '' then
         if DiscordBot.Data.debug then print("[DEBUG] flush_msgsrb2: writing "..string.len(DiscordBot.Data.msgsrb2).." bytes to Messages.txt") end
         local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a+")
         if logmsg then
@@ -71,13 +69,11 @@ DiscordBot.Functions.spamchatbug = function(player, msg, joinquit)
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..msg
 		return true
 	end
-	if player != server
+	if player ~= server
  then
 		if not DiscordBot.Messages[player.name] then DiscordBot.Messages[player.name] = DiscordBot.Data.servertime checked = true end
-		--if not DiscordBot.Messages[player.name][msg] then DiscordBot.Messages[player.name][msg] = DiscordBot.Data.servertime checked = true end
 		if checked == false
  then
-			--if DiscordBot.Data.servertime - DiscordBot.Messages[player.name][msg] < 5*TICRATE then return false end
 			if DiscordBot.Data.servertime - DiscordBot.Messages[player.name] < 35 then DiscordBot.Messages[player.name] = DiscordBot.Data.servertime return false end
 		end
 		DiscordBot.Messages[player.name] = DiscordBot.Data.servertime
@@ -120,7 +116,7 @@ DiscordBot.Functions.statsofserver = function()
 			elseif (ping < 64) then statms = ':ping_green:'
 			elseif (ping < 128) then statms = ':ping_yellow:'
 			elseif (ping < 256) then statms = ':ping_red:' end
-			if player.mo and player.spectator != true
+			if player.mo and player.spectator ~= true
  then
 				iconskin = ":"..player.mo.skin..":"
 			end
@@ -148,7 +144,7 @@ DiscordBot.Functions.statsofserver = function()
 end
 
 COM_AddCommand("server_log", function(player, arg, text)
-	if player != server then return end
+	if player ~= server then return end
 	if arg == "msg"
  then
 		if DiscordBot.Data.msgsrb2
@@ -272,7 +268,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 end, COM_LOCAL)
 
 COM_AddCommand("discord_message", function(player, ...)
-	if player != server then return end
+	if player ~= server then return end
 	if not ... then return end
 	local args = {...}
 	local msg = table.concat(args, " ", 1, #args)
@@ -280,18 +276,18 @@ COM_AddCommand("discord_message", function(player, ...)
 end)
 
 COM_AddCommand("dbot_sync", function(player)
-	if player != server then return end
-	if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: re-emitting server state (map="..tostring(DiscordBot.Data.current_map)..", round_active="..tostring(DiscordBot.Data.round_active)..")") end
+	if player ~= server then return end
+	if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: re-emitting server state (map="..tostring(DiscordBot.Data.current_map)..")") end
 	DiscordBot.Data.msgsrb2 = ''
-	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.round_active
+	if DiscordBot.Data.current_map ~= nil
  then
-		if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: round is active, waiting for next MapLoad to emit ROUND_START") end
+		if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: re-emitting initial map state") end
 	end
 	DiscordBot.Functions.flush_msgsrb2()
 end, COM_LOCAL)
 
 COM_AddCommand("dbot_debug", function(player, arg)
-	if player != server then return end
+	if player ~= server then return end
 	DiscordBot.Data.debug = (arg == "on")
 end, COM_LOCAL)
 
@@ -309,14 +305,13 @@ local function bot_function()
  then
 			playercount = 0
 		end
-		if DiscordBot.Data.gametype != gametype
+		if DiscordBot.Data.gametype ~= gametype
  then
-			COM_BufInsertText(server, "gametype")
 			DiscordBot.Data.gametype = gametype
 		end
 		if not G_IsSpecialStage(gamemap)
  then
-			if mapheaderinfo[gamemap].nextlevel != nil
+			if mapheaderinfo[gamemap].nextlevel ~= nil
  then
 				if mapheaderinfo[gamemap].nextlevel >= 1100
  then
@@ -324,7 +319,7 @@ local function bot_function()
 				else
 					local nextlevelint = mapheaderinfo[gamemap].nextlevel
 					local nextlevel = mapheaderinfo[mapheaderinfo[gamemap].nextlevel]
-					if nextlevel != nil
+					if nextlevel ~= nil
  then
 						if nextlevel.actnum == 0
  then
@@ -337,7 +332,7 @@ local function bot_function()
 					end
 				end
 			end
-			if gametype != GT_COOP
+			if gametype ~= GT_COOP
  then
 				local cv_advancemap = CV_FindVar("advancemap") 
 				if cv_advancemap.value == 0
@@ -410,14 +405,13 @@ local function bot_function()
 		COM_BufInsertText(server, "server_log discord")
 		COM_BufInsertText(server, "server_log console")
 		DiscordBot.Functions.flush_msgsrb2()
-		if DiscordBot.Data.log != ''
+		if DiscordBot.Data.log ~= ''
  then
 			COM_BufInsertText(server, "server_log logcom")
 			DiscordBot.Data.log = ''
 		end
 		COM_BufInsertText(server, "server_log players")
-		if DiscordBot.Commands.cv_autopause.value == 1
- then
+		if DiscordBot.Config.auto_pause then
 			local count = 0
 			count = DiscordBot.Functions.playerontheserver()
 			if count == 0
@@ -439,16 +433,10 @@ addHook("ThinkFrame", bot_function)
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
 	if type == 0 then
-		if server ~= player and target ~= 0 then return end
+		if server ~= player and target and target ~= 0 then return end
 		local text = nil
 		local message = msg
 		local sendit = false
-		--[[ /*
-		message = string.gsub(message, "@owners", "<@&1007014838326796298>")
-		message = string.gsub(message, "@moderators", "<@&1007015806716096645>")
-		message = string.gsub(message, "@Owners", "<@&1007014838326796298>")
-		message = string.gsub(message, "@Moderators", "<@&1007015806716096645>")
-		*/ --]]
 		if server == player then
 			if isdedicatedserver == true then
 				text = "[EVENT:SERVER_CHAT]|"..message.."|FEE75C\n"
@@ -458,8 +446,9 @@ addHook("PlayerMsg", function(player, type, target, msg)
 				return true
 			end
 		end
-		text = "[EVENT:CHAT]|["..#player.."]|**<"..player.name..">**|"..message.."|"..DiscordBot.Functions.get_skin_color(player).."\n"
-		if IsPlayerAdmin(player) then text = "[EVENT:CHAT]|["..#player.."]|**<@"..player.name..">**|"..message.."|"..DiscordBot.Functions.get_skin_color(player).."\n" end
+		local jointime = (DiscordBot.join_times and DiscordBot.join_times[#player]) and tostring(DiscordBot.join_times[#player]) or "0"
+		text = "[EVENT:CHAT]|["..#player.."]|"..player.name.."|"..message.."|"..(player.mo and player.mo.skin or "").."|"..jointime.."\n"
+		if IsPlayerAdmin(player) then text = "[EVENT:CHAT]|["..#player.."]|@"..player.name.."|"..message.."|"..(player.mo and player.mo.skin or "").."|"..jointime.."\n" end
 		if text
  then
 			sendit = DiscordBot.Functions.spamchatbug(player, text)
@@ -470,7 +459,6 @@ addHook("PlayerMsg", function(player, type, target, msg)
 			end
 			if sendit == false
  then
-				--chatprintf(player, "You're repeating yourself, please wait "..((5*TICRATE - (DiscordBot.Data.servertime - DiscordBot.Messages[player.name][text]))/TICRATE).." sec. or send a different message.")
 				chatprintf(player, "Wait a second before sending a message and chat again.")
 				return true
 			end
@@ -485,28 +473,32 @@ addHook("PlayerMsg", function(player, type, target, msg)
 end)
 
 addHook("PlayerJoin", function(playernum)
-	-- Flag this player for a single PLAYER_JOIN emission on next PlayerThink
 	if not DiscordBot.pending_joins then DiscordBot.pending_joins = {} end
 	DiscordBot.pending_joins[playernum] = true
-	-- Unpause if player has joined the game
-	if DiscordBot.Commands.cv_autopause.value == 1
- then
-		if paused == true then
-			DiscordBot.Data.paused = false
-			COM_BufInsertText(server, "pause")
+end)
+
+addHook("ThinkFrame", function()
+	if not DiscordBot.pending_joins then return end
+	for player in players.iterate do
+		if DiscordBot.pending_joins[#player] then
+			DiscordBot.pending_joins[#player] = nil
+			if not DiscordBot.join_emitted then DiscordBot.join_emitted = {} end
+			if DiscordBot.join_emitted[#player] then
+				-- already emitted for this node, skip duplicate
+			else
+				DiscordBot.join_emitted[#player] = true
+				DiscordBot.join_times = DiscordBot.join_times or {}
+				DiscordBot.join_times[#player] = os.time()
+				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
+				DiscordBot.Functions.flush_msgsrb2()
+			end
+			if DiscordBot.Config.auto_pause and paused == true then
+				DiscordBot.Data.paused = false
+				COM_BufInsertText(server, "pause")
+			end
 		end
 	end
 end)
-
--- Minimal PlayerThink: emits PLAYER_JOIN exactly once per player
--- (player needs a mobj for player.name to be accessible)
-addHook("PlayerThink", function(player)
-	if DiscordBot.pending_joins and DiscordBot.pending_joins[#player] then
-		DiscordBot.pending_joins[#player] = nil
-		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
-		DiscordBot.Functions.flush_msgsrb2()
-	end
-end, MT_PLAYER)
 
 local function reason_to_string(r)
 	if r == KR_KICK then return "Kicked"
@@ -520,18 +512,17 @@ local function reason_to_string(r)
 end
 
 addHook("PlayerQuit", function(player, reason)
-	if DiscordBot.Commands.cv_joinquit.value != 1 then return end
+	if DiscordBot.Commands.cv_joinquit.value ~= 1 then return end
 	if DiscordBot.pending_joins then DiscordBot.pending_joins[#player] = nil end
+	if DiscordBot.join_emitted then DiscordBot.join_emitted[#player] = nil end
+	if DiscordBot.join_times then DiscordBot.join_times[#player] = nil end
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n"
 	if reason == KR_KICK then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:KICK_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
 	if reason == KR_BAN then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:BAN_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
 	DiscordBot.Functions.flush_msgsrb2()
 end)
 
-addHook("NetVars", function(n)
-	 DiscordBot.Data = n($)
-	 DiscordBot.Messages = n($)
-end)
+
 
 local function get_gametype_name(gt)
 	-- Use SRB2's internal gametype name when available. This resolves
@@ -583,77 +574,10 @@ end
 		local gtname = get_gametype_name(gametype)
 		local mapstr = map_num_to_mapstr(map)
 		DiscordBot.Data.current_map = map
-		if DiscordBot.Data.round_active == false
- then
-			DiscordBot.Data.round_active = true
-			local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
-			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
-			DiscordBot.Functions.flush_msgsrb2()
-		end
+		local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
+		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
+		DiscordBot.Functions.flush_msgsrb2()
 	end)
 
-local ok, err = pcall(addHook, "IntermissionThinker", function(stagefailed)
-	DiscordBot.Data.servertime = DiscordBot.Data.servertime + 1
-	COM_BufInsertText(server, "server_log discord")
-	COM_BufInsertText(server, "server_log console")
-	DiscordBot.Functions.flush_msgsrb2()
-	if not DiscordBot.Data.round_active then return end
-	DiscordBot.Data.round_active = false
-
-	local gtname = get_gametype_name(gametype)
-	local mapstr = map_num_to_mapstr(gamemap)
-	local mapname = mapheaderinfo[gamemap]
-	local maptitle = "Unknown"
-	if mapname and mapname.lvlttl
- then
-		maptitle = mapname.lvlttl
-		if mapname.actnum and mapname.actnum > 0
- then
-			maptitle = maptitle.." Act "..mapname.actnum
-		end
-	end
-	local event_line = "[EVENT:ROUND_END]|"..gtname.."|"..mapstr.."|MAPNAME:"..maptitle
-	if gametype == GT_CTF or gametype == GT_TEAMMATCH or (GT_TEAMBATTLE and gametype == GT_TEAMBATTLE)
- then
-		local reds = ""
-		local blues = ""
-		for player in players.iterate do
-			if player and player.spectator != true then
-				local pname = string.gsub(player.name, "|", "")
-				if player.ctfteam == 1 then
-					reds = reds.."|RED:"..pname..":"..player.score
-				elseif player.ctfteam == 2
- 					then
-					blues = blues.."|BLUE:"..pname..":"..player.score
-				else
-					event_line = event_line.."|PLAYER:"..pname..":"..player.score
-				end
-			end
-		end
-		event_line = event_line.."|TEAM:Red:"..GetTeamScore(1)
-		event_line = event_line..reds
-		event_line = event_line.."|TEAM:Blue:"..GetTeamScore(2)
-		event_line = event_line..blues
-	end
-	if gametype == GT_COMPETITION or gametype == GT_MATCH or (GT_BATTLE and gametype == GT_BATTLE) or gametype == GT_RACE then
-		for player in players.iterate do
-			if player and player.spectator != true
- then
-				local pname = string.gsub(player.name, "|", "")
-				event_line = event_line.."|PLAYER:"..pname..":"..player.score
-			end
-		end
-	end
-	local specs = ""
-	for player in players.iterate do
-		if player and player.spectator == true
- then
-			local pname = string.gsub(player.name, "|", "")
-			specs = specs.."|SPEC:"..pname
-		end
-	end
-	event_line = event_line..specs
-	event_line = event_line.."\n"
-	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
-	DiscordBot.Functions.flush_msgsrb2()
-end)
+-- Mark initialization complete so any subsequent loads return early
+CV_RegisterVar({name = "dbot_initialized", defaultvalue = "On", PossibleValue = CV_OnOff})

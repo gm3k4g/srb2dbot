@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# generate_thumbnails.sh — Extract map level select pictures from PK3 files
+# generate_thumbnails.sh  -  Extract map level select pictures from PK3 files
 # Usage: ./generate_thumbnails.sh [maps_directory] [output_directory]
 #
 # Scans for MAPxxP.lmp lumps in extracted PK3 _FILES directories

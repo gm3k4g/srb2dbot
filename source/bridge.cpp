@@ -219,7 +219,8 @@ static auto get_loaded_pk3s_impl() -> std::vector<std::string> {
     while (std::getline(log, line)) {
         if (line.rfind(prefix, 0) != 0) continue;
         std::string path = line.substr(prefix.size());
-        // Extract filename part, keep last .pk3
+        auto paren = path.rfind(" (");
+        if (paren != std::string::npos) path = path.substr(0, paren);
         if (path.size() < 4) continue;
         std::string ext = path.substr(path.size() - 4);
         if (ext != ".pk3" && ext != ".wad") continue;
@@ -293,7 +294,6 @@ auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir)
 
     char thumb[256];
     snprintf(thumb, sizeof(thumb), "%s/%s.png", outdir.c_str(), map.c_str());
-    if (access(thumb, F_OK) == 0) return;
 
     std::string lump_name = "Level select pictures/" + map + "P.lmp";
     std::string pk3_path = bridge_find_pk3_for_lump(lump_name);

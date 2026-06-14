@@ -61,9 +61,7 @@ private:
         std::filesystem::create_directories(thumb_dir);
         std::string thumb_path = thumb_dir + "/" + map_name + ".png";
 
-        if (access(thumb_path.c_str(), F_OK) != 0) {
-            bridge_extract_thumbnail(map_name, thumb_dir);
-        }
+        bridge_extract_thumbnail(map_name, thumb_dir);
 
         if (access(thumb_path.c_str(), F_OK) == 0) {
             return thumb_path;
