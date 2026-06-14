@@ -25,6 +25,9 @@ source/version.h
 logs/
 latest-log.txt
 
+# PID lock file
+srb2dbot.pid
+
 # Secret
 secret.json
 

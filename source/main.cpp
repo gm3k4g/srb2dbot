@@ -11,6 +11,7 @@
 #include <ctime>
 #include <unistd.h>
 #include <algorithm>
+#include <csignal>
 
 #include "version.h"
 #include "srb2dbot/utils.hpp"
@@ -81,6 +82,36 @@ int main() {
             old_logs.erase(old_logs.begin());
         }
     }
+    // ── Single-instance lock ──
+    std::string pid_path = std::string(getenv("HOME")) + "/Desktop/srb2dbot/srb2dbot.pid";
+    {
+        std::ifstream pid_file(pid_path);
+        if (pid_file.is_open()) {
+            pid_t old_pid = 0;
+            pid_file >> old_pid;
+            pid_file.close();
+            if (old_pid > 0) {
+                std::string proc_path = "/proc/" + std::to_string(old_pid);
+                if (std::filesystem::exists(proc_path)) {
+                    std::cerr << "ERROR: srb2dbot is already running (PID " << old_pid << ")\n";
+                    return EXIT_FAILURE;
+                }
+            }
+        }
+    }
+    std::ofstream pid_file(pid_path, std::ios::trunc);
+    if (pid_file.is_open()) {
+        pid_file << getpid() << std::endl;
+        pid_file.close();
+    }
+    std::atexit([]{
+        std::string path = std::string(getenv("HOME")) + "/Desktop/srb2dbot/srb2dbot.pid";
+        std::filesystem::remove(path);
+    });
+    signal(SIGINT, [](int) { std::exit(0); });
+    signal(SIGTERM, [](int) { std::exit(0); });
+    signal(SIGQUIT, [](int) { std::exit(0); });
+
     dpp::cluster bot(bot_token, dpp::i_default_intents | dpp::i_message_content);
     bot.on_log([log_stream](const dpp::log_t& event) {
         // Skip Discord Gateway heartbeat noise only, keep everything else (including error JSON)
