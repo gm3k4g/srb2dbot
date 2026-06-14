@@ -61,7 +61,7 @@ public:
                 std::string home = dir_srb2_str();
                 std::ofstream msgs(home + "/luafiles/client/DiscordBot/Messages.txt", std::ios::app);
                 if (msgs.is_open())
-                    msgs << "[EVENT:KICK_PLAYER]|" << player << "\n";
+                    msgs << "[EVENT:KICK_PLAYER]|" << player << "|" << std::to_string(event.command.usr.id) << "|" << event.command.usr.username << "\n";
             }
             return true;
         }
@@ -83,7 +83,7 @@ public:
                 std::string home = dir_srb2_str();
                 std::ofstream msgs(home + "/luafiles/client/DiscordBot/Messages.txt", std::ios::app);
                 if (msgs.is_open())
-                    msgs << "[EVENT:BAN_PLAYER]|" << player << "\n";
+                    msgs << "[EVENT:BAN_PLAYER]|" << player << "|" << std::to_string(event.command.usr.id) << "|" << event.command.usr.username << "\n";
             }
             return true;
         }

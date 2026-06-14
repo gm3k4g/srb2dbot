@@ -50,12 +50,12 @@
                 "message": "Player Left"
             },
             "kick_player_card": {
-                "_note": "Available fields: {player}",
+                "_note": "Available fields: {player}, {node}, {reason}",
                 "enabled": true,
                 "message": "Player Kicked"
             },
             "ban_player_card": {
-                "_note": "Available fields: {player}",
+                "_note": "Available fields: {player}, {node}, {reason}",
                 "enabled": true,
                 "message": "Player Banned"
             }
