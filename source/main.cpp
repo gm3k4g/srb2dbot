@@ -255,7 +255,13 @@ int main() {
                         if (auto event = bridge_parse_event(line)) {
                             auto embed_opt = registry.handle_bridge_event(*event);
                             if (embed_opt.has_value()) {
-                                std::cout << "[bridge] SRB2→Discord: " << event->type << " embed created" << std::endl;
+                                std::cout << "[bridge] SRB2→Discord: " << event->type;
+                                if (event->type == "PLAYER_JOIN" || event->type == "PLAYER_QUIT" ||
+                                    event->type == "KICK_PLAYER" || event->type == "BAN_PLAYER") {
+                                    std::cout << " fields[0]=" << (event->fields.size() > 0 ? event->fields[0] : "?")
+                                              << " fields[1]=" << (event->fields.size() > 1 ? event->fields[1] : "?");
+                                }
+                                std::cout << std::endl;
                                 auto attach = registry.get_bridge_attachment(*event);
                                 if (attach.has_value()) {
                                     // Flush pending, then send thumbnailed embed individually
