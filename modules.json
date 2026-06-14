@@ -15,7 +15,7 @@
             "server_chat_card": true,
             "csay_card": {
                 "enabled": true,
-                "message": ":loudspeaker: Server Announcement"
+                "message": "Message"
             }
         },
         "auto": {

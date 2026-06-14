@@ -5,6 +5,7 @@
 .opencode/
 build/
 cmake-build-*/
+build_check/
 CMakeFiles/
 prefix/
 .clangd

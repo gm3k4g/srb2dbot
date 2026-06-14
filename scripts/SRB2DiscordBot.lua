@@ -74,10 +74,10 @@ DiscordBot.Functions.spamchatbug = function(player, msg, joinquit)
 	if player != server
  then
 		if not DiscordBot.Messages[player.name] then DiscordBot.Messages[player.name] = DiscordBot.Data.servertime checked = true end
-		//if not DiscordBot.Messages[player.name][msg] then DiscordBot.Messages[player.name][msg] = DiscordBot.Data.servertime checked = true end
+		--if not DiscordBot.Messages[player.name][msg] then DiscordBot.Messages[player.name][msg] = DiscordBot.Data.servertime checked = true end
 		if checked == false
  then
-			//if DiscordBot.Data.servertime - DiscordBot.Messages[player.name][msg] < 5*TICRATE then return false end
+			--if DiscordBot.Data.servertime - DiscordBot.Messages[player.name][msg] < 5*TICRATE then return false end
 			if DiscordBot.Data.servertime - DiscordBot.Messages[player.name] < 35 then DiscordBot.Messages[player.name] = DiscordBot.Data.servertime return false end
 		end
 		DiscordBot.Messages[player.name] = DiscordBot.Data.servertime
@@ -470,7 +470,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 			end
 			if sendit == false
  then
-				//chatprintf(player, "You're repeating yourself, please wait "..((5*TICRATE - (DiscordBot.Data.servertime - DiscordBot.Messages[player.name][text]))/TICRATE).." sec. or send a different message.")
+				--chatprintf(player, "You're repeating yourself, please wait "..((5*TICRATE - (DiscordBot.Data.servertime - DiscordBot.Messages[player.name][text]))/TICRATE).." sec. or send a different message.")
 				chatprintf(player, "Wait a second before sending a message and chat again.")
 				return true
 			end
@@ -504,9 +504,8 @@ addHook("PlayerThink", function(player)
 			if not DiscordBot.Data.emitted_joins then DiscordBot.Data.emitted_joins = {} end
 			local dup_key = tostring(#player)
 			if DiscordBot.Data.emitted_joins[dup_key] then
-				print("[DEDUP] skipping duplicate join for node="..dup_key.." name="..player.name)
+				if DiscordBot.Data.debug then print("[DEBUG] PlayerThink: skipping duplicate join for node "..dup_key) end
 			else
-				print("[DEDUP] emitting join for node="..dup_key.." name="..player.name)
 				DiscordBot.Data.emitted_joins[dup_key] = true
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
 				DiscordBot.Functions.flush_msgsrb2()
