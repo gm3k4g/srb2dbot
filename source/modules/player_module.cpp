@@ -58,10 +58,7 @@ public:
             event.reply(dpp::message(event.command.channel_id, result.str()).set_flags(dpp::m_ephemeral));
 
             if (kicked) {
-                std::string home = dir_srb2_str();
-                std::ofstream msgs(home + "/luafiles/client/DiscordBot/Messages.txt", std::ios::app);
-                if (msgs.is_open())
-                    msgs << "[EVENT:KICK_PLAYER]|" << player << "|" << std::to_string(event.command.usr.id) << "|" << event.command.usr.username << "\n";
+                // KICK_PLAYER event emitted by Lua's PlayerQuit hook (KR_KICK → node + reason)
             }
             return true;
         }
@@ -80,10 +77,7 @@ public:
             event.reply(dpp::message(event.command.channel_id, result.str()).set_flags(dpp::m_ephemeral));
 
             if (banned) {
-                std::string home = dir_srb2_str();
-                std::ofstream msgs(home + "/luafiles/client/DiscordBot/Messages.txt", std::ios::app);
-                if (msgs.is_open())
-                    msgs << "[EVENT:BAN_PLAYER]|" << player << "|" << std::to_string(event.command.usr.id) << "|" << event.command.usr.username << "\n";
+                // BAN_PLAYER event emitted by Lua's PlayerQuit hook (KR_BAN → node + reason)
             }
             return true;
         }

@@ -47,7 +47,7 @@
             "player_quit_card": {
                 "_note": "Available fields: {player}, {node}, {reason}",
                 "enabled": true,
-                "message": "{player} has left the game. (player {node})"
+                "message": "{player} has left the game. (player {node}) {reason}"
             },
             "kick_player_card": {
                 "_note": "Available fields: {player}, {node}, {reason}",
