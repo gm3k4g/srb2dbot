@@ -2,6 +2,7 @@
 #include "srb2dbot/bridge.hpp"
 #include "srb2dbot/utils.hpp"
 #include <dpp/dpp.h>
+#include <ctime>
 #include <optional>
 
 class BanPlayerCardModule : public Module {
@@ -16,9 +17,9 @@ public:
         std::string node = event.fields.size() >= 2 ? event.fields[1] : "";
         std::string reason = event.fields.size() >= 3 ? event.fields[2] : "";
         dpp::embed embed;
-        embed.set_title(msg_.empty() ? "Player Banned" : substitute_placeholders(msg_, {{"player", player}, {"node", node}, {"reason", reason}}));
-        embed.set_description(":hammer: **" + player + "** was banned.");
+        embed.set_title(msg_.empty() ? ":hammer: **" + player + "** was banned." : substitute_placeholders(msg_, {{"player", player}, {"node", node}, {"reason", reason}}));
         embed.set_color(0xED4245);
+        embed.set_timestamp(std::time(nullptr));
         return embed;
     }
 private:
