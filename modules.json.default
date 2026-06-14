@@ -15,61 +15,49 @@
             "server_chat_card": true,
             "csay_card": {
                 "enabled": true,
-                "message": ":loudspeaker: Server Announcement",
-                "_note": "Static title. No placeholder substitution."
+                "message": ":loudspeaker: Server Announcement"
             }
         },
         "auto": {
             "_note": "Auto modules — run automatically from game events",
             "server_start_card": {
                 "enabled": true,
-                "message": ":green_circle: The server has started",
-                "_note": "Static message. No placeholder substitution."
+                "message": ":green_circle: The server has started"
             },
             "round_start_card": {
+                "_note": "Available fields: {gametype}, {map_num}, {map_title}",
                 "enabled": true,
                 "message": ":map: Map is now {map_num}: {map_title} - {gametype}",
-                "thumbnails": true,
-                "_note": "Available fields: {gametype}, {map_num}, {map_title}"
+                "thumbnails": true
             },
             "round_end_card": {
+                "_note": "Available fields: {gametype}, {map_num}, {map_title}",
                 "enabled": true,
-                "message": "{map_num}: {map_title} - {gametype}",
-                "_note": "Available fields: {gametype}, {map_num}, {map_title}"
+                "message": "{map_num}: {map_title} - {gametype}"
             },
-            "flag_capture_card": {
-                "enabled": true,
-                "_note": "Hardcoded title: 'Flag Captured!'. No placeholder substitution."
-            },
-            "flag_drop_card": {
-                "enabled": true,
-                "_note": "Hardcoded title: 'Flag Dropped'. No placeholder substitution."
-            },
-            "flag_pickup_card": {
-                "enabled": true,
-                "_note": "Hardcoded title: 'Flag Taken'. No placeholder substitution."
-            },
-            "flag_return_card": {
-                "enabled": true,
-                "_note": "Hardcoded title: 'Flag Returned'. No placeholder substitution."
-            },
+            "flag_capture_card": true,
+            "flag_drop_card": true,
+            "flag_pickup_card": true,
+            "flag_return_card": true,
             "player_join_card": {
+                "_note": "Available fields: {player}",
                 "enabled": true,
-                "_note": "Available fields: {player}. Default: 'Player Joined'"
+                "message": "Player Joined"
             },
             "player_quit_card": {
+                "_note": "Available fields: {player}",
                 "enabled": true,
-                "_note": "Available fields: {player}. Default: 'Player Left'"
+                "message": "Player Left"
             },
             "kick_player_card": {
+                "_note": "Available fields: {player}",
                 "enabled": true,
-                "message": "Player Kicked",
-                "_note": "Available fields: {player}"
+                "message": "Player Kicked"
             },
             "ban_player_card": {
+                "_note": "Available fields: {player}",
                 "enabled": true,
-                "message": "Player Banned",
-                "_note": "Available fields: {player}"
+                "message": "Player Banned"
             }
         }
     }
