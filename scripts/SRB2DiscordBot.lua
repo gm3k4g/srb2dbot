@@ -504,8 +504,9 @@ addHook("PlayerThink", function(player)
 			if not DiscordBot.Data.emitted_joins then DiscordBot.Data.emitted_joins = {} end
 			local dup_key = tostring(#player)
 			if DiscordBot.Data.emitted_joins[dup_key] then
-				if DiscordBot.Data.debug then print("[DEBUG] PlayerThink: skipping duplicate join for node "..dup_key) end
+				print("[DEDUP] skipping duplicate join for node="..dup_key.." name="..player.name)
 			else
+				print("[DEDUP] emitting join for node="..dup_key.." name="..player.name)
 				DiscordBot.Data.emitted_joins[dup_key] = true
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
 				DiscordBot.Functions.flush_msgsrb2()
