@@ -497,19 +497,12 @@ addHook("PlayerThink", function(player)
 	end
 	if DiscordBot.Commands.cv_joinquit.value == 1
  then
-		if player.logjoin != true
- then
-			player.logjoin = true
-			-- Deduplication guard: stored outside DiscordBot.Data to survive NetVars deep-copy
-			if not DiscordBot.emitted_joins then DiscordBot.emitted_joins = {} end
-			local dup_key = tostring(#player)
-			if DiscordBot.emitted_joins[dup_key] then
-				if DiscordBot.Data.debug then print("[DEBUG] PlayerThink: skipping duplicate join for node "..dup_key) end
-			else
-				DiscordBot.emitted_joins[dup_key] = true
-				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
-				DiscordBot.Functions.flush_msgsrb2()
-			end
+		-- Emit PLAYER_JOIN exactly once: PlayerJoin sets pending_joins[node]=true,
+		-- PlayerThink reads and clears it on the first tick the player has a mobj.
+		if DiscordBot.pending_joins and DiscordBot.pending_joins[#player] then
+			DiscordBot.pending_joins[#player] = nil
+			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
+			DiscordBot.Functions.flush_msgsrb2()
 		end
 	end
 end, MT_PLAYER)
@@ -526,7 +519,10 @@ local function reason_to_string(r)
 end
 
 addHook("PlayerJoin", function(playernum)
-	--unpause if player has joined the game
+	-- Flag this player for a single PLAYER_JOIN emission on next PlayerThink
+	if not DiscordBot.pending_joins then DiscordBot.pending_joins = {} end
+	DiscordBot.pending_joins[playernum] = true
+	-- Unpause if player has joined the game
 	if DiscordBot.Commands.cv_autopause.value == 1
  then
 		if paused == true
@@ -539,9 +535,8 @@ end)
 
 addHook("PlayerQuit", function(player, reason)
 	if DiscordBot.Commands.cv_joinquit.value != 1 then return end
-	player.quitlog = true
-	-- Allow rejoin events for this node
-	if DiscordBot.emitted_joins then DiscordBot.emitted_joins[tostring(#player)] = nil end
+	-- Allow rejoin events: re-set pending_joins when player reconnects
+	if DiscordBot.pending_joins then DiscordBot.pending_joins[tostring(#player)] = nil end
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n"
 	if reason == KR_KICK then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:KICK_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
 	if reason == KR_BAN then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:BAN_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
