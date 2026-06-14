@@ -37,7 +37,7 @@ DiscordBot.Data.skin_colors = {
 }
 DiscordBot.Functions = {}
 DiscordBot.Functions.get_skin_color = function(player)
-	if DiscordBot.Data.skin_colors[player.skincolor]
+	if DiscordBot.Data.skin_colors[player.skincolor] then
 		return DiscordBot.Data.skin_colors[player.skincolor]
 	end
 	return "2F3136"
@@ -52,7 +52,7 @@ DiscordBot.Commands.cv_messagedelay = CV_RegisterVar({name = "dbot_messagedelay"
 DiscordBot.Messages = {}
 
 DiscordBot.Functions.flush_msgsrb2 = function()
-    if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 != ''
+    if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 != '' then
         if DiscordBot.Data.debug then print("[DEBUG] flush_msgsrb2: writing "..string.len(DiscordBot.Data.msgsrb2).." bytes to Messages.txt") end
         local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a+")
         if logmsg then
@@ -64,21 +64,21 @@ DiscordBot.Functions.flush_msgsrb2 = function()
 end
 DiscordBot.Functions.spamchatbug = function(player, msg, joinquit) 
 	local checked = false
-	if DiscordBot.Commands.cv_nospamchat.value == 0 and not joinquit
+	if DiscordBot.Commands.cv_nospamchat.value == 0 and not joinquit then
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..msg
 		return true
 	end
-	if player != server
+	if player != server then
 		if not DiscordBot.Messages[player.name] then DiscordBot.Messages[player.name] = DiscordBot.Data.servertime checked = true end
 		//if not DiscordBot.Messages[player.name][msg] then DiscordBot.Messages[player.name][msg] = DiscordBot.Data.servertime checked = true end
-		if checked == false
+		if checked == false then
 			//if DiscordBot.Data.servertime - DiscordBot.Messages[player.name][msg] < 5*TICRATE then return false end
 			if DiscordBot.Data.servertime - DiscordBot.Messages[player.name] < 35 then DiscordBot.Messages[player.name] = DiscordBot.Data.servertime return false end
 		end
 		DiscordBot.Messages[player.name] = DiscordBot.Data.servertime
 	end
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..msg
-	if DiscordBot.Commands.cv_messagedelay.value == 0
+	if DiscordBot.Commands.cv_messagedelay.value == 0 then
 		COM_BufInsertText(server, "server_log msg")
 		COM_BufInsertText(server, "server_log discord")
 		COM_BufInsertText(server, "server_log console")
@@ -90,7 +90,7 @@ end
 DiscordBot.Functions.playerontheserver = function()
 	local count = 0
 	for player in players.iterate do
-		if player
+		if player then
 			count = $ + 1
 		end
 	end
@@ -100,7 +100,7 @@ end
 DiscordBot.Functions.statsofserver = function()
 	local playerstats = ''
 	for player in players.iterate do
-		if player
+		if player then
 			local pname = string.gsub(player.name, "`", "")
 			local ping = 0
 			local statms = ''
@@ -112,12 +112,12 @@ DiscordBot.Functions.statsofserver = function()
 			elseif (ping < 64) then statms = ':ping_green:'
 			elseif (ping < 128) then statms = ':ping_yellow:'
 			elseif (ping < 256) then statms = ':ping_red:' end
-			if player.mo and player.spectator != true
+			if player.mo and player.spectator != true then
 				iconskin = ":"..player.mo.skin..":"
 			end
-			if player.spectator == true
+			if player.spectator == true then
 				iconskin = ':spectator:'
-			elseif player.playerstate == PST_DEAD
+			elseif player.playerstate == PST_DEAD then
 				iconskin = ':dead:'
 			end
 			if player.mo and (player.pflags & PF_FINISHED) then pffinished = ":completed:" end
@@ -129,7 +129,7 @@ DiscordBot.Functions.statsofserver = function()
 			playerstats = $ + statms..iconskin..pffinished..admin.."["..#player.."] `"..pname.."`: Score - "..player.score.."; Time - "..pptime.."\n"
 		end
 	end
-	if playerstats == ''
+	if playerstats == '' then
 		playerstats = "There's no one here."
 	end
 	return playerstats
@@ -137,32 +137,32 @@ end
 
 COM_AddCommand("server_log", function(player, arg, text)
 	if player != server then return end
-	if arg == "msg"
-		if DiscordBot.Data.msgsrb2
+	if arg == "msg" then
+		if DiscordBot.Data.msgsrb2 then
 			local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a")
 			logmsg:write(DiscordBot.Data.msgsrb2)
 			logmsg:close()
 			DiscordBot.Data.msgsrb2 = ''
 		end
-	elseif arg == "logcom"
-		if DiscordBot.Data.log
+	elseif arg == "logcom" then
+		if DiscordBot.Data.log then
 			local logcom = io.openlocal("client/DiscordBot/logcom.txt", "a+")
 			logcom:write(DiscordBot.Data.log)
 			logcom:close()
 		end
-	elseif arg == "pause"
-		if DiscordBot.Data.pcmtsrb2
+	elseif arg == "pause" then
+		if DiscordBot.Data.pcmtsrb2 then
 			local logmsg = io.openlocal("client/DiscordBot/Players.txt", "w")
 			logmsg:write("Game is paused, no players")
 			logmsg:close()
 		end
-	elseif arg == "players"
-		if DiscordBot.Data.pcmtsrb2
+	elseif arg == "players" then
+		if DiscordBot.Data.pcmtsrb2 then
 			local logmsg = io.openlocal("client/DiscordBot/Players.txt", "w")
 			logmsg:write(DiscordBot.Data.pcmtsrb2)
 			logmsg:close()
 		end
-		if DiscordBot.Data.stats
+		if DiscordBot.Data.stats then
 			-- Server name
 			local cv_servername = CV_FindVar("servername")
 			local playerskins = ''
@@ -178,48 +178,48 @@ COM_AddCommand("server_log", function(player, arg, text)
 			local sseconds = G_TicsToSeconds(DiscordBot.Data.servertime)
 			if string.len(sseconds) == 1 then sseconds = "0"..tostring(sseconds) end
 			local stime = G_TicsToMinutes(DiscordBot.Data.servertime, true)..":"..sseconds
-			if DiscordBot.Data.paused == true
+			if DiscordBot.Data.paused == true then
 				DiscordBot.Data.stats = "There's no one here."
 			end
 			local logmsg = io.openlocal("client/DiscordBot/Stats.txt", "w")
 			logmsg:write(cv_servername.string.."\n"..DiscordBot.Data.maptitle.." ("..gamemap..")\n"..gamemap.."\n"..DiscordBot.Data.nextlevel.."\n"..DiscordBot.Data.iconemeralds.."\n"..playerskins.."\n"..ltime.."\n"..stime.."\n"..DiscordBot.Data.pcmp.."\n"..DiscordBot.Data.stats)
 			logmsg:close()
 		end
-	elseif arg == "console"
-		if DiscordBot.Data.console
+	elseif arg == "console" then
+		if DiscordBot.Data.console then
 			local d_console = io.openlocal("client/DiscordBot/console.txt", "r")
-			if d_console
+			if d_console then
 				local clear = false
 				while true do
 					local line = ''
 					line = d_console:read("*l") or $
 					if line == "" then break end
 					line = string.sub(line,1 , 220)
-					if string.find(string.sub(string.lower(line),1,5), string.lower("quit")) == nil and string.find(string.sub(string.lower(line),1,9), string.lower("exitgame")) == nil
+					if string.find(string.sub(string.lower(line),1,5), string.lower("quit")) == nil and string.find(string.sub(string.lower(line),1,9), string.lower("exitgame")) == nil then
 						COM_BufInsertText(server, line)
 					end
 					clear = true
 				end
 				d_console:close()
-				if clear == true
+				if clear == true then
 					local d_console = io.openlocal("client/DiscordBot/console.txt", "w")
 					d_console:write("")
 					d_console:close()
 				end
 			end
 		end
-	elseif arg == "discord"
+	elseif arg == "discord" then
 		local d_msg = io.openlocal("client/DiscordBot/discordmessage.txt", "r")
-		if d_msg
+		if d_msg then
 			local clear = false
 			while true do
 				local line = ''
 				line = d_msg:read("*l") or $
 				if line == "" then break end
-				if #line > 220
+				if #line > 220 then
 					COM_BufInsertText(server, "discord_message "..string.sub(line, 1, 220))
 					local remainder = string.sub(line, 221)
-					if #remainder > 0
+					if #remainder > 0 then
 						COM_BufInsertText(server, "discord_message "..remainder)
 					end
 				else
@@ -228,7 +228,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 				clear = true
 			end
 			d_msg:close()
-			if clear == true
+			if clear == true then
 				local d_clear = io.openlocal("client/DiscordBot/discordmessage.txt", "w")
 				if d_clear then
 					d_clear:write("")
@@ -251,7 +251,7 @@ COM_AddCommand("dbot_sync", function(player)
 	if player != server then return end
 	if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: re-emitting server state (map="..tostring(DiscordBot.Data.current_map)..", round_active="..tostring(DiscordBot.Data.round_active)..")") end
 	DiscordBot.Data.msgsrb2 = ''
-	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.round_active
+	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.round_active then
 		if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: round is active, waiting for next MapLoad to emit ROUND_START") end
 	end
 	DiscordBot.Functions.flush_msgsrb2()
@@ -264,29 +264,29 @@ end, COM_LOCAL)
 
 local function bot_function()
 	DiscordBot.Data.servertime = DiscordBot.Data.servertime + 1
-	if (leveltime % 70) == 35
+	if (leveltime % 70) == 35 then
 		DiscordBot.Data.stats = DiscordBot.Functions.statsofserver()
 		local cv_maxplayer = CV_FindVar("maxplayers")
 		local playercount = 0
 		DiscordBot.Data.countemeralds = 0
 		DiscordBot.Data.iconemeralds = ''
 		playercount = DiscordBot.Functions.playerontheserver()
-		if not playercount
+		if not playercount then
 			playercount = 0
 		end
-		if DiscordBot.Data.gametype != gametype
+		if DiscordBot.Data.gametype != gametype then
 			COM_BufInsertText(server, "gametype")
 			DiscordBot.Data.gametype = gametype
 		end
-		if not G_IsSpecialStage(gamemap)
-			if mapheaderinfo[gamemap].nextlevel != nil
-				if mapheaderinfo[gamemap].nextlevel >= 1100
+		if not G_IsSpecialStage(gamemap) then
+			if mapheaderinfo[gamemap].nextlevel != nil then
+				if mapheaderinfo[gamemap].nextlevel >= 1100 then
 					DiscordBot.Data.nextlevel = "Ending"
 				else
 					local nextlevelint = mapheaderinfo[gamemap].nextlevel
 					local nextlevel = mapheaderinfo[mapheaderinfo[gamemap].nextlevel]
-					if nextlevel != nil
-						if nextlevel.actnum == 0
+					if nextlevel != nil then
+						if nextlevel.actnum == 0 then
 							DiscordBot.Data.nextlevel = (nextlevel.lvlttl.." ("..nextlevelint..")")
 						else
 							DiscordBot.Data.nextlevel = (nextlevel.lvlttl.." Act "..nextlevel.actnum.." ("..nextlevelint..")")
@@ -296,56 +296,56 @@ local function bot_function()
 					end
 				end
 			end
-			if gametype != GT_COOP
+			if gametype != GT_COOP then
 				local cv_advancemap = CV_FindVar("advancemap") 
-				if cv_advancemap.value == 0
-					if mapheaderinfo[gamemap].actnum == 0
+				if cv_advancemap.value == 0 then
+					if mapheaderinfo[gamemap].actnum == 0 then
 						DiscordBot.Data.nextlevel = (mapheaderinfo[gamemap].lvlttl.." ("..gamemap..")")
 					else
 						DiscordBot.Data.nextlevel = (mapheaderinfo[gamemap].lvlttl.." Act "..mapheaderinfo[gamemap].actnum.." ("..gamemap..")")
 					end
-				elseif cv_advancemap.value == 2
+				elseif cv_advancemap.value == 2 then
 					DiscordBot.Data.nextlevel = "Random"
 				end
 			end
 		end
-		if mapheaderinfo[gamemap].actnum == 0
+		if mapheaderinfo[gamemap].actnum == 0 then
 			DiscordBot.Data.maptitle = (mapheaderinfo[gamemap].lvlttl)
 		else
 			DiscordBot.Data.maptitle = (mapheaderinfo[gamemap].lvlttl.." Act "..mapheaderinfo[gamemap].actnum)
 		end
-		if emeralds & EMERALD1
+		if emeralds & EMERALD1 then
 			DiscordBot.Data.countemeralds = $ + 1
 			DiscordBot.Data.iconemeralds = DiscordBot.Data.iconemeralds..":emerald1:"
 		end
-		if emeralds & EMERALD2
+		if emeralds & EMERALD2 then
 			DiscordBot.Data.countemeralds = $ + 1
 			DiscordBot.Data.iconemeralds = DiscordBot.Data.iconemeralds..":emerald2:"
 		end
-		if emeralds & EMERALD3
+		if emeralds & EMERALD3 then
 			DiscordBot.Data.countemeralds = $ + 1
 			DiscordBot.Data.iconemeralds = DiscordBot.Data.iconemeralds..":emerald3:"
 		end
-		if emeralds & EMERALD4
+		if emeralds & EMERALD4 then
 			DiscordBot.Data.countemeralds = $ + 1
 			DiscordBot.Data.iconemeralds = DiscordBot.Data.iconemeralds..":emerald4:"
 		end
-		if emeralds & EMERALD5
+		if emeralds & EMERALD5 then
 			DiscordBot.Data.countemeralds = $ + 1
 			DiscordBot.Data.iconemeralds = DiscordBot.Data.iconemeralds..":emerald5:"
 		end
-		if emeralds & EMERALD6
+		if emeralds & EMERALD6 then
 			DiscordBot.Data.countemeralds = $ + 1
 			DiscordBot.Data.iconemeralds = DiscordBot.Data.iconemeralds..":emerald6:"
 		end
-		if emeralds & EMERALD7
+		if emeralds & EMERALD7 then
 			DiscordBot.Data.countemeralds = $ + 1
 			DiscordBot.Data.iconemeralds = DiscordBot.Data.iconemeralds..":emerald7:"
 		end
-		if emeralds == 0
+		if emeralds == 0 then
 			DiscordBot.Data.iconemeralds = "No emeralds"
 		end
-		if playercount
+		if playercount then
 			DiscordBot.Data.pcmp = (playercount.."/"..cv_maxplayer.value)
 			DiscordBot.Data.pcmtsrb2 = ("Players : "..playercount.."/"..cv_maxplayer.value)
 		else
@@ -355,16 +355,16 @@ local function bot_function()
 		COM_BufInsertText(server, "server_log discord")
 		COM_BufInsertText(server, "server_log console")
 		DiscordBot.Functions.flush_msgsrb2()
-		if DiscordBot.Data.log != ''
+		if DiscordBot.Data.log != '' then
 			COM_BufInsertText(server, "server_log logcom")
 			DiscordBot.Data.log = ''
 		end
 		COM_BufInsertText(server, "server_log players")
-		if DiscordBot.Commands.cv_autopause.value == 1
+		if DiscordBot.Commands.cv_autopause.value == 1 then
 			local count = 0
 			count = DiscordBot.Functions.playerontheserver()
-			if count == 0
-				if paused == false
+			if count == 0 then
+				if paused == false then
 					DiscordBot.Data.paused = true
 					COM_BufInsertText(server, "server_log players")
 					COM_BufInsertText(server, "server_log pause")
@@ -379,7 +379,7 @@ addHook("ThinkFrame", bot_function)
 
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
-	if type == 0
+	if type == 0 then
 		local text = nil
 		local message = msg
 		local sendit = false
@@ -389,8 +389,8 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		message = string.gsub(message, "@Owners", "<@&1007014838326796298>")
 		message = string.gsub(message, "@Moderators", "<@&1007015806716096645>")
 		*/
-		if server == player
-			if isdedicatedserver == true
+		if server == player then
+			if isdedicatedserver == true then
 				text = "[EVENT:SERVER_CHAT]|"..message.."|FEE75C\n"
 				DiscordBot.Functions.spamchatbug(player, text)
 				DiscordBot.Functions.flush_msgsrb2()
@@ -400,20 +400,20 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		end
 		text = "[EVENT:CHAT]|["..#player.."]|**<"..player.name..">**|"..message.."|"..DiscordBot.Functions.get_skin_color(player).."\n"
 		if IsPlayerAdmin(player) then text = "[EVENT:CHAT]|["..#player.."]|**<@"..player.name..">**|"..message.."|"..DiscordBot.Functions.get_skin_color(player).."\n" end
-		if text
+		if text then
 			sendit = DiscordBot.Functions.spamchatbug(player, text)
-			if sendit == true
+			if sendit == true then
 				DiscordBot.Functions.flush_msgsrb2()
 				return false
 			end
-			if sendit == false
+			if sendit == false then
 				//chatprintf(player, "You're repeating yourself, please wait "..((5*TICRATE - (DiscordBot.Data.servertime - DiscordBot.Messages[player.name][text]))/TICRATE).." sec. or send a different message.")
 				chatprintf(player, "Wait a second before sending a message and chat again.")
 				return true
 			end
 		end
 	end
-	if type == 3
+	if type == 3 then
 		local text = nil
 		text = "[EVENT:CSAY]|"..msg.."\n"
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..text
@@ -425,16 +425,16 @@ addHook("PlayerThink", function(player)
 	if not player.playtime then player.playtime = 0 end
 	if player.playtime != nil then player.playtime = $ + 1 end
 	if not player.oldname then player.oldname = player.name end
-	if player.name != player.oldname
+	if player.name != player.oldname then
 	player.name = string.gsub(player.name, "`", "")
 		local text = "[EVENT:CHAT]|["..#player.."]|System|:pencil2:"..string.gsub(player.oldname, "*", "").." renamed to "..string.gsub(player.name, "*", "")..":pencil2:\n"
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..text
 		player.oldname = player.name
 	end
-	if DiscordBot.Commands.cv_joinquit.value == 1
-		if player.logjoin != true
+	if DiscordBot.Commands.cv_joinquit.value == 1 then
+		if player.logjoin != true then
 			local text = "[EVENT:CHAT]|["..#player.."]|System|:rocket:"..player.name.." has joined the game:rocket:\n"
-			if text
+			if text then
 				DiscordBot.Functions.spamchatbug(player, text, true)
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."\n"
 				DiscordBot.Functions.flush_msgsrb2()
@@ -446,8 +446,8 @@ end, MT_PLAYER)
 
 addHook("PlayerJoin", function(playernum)
 	--unpause if player has joined the game
-	if DiscordBot.Commands.cv_autopause.value == 1
-		if paused == true
+	if DiscordBot.Commands.cv_autopause.value == 1 then
+		if paused == true then
 			DiscordBot.Data.paused = false
 			COM_BufInsertText(server, "pause")
 		end
@@ -456,27 +456,27 @@ end)
 
 addHook("PlayerQuit", function(player, reason)
 	local text = nil
-	if DiscordBot.Commands.cv_joinquit.value == 1
+	if DiscordBot.Commands.cv_joinquit.value == 1 then
 		player.quitlog = true
-		if reason == KR_KICK
+		if reason == KR_KICK then
 			text = "[EVENT:CHAT]|["..#player.."]|System|:boot:"..player.name.." has been kicked:boot:\n"
 		end
-		if reason == KR_PINGLIMIT
+		if reason == KR_PINGLIMIT then
 			text = "[EVENT:CHAT]|["..#player.."]|System|:red_square:"..player.name.." left the game (Ping limit):red_square:\n"
 		end
-		if reason == KR_SYNCH
+		if reason == KR_SYNCH then
 			text = "[EVENT:CHAT]|["..#player.."]|System|:o:"..player.name.." left the game (Synch Failure):o:\n"
 		end
-		if reason == KR_TIMEOUT
+		if reason == KR_TIMEOUT then
 			text = "[EVENT:CHAT]|["..#player.."]|System|:o:"..player.name.." left the game (Connection timeout):o:\n"
 		end
-		if reason == KR_BAN
+		if reason == KR_BAN then
 			text = "[EVENT:CHAT]|["..#player.."]|System|:hammer:"..player.name.." has been banned:hammer:\n"
 		end
-		if reason == KR_LEAVE
+		if reason == KR_LEAVE then
 			text = "[EVENT:CHAT]|["..#player.."]|System|:door:"..player.name.." left the game:door:\n"
 		end
-		if text
+		if text then
 			DiscordBot.Functions.spamchatbug(player, text, true)
 			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."\n"
 			DiscordBot.Functions.flush_msgsrb2()
@@ -484,12 +484,12 @@ addHook("PlayerQuit", function(player, reason)
 	end
 	/*
 	--pause if server is empty
-	if DiscordBot.Commands.cv_autopause.value == 1
+	if DiscordBot.Commands.cv_autopause.value == 1 then
 		local count = 0
 		count = DiscordBot.Functions.playerontheserver()
 		count = $ - 1
-		if count == 0
-			if paused == false
+		if count == 0 then
+			if paused == false then
 				DiscordBot.Data.paused = true
 				COM_BufInsertText(server, "server_log players")
 				COM_BufInsertText(server, "server_log pause")
@@ -544,16 +544,16 @@ end
 	addHook("MapLoad", function(map)
 		local mapname = mapheaderinfo[map]
 		local maptitle = "Unknown Map"
-		if mapname and mapname.lvlttl
+		if mapname and mapname.lvlttl then
 			maptitle = mapname.lvlttl
-			if mapname.actnum and mapname.actnum > 0
+			if mapname.actnum and mapname.actnum > 0 then
 				maptitle = maptitle.." Act "..mapname.actnum
 			end
 		end
 		local gtname = get_gametype_name(gametype)
 		local mapstr = map_num_to_mapstr(map)
 		DiscordBot.Data.current_map = map
-		if DiscordBot.Data.round_active == false
+		if DiscordBot.Data.round_active == false then
 			DiscordBot.Data.round_active = true
 			local event_line = "[EVENT:ROUND_START]|"..gtname.."|"..mapstr.."|"..maptitle.."\n"
 			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..event_line
@@ -573,22 +573,22 @@ local ok, err = pcall(addHook, "IntermissionThinker", function(stagefailed)
 	local mapstr = map_num_to_mapstr(gamemap)
 	local mapname = mapheaderinfo[gamemap]
 	local maptitle = "Unknown"
-	if mapname and mapname.lvlttl
+	if mapname and mapname.lvlttl then
 		maptitle = mapname.lvlttl
-		if mapname.actnum and mapname.actnum > 0
+		if mapname.actnum and mapname.actnum > 0 then
 			maptitle = maptitle.." Act "..mapname.actnum
 		end
 	end
 	local event_line = "[EVENT:ROUND_END]|"..gtname.."|"..mapstr.."|MAPNAME:"..maptitle
-	if gametype == GT_CTF or gametype == GT_TEAMMATCH or (GT_TEAMBATTLE and gametype == GT_TEAMBATTLE)
+	if gametype == GT_CTF or gametype == GT_TEAMMATCH or (GT_TEAMBATTLE and gametype == GT_TEAMBATTLE) then
 		local reds = ""
 		local blues = ""
 		for player in players.iterate do
-			if player and player.spectator != true
+			if player and player.spectator != true then
 				local pname = string.gsub(player.name, "|", "")
-				if player.ctfteam == 1
+				if player.ctfteam == 1 then
 					reds = reds.."|RED:"..pname..":"..player.score
-				elseif player.ctfteam == 2
+				elseif player.ctfteam == 2 then
 					blues = blues.."|BLUE:"..pname..":"..player.score
 				else
 					event_line = event_line.."|PLAYER:"..pname..":"..player.score
@@ -600,9 +600,9 @@ local ok, err = pcall(addHook, "IntermissionThinker", function(stagefailed)
 		event_line = event_line.."|TEAM:Blue:"..GetTeamScore(2)
 		event_line = event_line..blues
 	end
-	if gametype == GT_COMPETITION or gametype == GT_MATCH or (GT_BATTLE and gametype == GT_BATTLE) or gametype == GT_RACE
+	if gametype == GT_COMPETITION or gametype == GT_MATCH or (GT_BATTLE and gametype == GT_BATTLE) or gametype == GT_RACE then
 		for player in players.iterate do
-			if player and player.spectator != true
+			if player and player.spectator != true then
 				local pname = string.gsub(player.name, "|", "")
 				event_line = event_line.."|PLAYER:"..pname..":"..player.score
 			end
@@ -610,7 +610,7 @@ local ok, err = pcall(addHook, "IntermissionThinker", function(stagefailed)
 	end
 	local specs = ""
 	for player in players.iterate do
-		if player and player.spectator == true
+		if player and player.spectator == true then
 			local pname = string.gsub(player.name, "|", "")
 			specs = specs.."|SPEC:"..pname
 		end
