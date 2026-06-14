@@ -484,28 +484,21 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	end
 end)
 
-addHook("PlayerThink", function(player)
-	if not player.playtime then player.playtime = 0 end
-	if player.playtime != nil then player.playtime = $ + 1 end
-	if not player.oldname then player.oldname = player.name end
-	if player.name != player.oldname
- then
-	player.name = string.gsub(player.name, "`", "")
-		local text = "[EVENT:CHAT]|["..#player.."]|System|:pencil2:"..string.gsub(player.oldname, "*", "").." renamed to "..string.gsub(player.name, "*", "")..":pencil2:\n"
-		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2..text
-		player.oldname = player.name
-	end
+addHook("PlayerJoin", function(playernum)
 	if DiscordBot.Commands.cv_joinquit.value == 1
  then
-		-- Emit PLAYER_JOIN exactly once: PlayerJoin sets pending_joins[node]=true,
-		-- PlayerThink reads and clears it on the first tick the player has a mobj.
-		if DiscordBot.pending_joins and DiscordBot.pending_joins[#player] then
-			DiscordBot.pending_joins[#player] = nil
-			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
-			DiscordBot.Functions.flush_msgsrb2()
+		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..players[playernum].name.."|"..playernum.."\n"
+		DiscordBot.Functions.flush_msgsrb2()
+	end
+	-- Unpause if player has joined the game
+	if DiscordBot.Commands.cv_autopause.value == 1
+ then
+		if paused == true then
+			DiscordBot.Data.paused = false
+			COM_BufInsertText(server, "pause")
 		end
 	end
-end, MT_PLAYER)
+end)
 
 local function reason_to_string(r)
 	if r == KR_KICK then return "Kicked"
@@ -518,25 +511,8 @@ local function reason_to_string(r)
 	return "Unknown"
 end
 
-addHook("PlayerJoin", function(playernum)
-	-- Flag this player for a single PLAYER_JOIN emission on next PlayerThink
-	if not DiscordBot.pending_joins then DiscordBot.pending_joins = {} end
-	DiscordBot.pending_joins[playernum] = true
-	-- Unpause if player has joined the game
-	if DiscordBot.Commands.cv_autopause.value == 1
- then
-		if paused == true
- then
-			DiscordBot.Data.paused = false
-			COM_BufInsertText(server, "pause")
-		end
-	end
-end)
-
 addHook("PlayerQuit", function(player, reason)
 	if DiscordBot.Commands.cv_joinquit.value != 1 then return end
-	-- Allow rejoin events: re-set pending_joins when player reconnects
-	if DiscordBot.pending_joins then DiscordBot.pending_joins[tostring(#player)] = nil end
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n"
 	if reason == KR_KICK then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:KICK_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
 	if reason == KR_BAN then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:BAN_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
