@@ -499,14 +499,9 @@ addHook("PlayerThink", function(player)
  then
 		if player.logjoin != true
  then
-			local text = "[EVENT:CHAT]|["..#player.."]|System|:rocket:"..player.name.." has joined the game:rocket:\n"
-			if text
- then
-				DiscordBot.Functions.spamchatbug(player, text, true)
-				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
-				DiscordBot.Functions.flush_msgsrb2()
-				player.logjoin = true
-			end
+			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
+			DiscordBot.Functions.flush_msgsrb2()
+			player.logjoin = true
 		end
 	end
 end, MT_PLAYER)
@@ -535,63 +530,13 @@ addHook("PlayerJoin", function(playernum)
 end)
 
 addHook("PlayerQuit", function(player, reason)
-	local text = nil
-	if DiscordBot.Commands.cv_joinquit.value == 1
- then
-		player.quitlog = true
-		if reason == KR_KICK
- then
-			text = "[EVENT:CHAT]|["..#player.."]|System|:boot:"..player.name.." has been kicked:boot:\n"
-		end
-		if reason == KR_PINGLIMIT
- then
-			text = "[EVENT:CHAT]|["..#player.."]|System|:red_square:"..player.name.." left the game (Ping limit):red_square:\n"
-		end
-		if reason == KR_SYNCH
- then
-			text = "[EVENT:CHAT]|["..#player.."]|System|:o:"..player.name.." left the game (Synch Failure):o:\n"
-		end
-		if reason == KR_TIMEOUT
- then
-			text = "[EVENT:CHAT]|["..#player.."]|System|:o:"..player.name.." left the game (Connection timeout):o:\n"
-		end
-		if reason == KR_BAN
- then
-			text = "[EVENT:CHAT]|["..#player.."]|System|:hammer:"..player.name.." has been banned:hammer:\n"
-		end
-		if reason == KR_LEAVE
- then
-			text = "[EVENT:CHAT]|["..#player.."]|System|:door:"..player.name.." left the game:door:\n"
-		end
-		if text
- then
-			DiscordBot.Functions.spamchatbug(player, text, true)
-			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n"
-			if reason == KR_KICK then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:KICK_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
-			if reason == KR_BAN then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:BAN_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
-			DiscordBot.Functions.flush_msgsrb2()
-		end
-	end
-	/*
-	--pause if server is empty
-	if DiscordBot.Commands.cv_autopause.value == 1
- then
-		local count = 0
-		count = DiscordBot.Functions.playerontheserver()
-		count = $ - 1
-		if count == 0
- then
-			if paused == false
- then
-				DiscordBot.Data.paused = true
-				COM_BufInsertText(server, "server_log players")
-				COM_BufInsertText(server, "server_log pause")
-				COM_BufInsertText(server, "pause")
-			end
-		end
-	end
-	*/
-end, MT_PLAYER)
+	if DiscordBot.Commands.cv_joinquit.value != 1 then return end
+	player.quitlog = true
+	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n"
+	if reason == KR_KICK then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:KICK_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
+	if reason == KR_BAN then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:BAN_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
+	DiscordBot.Functions.flush_msgsrb2()
+end)
 
 addHook("NetVars", function(n)
 	 DiscordBot.Data = n($)
