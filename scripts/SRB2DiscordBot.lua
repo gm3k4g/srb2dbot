@@ -485,11 +485,9 @@ addHook("PlayerMsg", function(player, type, target, msg)
 end)
 
 addHook("PlayerJoin", function(playernum)
-	if DiscordBot.Commands.cv_joinquit.value == 1
- then
-		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..players[playernum].name.."|"..playernum.."\n"
-		DiscordBot.Functions.flush_msgsrb2()
-	end
+	-- Flag this player for a single PLAYER_JOIN emission on next PlayerThink
+	if not DiscordBot.pending_joins then DiscordBot.pending_joins = {} end
+	DiscordBot.pending_joins[playernum] = true
 	-- Unpause if player has joined the game
 	if DiscordBot.Commands.cv_autopause.value == 1
  then
@@ -499,6 +497,16 @@ addHook("PlayerJoin", function(playernum)
 		end
 	end
 end)
+
+-- Minimal PlayerThink: emits PLAYER_JOIN exactly once per player
+-- (player needs a mobj for player.name to be accessible)
+addHook("PlayerThink", function(player)
+	if DiscordBot.pending_joins and DiscordBot.pending_joins[#player] then
+		DiscordBot.pending_joins[#player] = nil
+		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
+		DiscordBot.Functions.flush_msgsrb2()
+	end
+end, MT_PLAYER)
 
 local function reason_to_string(r)
 	if r == KR_KICK then return "Kicked"
@@ -513,6 +521,7 @@ end
 
 addHook("PlayerQuit", function(player, reason)
 	if DiscordBot.Commands.cv_joinquit.value != 1 then return end
+	if DiscordBot.pending_joins then DiscordBot.pending_joins[#player] = nil end
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n"
 	if reason == KR_KICK then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:KICK_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
 	if reason == KR_BAN then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:BAN_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
