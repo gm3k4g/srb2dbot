@@ -21,6 +21,10 @@ run
 # Generated header: version.h.cmake -> build/source/version.h
 source/version.h
 
+# Session logs
+logs/
+latest-log.txt
+
 # Secret
 secret.json
 

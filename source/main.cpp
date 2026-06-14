@@ -8,6 +8,9 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <ctime>
+#include <unistd.h>
+#include <algorithm>
 
 #include "version.h"
 #include "srb2dbot/utils.hpp"
@@ -56,8 +59,35 @@ int main() {
     std::string bridge_channel_id = data.contains("channel_id") && data["channel_id"].is_string()
         ? data["channel_id"].get<std::string>() : "0";
 
+    // ── Session-based logging ──
+    std::string log_dir = std::string(getenv("HOME")) + "/Desktop/srb2dbot/logs";
+    std::filesystem::create_directories(log_dir);
+    std::time_t now = std::time(nullptr);
+    char ts[64];
+    std::strftime(ts, sizeof(ts), "%Y-%m-%d_%H-%M-%S", std::localtime(&now));
+    std::string log_name = log_dir + "/" + ts + ".txt";
+    auto log_stream = std::make_shared<std::ofstream>(log_name, std::ios::app);
+    if (log_stream->is_open()) {
+        std::string symlink_name = std::string(getenv("HOME")) + "/Desktop/srb2dbot/latest-log.txt";
+        std::filesystem::remove(symlink_name);
+        std::filesystem::create_symlink(log_name, symlink_name);
+        std::vector<std::filesystem::path> old_logs;
+        for (auto& entry : std::filesystem::directory_iterator(log_dir)) {
+            if (entry.path().extension() == ".txt") old_logs.push_back(entry.path());
+        }
+        std::sort(old_logs.begin(), old_logs.end());
+        while (old_logs.size() > 7) {
+            std::filesystem::remove(old_logs.front());
+            old_logs.erase(old_logs.begin());
+        }
+    }
     dpp::cluster bot(bot_token, dpp::i_default_intents | dpp::i_message_content);
-    bot.on_log(dpp::utility::cout_logger());
+    bot.on_log([log_stream](const dpp::log_t& event) {
+        std::cout << event.message << std::endl;
+        if (log_stream && log_stream->is_open()) {
+            *log_stream << event.message << std::endl;
+        }
+    });
 
     const bool fifo_available = detect_fifo_support();
 
