@@ -439,6 +439,7 @@ addHook("ThinkFrame", bot_function)
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
 	if type == 0 then
+		if server ~= player and target ~= 0 then return end
 		local text = nil
 		local message = msg
 		local sendit = false
