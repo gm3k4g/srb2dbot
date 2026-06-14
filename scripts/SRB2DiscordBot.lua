@@ -499,9 +499,17 @@ addHook("PlayerThink", function(player)
  then
 		if player.logjoin != true
  then
-			DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
-			DiscordBot.Functions.flush_msgsrb2()
 			player.logjoin = true
+			-- Deduplication guard: track emitted joins by player node
+			if not DiscordBot.Data.emitted_joins then DiscordBot.Data.emitted_joins = {} end
+			local dup_key = tostring(#player)
+			if DiscordBot.Data.emitted_joins[dup_key] then
+				if DiscordBot.Data.debug then print("[DEBUG] PlayerThink: skipping duplicate join for node "..dup_key) end
+			else
+				DiscordBot.Data.emitted_joins[dup_key] = true
+				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_JOIN]|"..player.name.."|"..#player.."\n"
+				DiscordBot.Functions.flush_msgsrb2()
+			end
 		end
 	end
 end, MT_PLAYER)
@@ -532,6 +540,8 @@ end)
 addHook("PlayerQuit", function(player, reason)
 	if DiscordBot.Commands.cv_joinquit.value != 1 then return end
 	player.quitlog = true
+	-- Allow rejoin events for this node
+	if DiscordBot.Data.emitted_joins then DiscordBot.Data.emitted_joins[tostring(#player)] = nil end
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:PLAYER_QUIT]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n"
 	if reason == KR_KICK then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:KICK_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
 	if reason == KR_BAN then DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2.."[EVENT:BAN_PLAYER]|"..player.name.."|"..#player.."|"..reason_to_string(reason).."\n" end
