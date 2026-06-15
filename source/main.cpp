@@ -303,7 +303,9 @@ int main() {
                             }
                             auto embed_opt = registry.handle_bridge_event(*event);
                             if (embed_opt.has_value()) {
+#ifndef NDEBUG
                                 std::cout << "[bridge] SRB2→Discord: " << event->type << " raw=" << line << std::endl;
+#endif
                                 auto attach = registry.get_bridge_attachment(*event);
                                 if (attach.has_value()) {
                                     // Flush pending, then send thumbnailed embed individually
