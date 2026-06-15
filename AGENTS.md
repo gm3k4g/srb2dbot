@@ -12,11 +12,14 @@
 ## Build & Test Commands
 
 ```bash
-# Build (auto-detects NixOS vs Linux)
+# Build (auto-detects NixOS vs Linux, defaults to 4 jobs)
 ./build.sh
 
+# Release build
+./build.sh --release
+
 # With tests
-BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh
+./build.sh --test
 
 # Manual build
 cmake -B build -DCMAKE_BUILD_TYPE=Debug -Dsrb2dbot_DEVELOPER_MODE=ON

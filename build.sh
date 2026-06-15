@@ -4,7 +4,7 @@ set -euo pipefail
 # ── defaults ──────────────────────────────────────────────
 BUILD_DIR="build"
 BUILD_TYPE="Debug"
-JOBS="8"
+JOBS="4"
 RUN_TESTS=0
 CLEAN=0
 RUN_BOT=0
@@ -28,7 +28,7 @@ Options:
   -h, --help      Show this help message
   -c, --clean     Remove build directory and reconfigure from scratch
   -r, --release   Build in Release mode (default: Debug)
-  -j, --jobs N    Number of parallel build jobs (default: 2)
+  -j, --jobs N    Number of parallel build jobs (default: 4)
   -t, --test      Run tests after building
   --run           Run the bot after building
   -B, --build-dir DIR  Set build directory (default: build)
@@ -71,7 +71,7 @@ DEVELOPER_MODE=$([[ "$RUN_TESTS" -eq 1 ]] && echo "ON" || echo "OFF")
 
 # ── banner ────────────────────────────────────────────────
 echo ""
-echo -e "${BOLD}${GREEN}  srb2dbot${NC}  -  ${BUILD_TYPE} build  -  $(nproc) jobs"
+echo -e "${BOLD}${GREEN}  srb2dbot${NC}  -  ${BUILD_TYPE} build  -  ${JOBS} jobs"
 echo ""
 
 # ── clean if requested ────────────────────────────────────

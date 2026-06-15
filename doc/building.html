@@ -77,17 +77,23 @@
 
 <h3>Using the Build Script (Recommended)</h3>
 <p>The <code>build.sh</code> script auto-detects NixOS vs regular Linux and handles everything:</p>
-<pre><code># Default: Debug build with tests
+<pre><code># Default: Debug build (4 parallel jobs)
 ./build.sh
 
-# Run tests after build
-RUN_TESTS=ON ./build.sh
-
 # Release mode
-BUILD_TYPE=Release ./build.sh
+./build.sh --release
 
-# Custom build directory
-BUILD_DIR=out ./build.sh</code></pre>
+# Run tests after build
+./build.sh --test
+
+# Clean rebuild
+./build.sh --clean --release
+
+# Custom build directory and job count
+./build.sh --build-dir out --jobs 4
+
+# Release build + run tests + start bot
+./build.sh --release --test --run</code></pre>
 
 <h3>Manual Build</h3>
 <pre><code># Configure
@@ -103,7 +109,7 @@ cmake --build build -j$(nproc)</code></pre>
 <h2>Testing</h2>
 <p>The project includes <strong>77 tests</strong> (66 unit + 11 end-to-end pipeline tests) covering utility functions, filename sanitization, script manipulation, chat bridge message sanitization, file polling, emoji conversion, event parsing, polling lifecycle, event pipeline simulation (dbot_sync replay, ROUND_END with teams, CTF batch detection, bot restart recovery).</p>
 <pre><code># Build with tests
-BUILD_DIR=build BUILD_TYPE=Debug RUN_TESTS=ON ./build.sh
+./build.sh --test
 
 # Or manually
 cmake -B build -DCMAKE_BUILD_TYPE=Debug -Dsrb2dbot_DEVELOPER_MODE=ON
@@ -154,6 +160,7 @@ cd build && ctest --output-on-failure
     <li><code>ci-sanitize</code>  -  Debug build with ASan and UBSan</li>
     <li><code>ci-coverage</code>  -  Coverage build with gcov/lcov</li>
 </ul>
+<p>The <code>build.sh</code> script defaults to <strong>4 parallel jobs</strong>. Override with <code>-j N</code>.</p>
 <pre><code>cmake --preset ci-ubuntu
 cmake --build build -j$(nproc)</code></pre>
 
