@@ -234,6 +234,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 		end
 	elseif arg == "discord"
  then
+		print("[dbot] server_log discord: reading discordmessage.txt")
 		local d_msg = io.openlocal("client/DiscordBot/discordmessage.txt", "r")
 		if d_msg
  then
@@ -273,6 +274,7 @@ COM_AddCommand("discord_message", function(player, ...)
 	if not ... then return end
 	local args = {...}
 	local msg = table.concat(args, " ", 1, #args)
+	print("[dbot] discord_message: "..msg)
 	chatprint("\x89".."[Discord]".."\x80"..msg, true)
 end)
 
