@@ -24,7 +24,10 @@ public:
     }
 
     auto handle_message(const dpp::message_create_t& event) -> bool override {
-        if (!bridge_channel_sf_.has_value()) return false;
+        if (!bridge_channel_sf_.has_value()) {
+            std::cout << "[relay] no bridge channel configured" << std::endl;
+            return false;
+        }
 
         dpp::snowflake channel_id = bridge_channel_sf_.value();
         if (event.msg.channel_id != channel_id) return false;
@@ -58,6 +61,9 @@ public:
             std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
             if (disc_file.is_open()) {
                 disc_file << "<" << display_name << "> " << sanitized << "\n";
+                std::cout << "[relay] wrote to file: " << bridge_path + "/discordmessage.txt" << std::endl;
+            } else {
+                std::cout << "[relay] failed to open " << bridge_path + "/discordmessage.txt" << std::endl;
             }
         }
         std::cout << "[bridge] Discord→SRB2: <" << display_name << "> " << sanitized << std::endl;
