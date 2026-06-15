@@ -7,6 +7,7 @@ do
 end
 
 rawset(_G, "DiscordBot", {})
+DiscordBot.version = "0.1.34"
 DiscordBot.Data = {}
 DiscordBot.Data.msgsrb2 = ''
 DiscordBot.Data.pcmtsrb2 = ''
@@ -581,3 +582,4 @@ end
 
 -- Mark initialization complete so any subsequent loads return early
 CV_RegisterVar({name = "dbot_initialized", defaultvalue = "On", PossibleValue = CV_OnOff})
+CV_RegisterVar({name = "dbot_version", defaultvalue = "0.1.34"})
