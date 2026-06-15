@@ -148,7 +148,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 	if player ~= server then return end
 	if arg == "msg"
  then
-		if DiscordBot.Data.msgsrb2
+		if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 ~= ''
  then
 			local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a")
 			logmsg:write(DiscordBot.Data.msgsrb2)
@@ -435,6 +435,13 @@ addHook("ThinkFrame", bot_function)
 
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
+	if not DiscordBot._player_msg_cache then DiscordBot._player_msg_cache = {} end
+	local cache = DiscordBot._player_msg_cache
+	local cache_key = tostring(#player).."|"..tostring(type).."|"..tostring(target).."|"..msg
+	if cache[cache_key] == leveltime then
+		return true
+	end
+	cache[cache_key] = leveltime
 	if type == 0 then
 		if server ~= player and target and target ~= 0 then return end
 		local text = nil

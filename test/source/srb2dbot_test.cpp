@@ -364,15 +364,13 @@ void test_bridge_polling_cycle() {
     TEST("bridge_integration: empty file has zero lines");
     {
         std::ofstream f(tmp, std::ios::trunc);
-        f << "\n";
     }
-    CHECK(bridge_get_lines(tmp) == 1);
+    CHECK(bridge_get_lines(tmp) == 0);
     PASS();
 
     TEST("bridge_integration: detect new lines via seek tracking");
     {
         std::ofstream f(tmp, std::ios::trunc);
-        f << "\n";
     }
     {
         size_t seek = bridge_get_lines(tmp);
@@ -390,10 +388,10 @@ void test_bridge_polling_cycle() {
     TEST("bridge_integration: multiple incremental polls");
     {
         std::ofstream f(tmp, std::ios::trunc);
-        f << "\nline1\n";
+        f << "line1\n";
     }
     {
-        size_t s = 1;
+        size_t s = 0;
         {
             std::ofstream f(tmp, std::ios::app);
             f << "line2\nline3\n";
@@ -407,13 +405,12 @@ void test_bridge_polling_cycle() {
     TEST("bridge_integration: emoji conversion on full message");
     {
         std::ofstream f(tmp, std::ios::trunc);
-        f << "\n";
     }
     {
         std::ofstream f(tmp, std::ios::app);
         f << ":smile: hello :wave: world\n";
     }
-    size_t s = 1;
+    size_t s = 0;
     {
         std::ofstream f(tmp, std::ios::app);
         f << ":smile: again\n";
@@ -432,9 +429,9 @@ void test_bridge_polling_cycle() {
         std::string big_line(1200, 'x');
         {
             std::ofstream f(tmp, std::ios::trunc);
-            f << "\n" << big_line << "\n";
+            f << big_line << "\n";
         }
-        std::string capped = bridge_read_range(tmp, 0, 2);
+        std::string capped = bridge_read_range(tmp, 0, 1);
         CHECK(!capped.empty());
     }
     PASS();

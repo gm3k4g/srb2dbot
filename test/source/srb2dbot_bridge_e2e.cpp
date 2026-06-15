@@ -32,7 +32,6 @@ void test_discord_to_srb2_e2e() {
     std::string display_name = "TestUser";
     {
         std::ofstream f(tmp, std::ios::trunc);
-        f << "\n";
     }
     {
         std::ofstream f(tmp, std::ios::app);
@@ -40,7 +39,6 @@ void test_discord_to_srb2_e2e() {
     }
     std::ifstream verify(tmp);
     std::string line;
-    std::getline(verify, line); // skip header
     std::getline(verify, line);
     CHECK(line.find("<TestUser>") != std::string::npos);
     PASS();
@@ -67,7 +65,6 @@ void test_srb2_to_discord_e2e() {
     TEST("E2E: full polling lifecycle with seek tracking");
     {
         std::ofstream f(tmp, std::ios::trunc);
-        f << "\n";
     }
     size_t seek = 0;
 
@@ -132,7 +129,6 @@ void test_bridge_full_cycle() {
     std::string sanitized = sanitize_message_for_srb2(raw);
     {
         std::ofstream f(disc_tmp, std::ios::trunc);
-        f << "\n";
     }
     {
         std::ofstream f(disc_tmp, std::ios::app);
@@ -140,7 +136,6 @@ void test_bridge_full_cycle() {
     }
     std::ifstream check(disc_tmp);
     std::string l;
-    std::getline(check, l); // skip header
     std::getline(check, l);
     CHECK(l.find("<DiscordUser>") != std::string::npos);
     CHECK(l.find("[LINK]") != std::string::npos);
@@ -148,7 +143,6 @@ void test_bridge_full_cycle() {
     // Step 2: SRB2 player responds → Discord
     {
         std::ofstream f(msg_tmp, std::ios::trunc);
-        f << "\n";
     }
     size_t seek = 0;
     {
@@ -171,7 +165,7 @@ void test_bridge_full_cycle() {
         f << "<User3> " << sanitize_message_for_srb2("third msg") << "\n";
     }
     int disc_lines = bridge_get_lines(disc_tmp);
-    CHECK(disc_lines == 4);
+    CHECK(disc_lines == 3);
 
     // Step 4: Multiple SRB2 messages
     {
@@ -212,7 +206,6 @@ void test_bridge_event_pipeline() {
     TEST("E2E: pipeline simulates dbot_sync startup replay");
     {
         std::ofstream f(msg_tmp, std::ios::trunc);
-        f << "\n";  // Bot init line
     }
     size_t seek = 0;
 
@@ -228,7 +221,7 @@ void test_bridge_event_pipeline() {
 
     // Bot poll 1: pick up startup events
     size_t lines = bridge_get_lines(msg_tmp);
-    CHECK(lines == 3);  // header + 2 events
+    CHECK(lines == 2);  // 2 events
     std::string content = bridge_read_range(msg_tmp, seek, lines);
     CHECK(content.find("SERVER_START") != std::string::npos);
     CHECK(content.find("ROUND_START") != std::string::npos);
@@ -243,7 +236,7 @@ void test_bridge_event_pipeline() {
         f << "[EVENT:ROUND_END]|CTF|MAP01|MAPNAME:Greenflower Zone|TEAM:Red:3|RED:Sonic:2|RED:Tails:1|TEAM:Blue:1|BLUE:Knuckles:1|SPEC:Watcher\n";
     }
     lines = bridge_get_lines(msg_tmp);
-    CHECK(lines == 4);
+    CHECK(lines == 3);
     content = bridge_read_range(msg_tmp, seek, lines);
     CHECK(content.find("ROUND_END") != std::string::npos);
     CHECK(content.find("TEAM:Red:3") != std::string::npos);
@@ -289,7 +282,6 @@ void test_bridge_event_pipeline() {
     TEST("E2E: pipeline handles bot restart with dbot_sync");
     {
         std::ofstream f(msg_tmp, std::ios::trunc);
-        f << "\n";  // fresh init line
     }
     seek = 0;
     // Lua re-emits current state
@@ -299,7 +291,7 @@ void test_bridge_event_pipeline() {
         f << "[EVENT:ROUND_START]|Match|MAP03|Azure Temple Act 2\n";
     }
     lines = bridge_get_lines(msg_tmp);
-    CHECK(lines == 3);
+    CHECK(lines == 2);
     content = bridge_read_range(msg_tmp, seek, lines);
     CHECK(content.find("SERVER_START") != std::string::npos);
     CHECK(content.find("ROUND_START") != std::string::npos);

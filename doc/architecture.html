@@ -100,6 +100,14 @@
 <p>On bot startup, a <code>dbot_sync</code> FIFO command triggers the Lua script to re-emit current server state (SERVER_START + ROUND_START if active). This ensures events are visible within the next poll cycle even after a restart.</p>
 <p>Both files are cleared on bot startup. The bridge channel and bot identity are configured in <code>secret.json</code>.</p>
 
+<h3>Double-Post Prevention</h3>
+<p>The <code>PlayerMsg</code> hook in SRB2 can fire twice for a single chat message. The companion Lua script prevents duplicate Discord posts through two mechanisms:</p>
+<ul>
+    <li><strong>Frame-level dedup in PlayerMsg:</strong> Each message is tracked by <code>(player_node, type, target, msg)</code> combined with <code>leveltime</code>. On a second fire within the same tick, <code>true</code> is returned to suppress the duplicate without writing to <code>Messages.txt</code>.</li>
+    <li><strong>Guard fix in server_log msg:</strong> The handler now checks <code>DiscordBot.Data.msgsrb2 ~= ''</code> alongside the existing truthy check, preventing file open/write/close cycles when the buffer is empty (empty string is truthy in Lua).</li>
+</ul>
+<p>The C++ bot no longer writes an initial <code>\n</code> to <code>Messages.txt</code> on startup, eliminating the phantom empty line that was previously tracked as line 1.</p>
+
 <h2>Key Files</h2>
 <table>
     <tr><th>File</th><th>Role</th></tr>

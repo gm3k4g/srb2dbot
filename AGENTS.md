@@ -77,6 +77,17 @@ When modifying the codebase, maintain these invariants:
 5. **JSON parsing**  -  must use try/catch with proper error messages.
 6. **Password redaction**  -  lines containing "password" must be redacted in script display/output.
 
+## Double-Post Fix (PlayerMsg)
+
+The `PlayerMsg` hook in SRB2 can fire **twice** for a single chat message (engine-level behavior, not a script bug). This previously caused duplicate `[EVENT:CHAT]` lines in `Messages.txt` with different `jointime` fields, which bypassed the C++ line-level dedup.
+
+### Fix applied in `scripts/SRB2DiscordBot-v0.1.35.lua`:
+- **PlayerMsg dedup**: Tracks `(player_node, type, target, msg)` combined with `leveltime` at the top of the hook. On the second fire within the same tick, returns `true` to suppress the duplicate without writing to `Messages.txt`.
+- **`server_log msg` handler**: Added `~= ''` guard to match `flush_msgsrb2()`, preventing spurious file open/write/close cycles when `msgsrb2` is empty.
+
+### Fix applied in `source/main.cpp`:
+- **Removed phantom newline**: No longer writes `\n` to `Messages.txt` on startup. The code already handles empty files correctly (`seek_start == seek_end == 0` → skip).
+
 ## Current TODO List
 
 From `source/main.cpp` comments:

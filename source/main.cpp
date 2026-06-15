@@ -211,15 +211,12 @@ int main() {
     std::string messages_path = bridge_dir + "/Messages.txt";
     {
         std::ofstream msg_file(messages_path, std::ios::trunc);
-        if (msg_file.is_open()) msg_file << "\n";
     }
     {
         std::ofstream disc_file(bridge_dir + "/discordmessage.txt", std::ios::trunc);
-        if (disc_file.is_open()) disc_file << "\n";
     }
     {
         std::ofstream con_file(bridge_dir + "/console.txt", std::ios::trunc);
-        if (con_file.is_open()) con_file << "\n";
     }
 
     // Read auto_pause from modules.json and write to console.txt for the Lua script
