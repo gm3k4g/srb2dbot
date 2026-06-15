@@ -10,15 +10,13 @@ public:
     auto name() const -> std::string_view override { return "chat_relay"; }
     auto description() const -> std::string_view override { return "Relay chat messages between Discord and SRB2"; }
 
-    explicit ChatRelayModule(bool fifo_enabled, const std::string& bridge_id = "", const std::string& bot_id_val = "")
-        : fifo_available_(fifo_enabled) {
+    explicit ChatRelayModule(const std::string& bridge_id = "", const std::string& bot_id_val = "") {
         if (!bridge_id.empty() && bridge_id != "0") {
             bridge_channel_sf_ = std::stoull(bridge_id);
         }
         bot_id_ = bot_id_val;
     }
 
-    // ChatRelay provides no slash commands
     auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override {
         return {};
     }
@@ -47,18 +45,14 @@ public:
             if (c == '<' || c == '>' || c == '|' || c == '\\' || c == '"') c = '_';
         }
 
-        std::string cmd = "discord_message <" + display_name + "> " + sanitized;
-        bool sent = false;
-        if (fifo_available_) sent = pipe_srb2_server_do(cmd);
-
-        if (!sent) {
-            std::string home = dir_srb2_str();
-            std::string bridge_path = home + "/luafiles/client/DiscordBot";
-            std::filesystem::create_directories(bridge_path);
-            std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
-            if (disc_file.is_open()) {
-                disc_file << "<" << display_name << "> " << sanitized << "\n";
-            }
+        // Write to discordmessage.txt — Lua reads and dispatches this file
+        // every ~2 seconds via bot_function() → server_log discord.
+        std::string home = dir_srb2_str();
+        std::string bridge_path = home + "/luafiles/client/DiscordBot";
+        std::filesystem::create_directories(bridge_path);
+        std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
+        if (disc_file.is_open()) {
+            disc_file << "<" << display_name << "> " << sanitized << "\n";
         }
 #ifndef NDEBUG
         std::cout << "[bridge] Discord→SRB2: <" << display_name << "> " << sanitized << std::endl;
@@ -66,14 +60,11 @@ public:
         return true;
     }
 
-
-
 private:
-    bool fifo_available_;
     std::optional<dpp::snowflake> bridge_channel_sf_;
     std::string bot_id_;
 };
 
-auto create_relay_module(const std::string& bridge_channel, const std::string& bot_id, bool fifo_available) -> std::unique_ptr<Module> {
-    return std::make_unique<ChatRelayModule>(fifo_available, bridge_channel, bot_id);
+auto create_relay_module(const std::string& bridge_channel, const std::string& bot_id, bool /*fifo_available*/) -> std::unique_ptr<Module> {
+    return std::make_unique<ChatRelayModule>(bridge_channel, bot_id);
 }
