@@ -4,7 +4,7 @@ set -euo pipefail
 # ── defaults ──────────────────────────────────────────────
 BUILD_DIR="build"
 BUILD_TYPE="Debug"
-JOBS="$(nproc)"
+JOBS="8"
 RUN_TESTS=0
 CLEAN=0
 RUN_BOT=0
