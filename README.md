@@ -69,13 +69,32 @@ Create `secret.json` from the template and fill in these fields:
 
 ## Dependencies
 
-- **C++26** compiler (GCC 14+ / Clang 18+)
-- **CMake** 3.14+
-- **[D++](https://dpp.dev)** - Discord API library
-- **[nlohmann/json](https://github.com/nlohmann/json)** - JSON parsing
-- **ImageMagick** - thumbnail generation (install `imagemagick` on Debian)
-- **unzip** - PK3 lump extraction for thumbnails
-- **systemd** + **bash** (runtime)
+### srb2dbot (build)
+| Dependency | Minimum | Notes |
+|---|---|---|
+| C++ compiler | GCC 14+ / Clang 18+ | C++26 required |
+| CMake | 3.14+ | |
+| [D++](https://dpp.dev) | 10.x | Discord API library |
+| [nlohmann/json](https://github.com/nlohmann/json) | 3.x | JSON parsing |
+| systemd | — | Service management |
+| bash | — | Script validation |
+
+### srb2dbot (runtime)
+| Dependency | Notes |
+|---|---|
+| systemd | For restart/stop commands |
+| bash | Script validation and `srb2_dbot.sh` |
+
+### Thumbnail grabber (runtime)
+| Dependency | Package | Notes |
+|---|---|---|
+| ImageMagick | `imagemagick` | PPM → PNG conversion |
+| unzip | `unzip` | PK3 lump extraction |
+
+### Ubuntu / Debian quick setup
+```bash
+sudo apt install build-essential cmake libdpp-dev nlohmann-json3-dev imagemagick unzip
+```
 
 ## Testing
 

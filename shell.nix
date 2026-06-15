@@ -6,6 +6,8 @@ pkgs.mkShell {
     gcc
     dpp
     nlohmann_json
+    imagemagick
+    unzip
   ];
 
   nativeBuildInputs = with pkgs; [

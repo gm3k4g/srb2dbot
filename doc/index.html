@@ -230,13 +230,21 @@ cp secret.json.default secret.json
 </ul>
 
 <h2>Dependencies</h2>
+
+<h3>srb2dbot (build)</h3>
 <ul>
     <li><strong>C++26</strong> compiler (GCC 14+ or Clang 18+)</li>
     <li><strong>CMake</strong> 3.14+</li>
-    <li><strong><a href="https://dpp.dev">D++</a></strong>  -  Discord API library</li>
-    <li><strong><a href="https://github.com/nlohmann/json">nlohmann/json</a></strong>  -  JSON parsing</li>
+    <li><strong><a href="https://dpp.dev">D++</a></strong> 10.x  -  Discord API library</li>
+    <li><strong><a href="https://github.com/nlohmann/json">nlohmann/json</a></strong> 3.x  -  JSON parsing</li>
     <li><strong>systemd</strong>  -  for service management</li>
     <li><strong>bash</strong>  -  for script validation</li>
+</ul>
+
+<h3>Thumbnail grabber (runtime)</h3>
+<ul>
+    <li><strong>ImageMagick</strong> (<code>imagemagick</code>)  -  PPM to PNG conversion</li>
+    <li><strong>unzip</strong>  -  PK3 lump extraction</li>
 </ul>
 
 <h2>Test Suite</h2>

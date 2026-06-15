@@ -81,13 +81,57 @@ if [[ "$CLEAN" -eq 1 ]] && [[ -d "$BUILD_DIR" ]]; then
 fi
 
 # ── dependency check ──────────────────────────────────────
+check_dep() {
+    local name="$1"
+    local pkg="${2:-$1}"
+    local critical="${3:-yes}"
+    if command -v "$name" &>/dev/null || [[ -f "$name" ]]; then
+        ok "Found: $name"
+    else
+        if [[ "$critical" == "yes" ]]; then
+            die "$name not found. Install with: sudo apt install $pkg"
+        else
+            warn "$name not found (optional: sudo apt install $pkg)"
+        fi
+    fi
+}
+
+check_header() {
+    local header="$1" name="$2" pkg="$3"
+    if echo "#include <$header>" | g++ -fsyntax-only -x c++ - 2>/dev/null; then
+        ok "Found: $name ($header)"
+    else
+        die "$name not found. Install with: sudo apt install $pkg"
+    fi
+}
+
 if is_nixos; then
     command -v nix-shell &>/dev/null || die "nix-shell not found"
     info "NixOS detected  -  using nix-shell"
 else
-    command -v cmake &>/dev/null || die "cmake not found. Install it first."
+    echo ""
+    info "Checking build dependencies..."
+    command -v cmake &>/dev/null || die "cmake not found. Install: sudo apt install cmake"
+    ok "Found: cmake"
     command -v g++ &>/dev/null || command -v clang++ &>/dev/null || \
-        die "No C++ compiler found (g++ or clang++)"
+        die "No C++ compiler found. Install: sudo apt install build-essential"
+    ok "Found: C++ compiler ($(command -v g++ 2>/dev/null || command -v clang++))"
+    check_header "dpp/dpp.h" "D++" "libdpp-dev"
+    check_header "nlohmann/json.hpp" "nlohmann/json" "nlohmann-json3-dev"
+    echo ""
+    info "Checking runtime dependencies..."
+    check_dep "convert" "imagemagick" "no"
+    check_dep "magick" "imagemagick" "no"
+    if ! command -v convert &>/dev/null && ! command -v magick &>/dev/null; then
+        warn "ImageMagick not found  -  thumbnails will not be generated"
+        warn "  Install: sudo apt install imagemagick"
+    fi
+    check_dep "unzip" "unzip" "no"
+    if ! command -v unzip &>/dev/null; then
+        warn "unzip not found  -  thumbnail extraction will fail"
+    fi
+    check_dep "bash" "bash"
+    echo ""
 fi
 
 # ── build ─────────────────────────────────────────────────

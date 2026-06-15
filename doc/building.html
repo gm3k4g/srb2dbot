@@ -39,6 +39,8 @@
 <h1>Building srb2dbot</h1>
 
 <h2>Prerequisites</h2>
+
+<h3>srb2dbot</h3>
 <table>
     <tr><th>Dependency</th><th>Minimum Version</th><th>Notes</th></tr>
     <tr><td>C++ compiler</td><td>GCC 14 / Clang 18</td><td>C++26 support required</td></tr>
@@ -49,6 +51,13 @@
     <tr><td>bash</td><td> - </td><td>Script syntax validation</td></tr>
 </table>
 
+<h3>Thumbnail grabber</h3>
+<table>
+    <tr><th>Dependency</th><th>Package</th><th>Notes</th></tr>
+    <tr><td>ImageMagick</td><td><code>imagemagick</code></td><td>PPM to PNG conversion</td></tr>
+    <tr><td>unzip</td><td><code>unzip</code></td><td>PK3 lump extraction</td></tr>
+</table>
+
 <h3>Installing Dependencies</h3>
 
 <h4>NixOS / Nix</h4>
@@ -56,7 +65,7 @@
 <pre><code>nix-shell</code></pre>
 
 <h4>Ubuntu / Debian</h4>
-<pre><code>sudo apt install build-essential cmake libdpp-dev nlohmann-json3-dev</code></pre>
+<pre><code>sudo apt install build-essential cmake libdpp-dev nlohmann-json3-dev imagemagick unzip</code></pre>
 
 <h4>Arch Linux</h4>
 <pre><code>sudo pacman -S cmake dpp nlohmann-json</code></pre>
