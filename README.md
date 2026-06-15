@@ -71,8 +71,10 @@ Create `secret.json` from the template and fill in these fields:
 
 - **C++26** compiler (GCC 14+ / Clang 18+)
 - **CMake** 3.14+
-- **[D++](https://dpp.dev)**  -  Discord API library
-- **[nlohmann/json](https://github.com/nlohmann/json)**  -  JSON parsing
+- **[D++](https://dpp.dev)** - Discord API library
+- **[nlohmann/json](https://github.com/nlohmann/json)** - JSON parsing
+- **ImageMagick** - thumbnail generation (install `imagemagick` on Debian)
+- **unzip** - PK3 lump extraction for thumbnails
 - **systemd** + **bash** (runtime)
 
 ## Testing
