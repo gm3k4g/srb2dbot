@@ -7,9 +7,10 @@ set -euo pipefail
 # Usage: ./srb2_dbot.sh [--release] [port] [room] [servername] [lua_wad_path]
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BUILD_ARGS=""
+BUILD_ARGS="-r"
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --debug) BUILD_ARGS=""; shift ;;
         --release) BUILD_ARGS="-r"; shift ;;
         *) break ;;
     esac
