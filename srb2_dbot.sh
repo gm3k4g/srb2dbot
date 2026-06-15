@@ -4,9 +4,16 @@ set -euo pipefail
 # srb2_dbot.sh  -  minimal SRB2 server with Discord bridge Lua
 # Run this alongside srb2dbot to test the chat bridge locally.
 #
-# Usage: ./srb2_dbot.sh [port] [room] [servername] [lua_wad_path]
+# Usage: ./srb2_dbot.sh [--release] [port] [room] [servername] [lua_wad_path]
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BUILD_ARGS=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --release) BUILD_ARGS="-r"; shift ;;
+        *) break ;;
+    esac
+done
 PORT="${1:-5029}"
 ROOM="${2:-38}"
 SERVERNAME="${3:-srb2dbot test server}"
@@ -60,6 +67,7 @@ mkdir -p "$HOME/.srb2/luafiles/client/DiscordBot"
 cp "$LUA_WAD" "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua"
 
 echo "=== srb2_dbot ==="
+[[ -n "$BUILD_ARGS" ]] && echo "Mode:   Release"
 echo "Server: $SERVERNAME"
 echo "Port:   $PORT"
 echo "Room:   $ROOM"
@@ -69,7 +77,7 @@ echo ""
 echo "[srb2_dbot] Launching srb2dbot..."
 if [[ ! -f "$SCRIPT_DIR/build/srb2dbot" ]]; then
     echo "[srb2_dbot] Binary not found, building..."
-    "$SCRIPT_DIR/build.sh" || { echo "ERROR: Build failed" >&2; exit 1; }
+    "$SCRIPT_DIR/build.sh" $BUILD_ARGS || { echo "ERROR: Build failed" >&2; exit 1; }
 fi
 "$SCRIPT_DIR/build/srb2dbot" &
 BOT_PID=$!
