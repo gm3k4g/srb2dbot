@@ -35,7 +35,7 @@ local test_cmds = {
 
 local test_messages = {}
 
--- ── Core functions under test (copied from SRB2DiscordBot-v0.1.34.lua) ──
+-- ── Core functions under test (copied from SRB2DiscordBot-v0.1.35.lua) ──
 
 local function reason_to_string(r)
 	if r == 1 then return "Kicked"

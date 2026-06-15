@@ -88,7 +88,7 @@ From `source/main.cpp` comments:
 
 ## Gametype System
 
-Gametype names in bridge events are resolved through SRB2's internal `G_GetGametypeName()` Lua API in `scripts/SRB2DiscordBot-v0.1.34.lua:451`. This ensures:
+Gametype names in bridge events are resolved through SRB2's internal `G_GetGametypeName()` Lua API in `scripts/SRB2DiscordBot-v0.1.35.lua:451`. This ensures:
 
 1. **1-to-1 accuracy** with SRB2's in-game names:
    - `GT_COOP` → `"Co-op"` (not "Cooperative")
@@ -112,7 +112,7 @@ Discord embed ← main.cpp event handler ← bridge_parse_event() ← bot poll t
 | Path | Location | Trigger | Behavior |
 |---|---|---|---|
 | **Immediate (primary)** | `DiscordBot.Functions.flush_msgsrb2()` | Called after every event emission (SERVER_START, ROUND_START/END, PLAYER_JOIN/QUIT) | Opens file, writes buffer, closes, clears buffer |
-| **Periodic (fallback)** | `bot_function()` in `SRB2DiscordBot-v0.1.34.lua:298` | Every 70 tics (~2s) inside `leveltime%70==35` gate | Same as immediate, acts as redundancy |
+| **Periodic (fallback)** | `bot_function()` in `SRB2DiscordBot-v0.1.35.lua:298` | Every 70 tics (~2s) inside `leveltime%70==35` gate | Same as immediate, acts as redundancy |
 | **Message-triggered** | `server_log msg` on line 105 | `spamchatbug()` when `cv_messagedelay.value == 0` | Writes buffer but does NOT clear it (buffer cleared by flush_msgsrb2 instead) |
 
 ### Bot Startup Sync
@@ -131,7 +131,7 @@ Debug prints (`[DEBUG]`) in the C++ code are guarded by `#ifndef NDEBUG` and onl
 
 ### `cv_messagedelay` Bug (Fixed)
 
-Line 44 of `SRB2DiscordBot-v0.1.34.lua` previously compared `cv_messagedelay == 0`  -  comparing the CVar *table* to 0, which is always false. Fixed to `cv_messagedelay.value == 0`. This restores the immediate message-triggered flush path for users who disable messagedelay.
+Line 44 of `SRB2DiscordBot-v0.1.35.lua` previously compared `cv_messagedelay == 0`  -  comparing the CVar *table* to 0, which is always false. Fixed to `cv_messagedelay.value == 0`. This restores the immediate message-triggered flush path for users who disable messagedelay.
 
 ## Known Issues
 

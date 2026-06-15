@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 26)
 set(PROJECT_AUTHOR "gm3k4g")
 project(
     srb2dbot
-    VERSION 0.1.34
+    VERSION 0.1.35
     DESCRIPTION "Bidirectional SRB2 Discord chat bridge"
     HOMEPAGE_URL "https://github.com/gm3k4g/srb2dbot"
     LANGUAGES CXX
