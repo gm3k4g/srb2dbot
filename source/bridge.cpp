@@ -17,6 +17,27 @@
 
 auto sanitize_message_for_srb2(const std::string& content) -> std::string {
     std::string result = content;
+
+    // Convert custom Discord emojis <:name:id> and <a:name:id> to :name:
+    size_t emoji_pos = 0;
+    while (emoji_pos < result.size()) {
+        size_t start = result.find('<', emoji_pos);
+        if (start == std::string::npos) break;
+        size_t name_start = result.find(':', start);
+        if (name_start == std::string::npos || name_start != start + 1) {
+            emoji_pos = start + 1;
+            continue;
+        }
+        size_t name_end = result.find(':', name_start + 1);
+        if (name_end == std::string::npos) { emoji_pos = start + 1; continue; }
+        size_t end = result.find('>', name_end);
+        if (end == std::string::npos) { emoji_pos = start + 1; continue; }
+        std::string emoji_name = result.substr(name_start + 1, name_end - name_start - 1);
+        if (emoji_name.empty()) { emoji_pos = start + 1; continue; }
+        result.replace(start, end - start + 1, ":" + emoji_name + ":");
+        emoji_pos = start + emoji_name.size() + 2;
+    }
+
     for (size_t pos = 0; (pos = result.find('\n', pos)) != std::string::npos; pos += 2) {
         result.replace(pos, 1, "\\n");
     }
