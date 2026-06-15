@@ -90,6 +90,5 @@ exec srb2 \
     -room "$ROOM" \
     -servername "$SERVERNAME" \
     -file "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot.lua" \
-    -file "$HOME/.srb2/DOWNLOAD/Ba_CommunityPack-v13_2HOTFIX.pk3" \
     +rejointimeout 0
     #</dev/null
