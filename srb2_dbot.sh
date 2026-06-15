@@ -38,7 +38,7 @@ kill_pid_file "$SRB2_PID_FILE" "SRB2"
 find_wad() {
     for loc in \
         "${4:-}" \
-        "$SCRIPT_DIR/scripts/SRB2DiscordBot.lua"
+        "$SCRIPT_DIR/scripts/SRB2DiscordBot-v0.1.34.lua"
     do
         [[ -n "$loc" && -f "$loc" ]] && { echo "$loc"; return 0; }
     done
@@ -57,7 +57,7 @@ LUA_WAD=$(find_wad) || {
 mkdir -p "$HOME/.srb2/luafiles/client/DiscordBot"
 
 # Deploy script to DOWNLOAD so SRB2 auto-loads it once
-cp "$LUA_WAD" "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot.lua"
+cp "$LUA_WAD" "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.34.lua"
 
 echo "=== srb2_dbot ==="
 echo "Server: $SERVERNAME"
@@ -89,6 +89,6 @@ exec srb2 \
     -port "$PORT" \
     -room "$ROOM" \
     -servername "$SERVERNAME" \
-    -file "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot.lua" \
+    -file "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.34.lua" \
     +rejointimeout 0
     #</dev/null
