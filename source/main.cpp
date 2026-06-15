@@ -138,8 +138,11 @@ int main() {
 
     dpp::cluster bot(bot_token, dpp::i_default_intents | dpp::i_message_content);
     bot.on_log([](const dpp::log_t& event) {
-        // Skip Discord Gateway heartbeat noise only, keep everything else (including error JSON)
+#ifndef NDEBUG
         if (event.message.find("\"op\":1") != std::string::npos) return;
+#else
+        if (event.severity < dpp::ll_warning) return;
+#endif
         std::cout << event.message << std::endl;
     });
 
