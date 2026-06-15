@@ -36,3 +36,4 @@ secret.json
 srb2discb
 source/version.h
 deploy_srb2b.sh
+deploy.sh
