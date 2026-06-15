@@ -44,6 +44,10 @@ echo "Lua:    $LUA_WAD"
 echo ""
 
 echo "[srb2_dbot] Launching srb2dbot..."
+if [[ ! -f "$SCRIPT_DIR/build/srb2dbot" ]]; then
+    echo "[srb2_dbot] Binary not found, building..."
+    "$SCRIPT_DIR/build.sh" || { echo "ERROR: Build failed" >&2; exit 1; }
+fi
 "$SCRIPT_DIR/build/srb2dbot" &
 BOT_PID=$!
 
