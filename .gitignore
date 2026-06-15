@@ -35,3 +35,4 @@ secret.json
 # Dev symlinks
 srb2discb
 source/version.h
+srb2b_bridge.sh
