@@ -506,10 +506,7 @@ local function get_gametype_name(gt)
 end
 
 local function map_num_to_mapstr(n)
-	if n < 100 then
-		return string.format("MAP%02d", n)
-	end
-	return "MAP" .. n
+	return string.format("MAP%02X", n)
 end
 
 addHook("MapChange", function(map)
