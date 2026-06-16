@@ -38,8 +38,8 @@ HEIGHT=400
 
 # Layout parameters (all configurable via CLI)
 MARGIN=40              # horizontal margin: canvas edge → panel edge
-HEADER_H=48            # header bar height at top
-HEADER_GAP=11          # gap between header bar bottom → panel top
+HEADER_H=58            # header bar height at top
+HEADER_GAP=9           # gap between header bar bottom → panel top
 BOTTOM_GAP=15          # gap between panel bottom → canvas bottom
 ROW_H_FFA=28           # per-player row height (FFA)
 ROW_H_TEAM=26          # per-player row height (team)
@@ -292,16 +292,16 @@ gen_mvg() {
     fi
     [[ -z "$map_line" ]] && map_line="Round Results"
 
-    # Line 1: gametype + round time (top, smaller font)
+    # Line 1: gametype + round time (top, biggest font)
     [[ -n "$FONT_TITLE" ]] && echo "  font '$FONT_TITLE'" >> "$f"
     echo "  stroke none" >> "$f"
     echo "  fill '$C_TITLE'" >> "$f"
-    echo "  font-size 16" >> "$f"
-    echo "  text-anchor middle" >> "$f"
-    echo "  text $((WIDTH/2)),18 '$gt_line'" >> "$f"
-    # Line 2: map name + number (bottom, title font)
     echo "  font-size $FONT_SZ_TITLE" >> "$f"
-    echo "  text $((WIDTH/2)),38 '$map_line'" >> "$f"
+    echo "  text-anchor middle" >> "$f"
+    echo "  text $((WIDTH/2)),22 '$gt_line'" >> "$f"
+    # Line 2: map name + number (bottom, smaller font)
+    echo "  font-size 16" >> "$f"
+    echo "  text $((WIDTH/2)),44 '$map_line'" >> "$f"
     echo "  text-anchor start" >> "$f"
 
     if [[ "$GAMETYPE" == "team" ]]; then
