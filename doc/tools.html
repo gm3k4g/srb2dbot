@@ -119,12 +119,13 @@
 </p>
 
 <h3>Title Bar Format</h3>
-<p>The header bar displays: <code>{title} ({map}) - {gametype} - {round_time}</code></p>
-<ul>
-    <li>Example: <strong>Green Flower Zone (MAP01) - FFA - 2:30</strong></li>
-    <li>Gametype displays as <code>FFA</code> or <code>Team</code></li>
-    <li>If a field is omitted it is excluded from the title</li>
-</ul>
+<p>The header bar shows two centered lines:</p>
+<table>
+    <tr><th>Line</th><th>Content</th><th>Font size</th><th>Example</th></tr>
+    <tr><td>Top (y=18)</td><td><code>{gametype} - {round_time}</code></td><td>16px</td><td><strong>FFA - 3:45</strong></td></tr>
+    <tr><td>Bottom (y=38)</td><td><code>{title} ({map})</code></td><td>22px</td><td><strong>Green Flower Zone (MAP01)</strong></td></tr>
+</table>
+<p>Gametype displays as <code>FFA</code> or <code>Team</code>. If a field is omitted it is excluded.</p>
 
 <h3>Clipping Warning</h3>
 <p>If more players are provided than fit in the panel area, a warning is printed to stderr:</p>

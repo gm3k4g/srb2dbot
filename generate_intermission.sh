@@ -160,7 +160,9 @@ Player data (one required):
   --players "<json>"        JSON array of player objects
   --players-file <path>     Read player JSON from file
 
-Title bar format:  {title} ({map}) - {gametype} - {round_time}
+Title bar (two lines):
+  Line 1: {gametype} - {round_time}    (e.g. "FFA - 3:45")
+  Line 2: {title} ({map})              (e.g. "Green Flower Zone (MAP01)")
 
 Player JSON format:
   [{"name":"P1","score":1500,"team":"blue"}, ...]
@@ -275,29 +277,31 @@ gen_mvg() {
 
     local gt_display="FFA"
     [[ "$GAMETYPE" == "team" ]] && gt_display="Team"
-    local title_text=""
+    local map_line="" gt_line=""
     if [[ -n "$TITLE" && -n "$MAP" ]]; then
-        title_text="$TITLE ($MAP)"
+        map_line="$TITLE ($MAP)"
     elif [[ -n "$TITLE" ]]; then
-        title_text="$TITLE"
+        map_line="$TITLE"
     elif [[ -n "$MAP" ]]; then
-        title_text="$MAP"
+        map_line="$MAP"
     fi
-    if [[ -n "$title_text" && -n "$ROUND_TIME" ]]; then
-        title_text="$title_text - $gt_display - $ROUND_TIME"
-    elif [[ -n "$ROUND_TIME" ]]; then
-        title_text="$gt_display - $ROUND_TIME"
-    elif [[ -n "$title_text" ]]; then
-        title_text="$title_text - $gt_display"
+    if [[ -n "$ROUND_TIME" ]]; then
+        gt_line="$gt_display - $ROUND_TIME"
     else
-        title_text="Round Results"
+        gt_line="$gt_display"
     fi
+    [[ -z "$map_line" ]] && map_line="Round Results"
+
+    # Line 1: gametype + round time (top, smaller font)
     [[ -n "$FONT_TITLE" ]] && echo "  font '$FONT_TITLE'" >> "$f"
     echo "  stroke none" >> "$f"
     echo "  fill '$C_TITLE'" >> "$f"
-    echo "  font-size $FONT_SZ_TITLE" >> "$f"
+    echo "  font-size 16" >> "$f"
     echo "  text-anchor middle" >> "$f"
-    echo "  text $((WIDTH/2)),$((HEADER_H/2 + 6)) '$title_text'" >> "$f"
+    echo "  text $((WIDTH/2)),18 '$gt_line'" >> "$f"
+    # Line 2: map name + number (bottom, title font)
+    echo "  font-size $FONT_SZ_TITLE" >> "$f"
+    echo "  text $((WIDTH/2)),38 '$map_line'" >> "$f"
     echo "  text-anchor start" >> "$f"
 
     if [[ "$GAMETYPE" == "team" ]]; then
