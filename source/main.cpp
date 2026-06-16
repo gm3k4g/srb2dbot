@@ -28,6 +28,7 @@ const auto PERMS = dpp::p_ban_members;
 
 // TeeBuf: writes to both stdout and a log file simultaneously
 static std::ofstream g_log_file;
+static volatile sig_atomic_t g_shutdown_requested = 0;
 class TeeBuf : public std::streambuf {
     std::streambuf* cout_buf_;
 public:
@@ -133,9 +134,9 @@ int main() {
         std::string path = std::string(getenv("HOME")) + "/Desktop/srb2dbot/srb2dbot.pid";
         std::filesystem::remove(path);
     });
-    signal(SIGINT, [](int) { std::exit(0); });
-    signal(SIGTERM, [](int) { std::exit(0); });
-    signal(SIGQUIT, [](int) { std::exit(0); });
+    signal(SIGINT,  [](int) { g_shutdown_requested = 1; });
+    signal(SIGTERM, [](int) { g_shutdown_requested = 1; });
+    signal(SIGQUIT, [](int) { g_shutdown_requested = 1; });
 
     dpp::cluster bot(bot_token, dpp::i_default_intents | dpp::i_message_content);
     bot.on_log([](const dpp::log_t& event) {
@@ -260,6 +261,17 @@ int main() {
 
 
                          fifo_available](dpp::timer) {
+            if (g_shutdown_requested) {
+                dpp::embed shutdown_embed;
+                shutdown_embed.set_title("Bot is going down");
+                shutdown_embed.set_color(0xE74C3C);
+                bot.message_create(dpp::message(bridge_channel_sf, "").add_embed(shutdown_embed),
+                    [](const dpp::confirmation_callback_t& cb) {
+                        if (cb.is_error()) std::cout << "[bridge] shutdown message error: " << cb.get_error().human_readable << std::endl;
+                    });
+                bot.shutdown();
+                return;
+            }
             if (fifo_available && !dbot_synced && dbot_sync_retries < DBOT_SYNC_MAX_RETRIES) {
                 ++dbot_sync_retries;
                 dbot_synced = pipe_srb2_server_do("dbot_sync");
