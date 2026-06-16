@@ -86,6 +86,22 @@
     <tr><td><code>--out</code></td><td><strong>required</strong></td><td>Output PNG path</td></tr>
     <tr><td><code>--width</code></td><td><code>640</code></td><td>Canvas width in pixels</td></tr>
     <tr><td><code>--height</code></td><td><code>400</code></td><td>Canvas height in pixels</td></tr>
+    <tr><td colspan="3" style="background:#1a1a2e;color:#e0e0e0;font-weight:600;text-align:center">Layout parameters</td></tr>
+    <tr><td><code>--margin</code></td><td><code>40</code></td><td>Horizontal margin: canvas edge to panel edge</td></tr>
+    <tr><td><code>--header-h</code></td><td><code>48</code></td><td>Top header bar height</td></tr>
+    <tr><td><code>--header-gap</code></td><td><code>11</code></td><td>Gap between header bar bottom and panel top</td></tr>
+    <tr><td><code>--bottom-gap</code></td><td><code>15</code></td><td>Gap between panel bottom and canvas bottom</td></tr>
+    <tr><td><code>--row-h-ffa</code></td><td><code>28</code></td><td>Per-player row height in FFA mode</td></tr>
+    <tr><td><code>--row-h-team</code></td><td><code>26</code></td><td>Per-player row height in team mode</td></tr>
+    <tr><td><code>--col-gap</code></td><td><code>30</code></td><td>Gap between columns in team mode</td></tr>
+    <tr><td><code>--panel-pad</code></td><td><code>4</code></td><td>Inset from panel inner edge to row backgrounds</td></tr>
+    <tr><td colspan="3" style="background:#1a1a2e;color:#e0e0e0;font-weight:600;text-align:center">Font sizes</td></tr>
+    <tr><td><code>--font-title</code></td><td><code>22</code></td><td>Title text</td></tr>
+    <tr><td><code>--font-header</code></td><td><code>12</code></td><td>Column header labels (#, Player, Score)</td></tr>
+    <tr><td><code>--font-row</code></td><td><code>14</code></td><td>Player name</td></tr>
+    <tr><td><code>--font-score</code></td><td><code>13</code></td><td>Score number</td></tr>
+    <tr><td><code>--font-team</code></td><td><code>17</code></td><td>Team label (BLUE/RED)</td></tr>
+    <tr><td><code>--font-tscore</code></td><td><code>15</code></td><td>Team score</td></tr>
     <tr><td><code>--verbose</code></td><td>—</td><td>Print debug info</td></tr>
     <tr><td><code>--help</code></td><td>—</td><td>Show usage help</td></tr>
 </table>
@@ -121,6 +137,21 @@
 # Extract PK3s first
 find /path/to/addons -name '*.pk3' -exec unzip -o {} -d {}_FILES \
     'Level select pictures/*' \;</code></pre>
+
+<h3>Hitbox Validation</h3>
+<p>
+    The script validates rectangle positions before generating the image.
+    All panel backgrounds, header highlights, and row backgrounds are tracked
+    as hitboxes. If any two non-nested rectangles overlap (share interior area),
+    the script exits with an error showing the overlapping coordinates and labels.
+    Nested containment (e.g. a row background inside a panel) is permitted.
+</p>
+
+<h2>Intermission Test Harness</h2>
+<p><code>./test_intermission.sh</code>  -  generates sample outputs for 2, 4, 8, 12, 16, 18, and 24 players in both FFA and Team modes, verifying that all hitboxes pass validation and outputs are valid transparent PNGs.</p>
+
+<pre><code>./test_intermission.sh [output_directory]
+# Default: /tmp/intermission_tests/</code></pre>
 
 <h3>Dependencies</h3>
 <ul>
