@@ -14,9 +14,14 @@ public:
         if (event.type != "CSAY") return std::nullopt;
         if (event.fields.empty()) return std::nullopt;
 
+        std::string message = event.fields[0];
+        for (size_t i = 1; i < event.fields.size(); i++) {
+            message += "|" + event.fields[i];
+        }
+
         dpp::embed embed;
         embed.set_title(msg_.empty() ? ":loudspeaker: Server Announcement" : msg_);
-        embed.set_description(event.fields[0]);
+        embed.set_description(message);
         embed.set_color(0xFEE75C);
         return embed;
     }

@@ -16,11 +16,15 @@ public:
         if (event.type != "CHAT") return std::nullopt;
         if (event.fields.size() < 3) return std::nullopt;
 
-        std::string node = event.fields[0];
-        std::string name = event.fields[1];
-        std::string message = event.fields[2];
-        std::string skin = event.fields.size() >= 4 ? event.fields[3] : "";
-        std::string jointime_str = event.fields.size() >= 5 ? event.fields[4] : "";
+        auto& f = event.fields;
+        std::string node = f[0];
+        std::string name = f[1];
+        std::string message = f[2];
+        for (size_t i = 3; i + 2 < f.size(); i++) {
+            message += "|" + f[i];
+        }
+        std::string skin = f.size() >= 4 ? f[f.size() - 2] : "";
+        std::string jointime_str = f.size() >= 5 ? f[f.size() - 1] : "";
         if (message.empty()) return std::nullopt;
 
         dpp::embed embed;
