@@ -510,7 +510,7 @@ local function map_num_to_mapstr(n)
 		return string.format("MAP%02d", n)
 	end
 	local val = n - 100
-	local first = string.char(math.floor(val / 36) + string.byte('A'))
+	local first = string.char(((val - val % 36) / 36) + string.byte('A'))
 	local r = val % 36
 	local second
 	if r < 10 then
