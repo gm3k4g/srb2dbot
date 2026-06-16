@@ -562,32 +562,22 @@ local function emit_round_end(prev_map, prev_maptitle)
 	spec_json = spec_json .. "]"
 
 	local mode = has_teams and "team" or "ffa"
+
+	-- Encode player JSON without | chars so it survives the pipe-delimited event line
+	local players_safe = string.gsub(string.gsub(players_json, '|', '\\x7c'), '\n', '\\n')
+	local spec_safe = string.gsub(string.gsub(spec_json, '|', '\\x7c'), '\n', '\\n')
+
 	local round_seconds = (leveltime - leveltime % 35) / 35
 	local round_mins = (round_seconds - round_seconds % 60) / 60
 	local round_secs = round_seconds % 60
 	local round_time_str = round_mins .. ":" .. string.format("%02d", round_secs)
 
-	local round_json = '{'
-	round_json = round_json .. '"gametype":"' .. json_escape(gtname) .. '",'
-	round_json = round_json .. '"map":"' .. json_escape(mapstr) .. '",'
-	round_json = round_json .. '"title":"' .. json_escape(prev_maptitle) .. '",'
-	round_json = round_json .. '"round_time":"' .. round_time_str .. '",'
-	round_json = round_json .. '"mode":"' .. mode .. '",'
-	round_json = round_json .. '"blue_score":' .. (bluescore or 0) .. ','
-	round_json = round_json .. '"red_score":' .. (redscore or 0) .. ','
-	round_json = round_json .. '"players":' .. players_json .. ','
-	round_json = round_json .. '"spectators":' .. spec_json
-	round_json = round_json .. '}'
-
-	pcall(function()
-		local rf = io.openlocal("client/DiscordBot/RoundResults.json", "w")
-		if rf then
-			rf:write(round_json)
-			rf:close()
-		end
-	end)
-
-	local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime .. "|" .. DiscordBot.Data.servertime .. "|" .. players_total .. "|" .. players_red .. "|" .. players_blue .. "|" .. players_spec .. "\n"
+	local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime
+		.. "|" .. DiscordBot.Data.servertime .. "|" .. players_total .. "|" .. players_red
+		.. "|" .. players_blue .. "|" .. players_spec .. "|" .. mode
+		.. "|" .. (redscore or 0) .. "|" .. (bluescore or 0)
+		.. "|" .. round_time_str .. "|" .. json_escape(prev_maptitle)
+		.. "|" .. players_safe .. "|" .. spec_safe .. "\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
 	DiscordBot.Functions.flush_msgsrb2()
 	DiscordBot.Data.round_end_emitted = true

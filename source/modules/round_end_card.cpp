@@ -7,7 +7,6 @@
 #include <optional>
 #include <filesystem>
 #include <cstdio>
-#include <nlohmann/json.hpp>
 
 class RoundEndCardModule : public Module {
 public:
@@ -57,23 +56,17 @@ public:
 
     auto get_bridge_attachment(const BridgeEvent& event) -> std::optional<std::pair<std::string, std::string>> override {
         if (event.type != "ROUND_END") return std::nullopt;
-        if (event.fields.size() < 2) return std::nullopt;
+        if (event.fields.size() < 15) return std::nullopt;
 
-        std::string results_path = srb2_dir_ + "/luafiles/client/DiscordBot/RoundResults.json";
-        std::ifstream rf(results_path);
-        if (!rf.is_open()) return std::nullopt;
-
-        nlohmann::json data;
-        try { rf >> data; } catch (...) { return std::nullopt; }
-        rf.close();
-
-        std::string gametype = data.value("gametype", "FFA");
-        std::string map_name = data.value("map", "");
-        std::string title    = data.value("title", "");
-        std::string round_time = data.value("round_time", "");
-        std::string mode     = data.value("mode", "ffa");
-        int blue_score = data.value("blue_score", 0);
-        int red_score  = data.value("red_score", 0);
+        auto& f = event.fields;
+        std::string map_name     = f[1];
+        std::string mode         = f[8];
+        std::string red_score    = f[9];
+        std::string blue_score   = f[10];
+        std::string round_time   = f[11];
+        std::string map_title    = unescape_pipe(f[12]);
+        std::string players_json = unescape_pipe(f[13]);
+        std::string spec_json    = f.size() >= 15 ? unescape_pipe(f[14]) : "[]";
 
         if (map_name.empty()) return std::nullopt;
 
@@ -83,10 +76,7 @@ public:
         bridge_extract_thumbnail(map_name, thumb_dir);
         bool has_thumb = (access(thumb_path.c_str(), F_OK) == 0);
 
-        std::string players_json = data["players"].dump();
-        std::string spec_json = data["spectators"].dump();
-
-        // Find the intermission script — search common locations
+        // Find the intermission script
         std::string script_path;
         std::vector<std::string> search_paths = {
             srb2_dir_ + "/generate_intermission.sh",
@@ -105,19 +95,19 @@ public:
 
         std::string cmd = "'" + script_path + "'"
             + " --gametype '" + mode + "'"
-            + " --map '" + map_name + "'"
-            + " --title '" + title + "'";
+            + " --map '" + map_name + "'";
         if (!round_time.empty())
             cmd += " --round-time '" + round_time + "'";
         if (mode == "team") {
-            cmd += " --blue-score " + std::to_string(blue_score);
-            cmd += " --red-score " + std::to_string(red_score);
+            cmd += " --blue-score " + blue_score;
+            cmd += " --red-score " + red_score;
         }
         cmd += " --players '" + players_json + "'";
         if (spec_json != "[]")
             cmd += " --spectators '" + spec_json + "'";
         if (has_thumb)
             cmd += " --thumb '" + thumb_path + "'";
+        cmd += " --title '" + map_title + "'";
         cmd += " --out '" + out_path + "'";
 
         int ret = std::system(cmd.c_str());
@@ -139,6 +129,15 @@ private:
     std::string msg_;
     bool thumbs_enabled_;
     std::string srb2_dir_;
+
+    static auto unescape_pipe(const std::string& s) -> std::string {
+        std::string r = s;
+        for (auto pos = r.find("\\x7c"); pos != std::string::npos; pos = r.find("\\x7c", pos + 1))
+            r.replace(pos, 4, "|");
+        for (auto pos = r.find("\\n"); pos != std::string::npos; pos = r.find("\\n", pos + 1))
+            r.replace(pos, 2, "\n");
+        return r;
+    }
 
     static auto format_game_time(const std::string& tics_str) -> std::string {
         std::int64_t tics = 0;
