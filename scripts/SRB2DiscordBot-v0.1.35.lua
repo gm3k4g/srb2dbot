@@ -404,8 +404,10 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		local jointime = (DiscordBot.join_times and DiscordBot.join_times[#player]) and tostring(DiscordBot.join_times[#player]) or "0"
 		local flag = player.gotflag and player.gotflag > 0 and "1" or "0"
 		local team = "none"
-		if not player.spectator and (gametype == GT_CTF or gametype == GT_TEAMMATCH) then
-			team = tostring(player.ctfteam or 0)
+		if not player.spectator then
+			if gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE then
+				team = tostring(player.ctfteam or 0)
+			end
 		end
 		text = "[EVENT:CHAT]|[" .. #player .. "]|" .. player.name .. "|" .. message .. "|" .. (player.mo and player.mo.skin or "") .. "|" .. jointime .. "|" .. flag .. "|" .. team .. "\n"
 		if IsPlayerAdmin(player) then
