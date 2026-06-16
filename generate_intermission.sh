@@ -57,9 +57,9 @@ FONT_SZ_TEAM=17
 FONT_SZ_TSCORE=15
 
 # ── Colors (SRB2-inspired) ──────────────────────────────────────────────────
-readonly C_BG="rgba(0,0,0,0.55)"
-readonly C_BG_PANEL="rgba(0,0,0,0.50)"
-readonly C_BG_ROW="rgba(255,255,255,0.06)"
+readonly C_BG="rgba(0,0,0,0.70)"
+readonly C_BG_PANEL="rgba(0,0,0,0.65)"
+readonly C_BG_ROW="rgba(255,255,255,0.10)"
 readonly C_HDR="rgba(255,255,255,0.08)"
 readonly C_HDR_BLUE="rgba(74,158,255,0.15)"
 readonly C_HDR_RED="rgba(255,74,74,0.15)"

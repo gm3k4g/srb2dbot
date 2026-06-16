@@ -92,24 +92,44 @@ public:
             return std::nullopt;
         }
 
+        // Write player data to temp files to avoid shell quoting issues
+        std::string pf = thumb_dir + "/_players_" + map_name + ".json";
+        std::string sf = thumb_dir + "/_specs_" + map_name + ".json";
+        {
+            std::ofstream pf_out(pf); pf_out << players_json;
+            std::ofstream sf_out(sf); sf_out << spec_json;
+        }
+
         std::string out_path = thumb_dir + "/intermission_" + map_name + ".png";
 
-        std::string cmd = "'" + script_path + "'"
-            + " --gametype '" + gametype_name + "'"
-            + " --map '" + map_name + "'";
-        if (!round_time.empty())
-            cmd += " --round-time '" + round_time + "'";
-        if (mode == "team") {
-            cmd += " --blue-score " + blue_score;
-            cmd += " --red-score " + red_score;
+        // Build command without any single-quote wrapping (use --*-file instead)
+        std::vector<std::string> args = {
+            script_path,
+            "--gametype", gametype_name,
+            "--map", map_name,
+        };
+        if (!round_time.empty()) {
+            args.push_back("--round-time"); args.push_back(round_time);
         }
-        cmd += " --players '" + players_json + "'";
-        if (spec_json != "[]")
-            cmd += " --spectators '" + spec_json + "'";
-        if (has_thumb)
-            cmd += " --thumb '" + thumb_path + "'";
-        cmd += " --title '" + map_title + " (" + map_name + ")'";
-        cmd += " --out '" + out_path + "'";
+        if (mode == "team") {
+            args.push_back("--blue-score"); args.push_back(blue_score);
+            args.push_back("--red-score"); args.push_back(red_score);
+        }
+        args.push_back("--players-file"); args.push_back(pf);
+        if (spec_json != "[]") {
+            args.push_back("--spectators-file"); args.push_back(sf);
+        }
+        if (has_thumb) {
+            args.push_back("--thumb"); args.push_back(thumb_path);
+        }
+        args.push_back("--title"); args.push_back(map_title + " (" + map_name + ")");
+        args.push_back("--out"); args.push_back(out_path);
+
+        std::string cmd;
+        for (auto& a : args) {
+            cmd += a;
+            cmd.push_back(' ');
+        }
 
         int ret = std::system(cmd.c_str());
         if (ret != 0) {
@@ -123,6 +143,11 @@ public:
         if (!file.is_open()) return std::nullopt;
 
         std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+
+        // Clean up temp files
+        std::remove(pf.c_str());
+        std::remove(sf.c_str());
+
         return std::make_pair("intermission_" + map_name + ".png", content);
     }
 
