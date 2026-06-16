@@ -521,9 +521,10 @@ local function map_num_to_mapstr(n)
 end
 
 addHook("MapChange", function(map)
-	-- Emit ROUND_END for the previous map when the round ended naturally
-	-- (intermission).  Forced map changes (console `map` command) skip this.
-	if DiscordBot.Data.current_map ~= nil and gamestate == GS_INTERMISSION then
+	-- Emit ROUND_END when the map actually changes after a round end.
+	-- Skip death reloads (same map) and forced `map` commands (GS_LEVEL).
+	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.current_map ~= map
+	   and (gamestate == GS_INTERMISSION or gamestate == GS_NULL) then
 		local players_total = 0
 		local players_red = 0
 		local players_blue = 0
