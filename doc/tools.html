@@ -119,13 +119,14 @@
 </p>
 
 <h3>Title Bar Format</h3>
-<p>The header bar shows two centered lines:</p>
+<p>The header bar shows:</p>
 <table>
-    <tr><th>Line</th><th>Content</th><th>Font size</th><th>Example</th></tr>
-<tr><td>Top (y=22)</td><td><code>{gametype} - {round_time}</code></td><td>22px</td><td><strong>FFA - 3:45</strong></td></tr>
-<tr><td>Bottom (y=44)</td><td><code>{title} ({map})</code></td><td>16px</td><td><strong>Green Flower Zone (MAP01)</strong></td></tr>
+    <tr><th>Line</th><th>Align</th><th>Content</th><th>Font size</th><th>Example</th></tr>
+    <tr><td>Top (y=22)</td><td>Center</td><td>Gametype</td><td>22px</td><td><strong>FFA</strong></td></tr>
+    <tr><td>Top (y=22)</td><td>Right</td><td>Round time</td><td>22px</td><td><strong>3:45</strong></td></tr>
+    <tr><td>Bottom (y=44)</td><td>Center</td><td>Map name (code)</td><td>16px</td><td><strong>Green Flower Zone (MAP01)</strong></td></tr>
 </table>
-<p>Gametype displays as <code>FFA</code> or <code>Team</code>. If a field is omitted it is excluded.</p>
+<p>Gametype displays as <code>FFA</code> or <code>Team</code>. Omitting a field excludes it.</p>
 
 <h3>Clipping Warning</h3>
 <p>If more players are provided than fit in the panel area, a warning is printed to stderr:</p>

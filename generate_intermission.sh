@@ -160,9 +160,9 @@ Player data (one required):
   --players "<json>"        JSON array of player objects
   --players-file <path>     Read player JSON from file
 
-Title bar (two lines):
-  Line 1: {gametype} - {round_time}    (e.g. "FFA - 3:45")
-  Line 2: {title} ({map})              (e.g. "Green Flower Zone (MAP01)")
+Title bar:
+  Top line: {gametype} centered, {round_time} right-aligned
+  Bottom line: {title} ({map}) centered
 
 Player JSON format:
   [{"name":"P1","score":1500,"team":"blue"}, ...]
@@ -277,7 +277,7 @@ gen_mvg() {
 
     local gt_display="FFA"
     [[ "$GAMETYPE" == "team" ]] && gt_display="Team"
-    local map_line="" gt_line=""
+    local map_line=""
     if [[ -n "$TITLE" && -n "$MAP" ]]; then
         map_line="$TITLE ($MAP)"
     elif [[ -n "$TITLE" ]]; then
@@ -285,22 +285,22 @@ gen_mvg() {
     elif [[ -n "$MAP" ]]; then
         map_line="$MAP"
     fi
-    if [[ -n "$ROUND_TIME" ]]; then
-        gt_line="$gt_display - $ROUND_TIME"
-    else
-        gt_line="$gt_display"
-    fi
     [[ -z "$map_line" ]] && map_line="Round Results"
 
-    # Line 1: gametype + round time (top, biggest font)
+    # Line 1: gametype centered, round time right-aligned (top, biggest font)
     [[ -n "$FONT_TITLE" ]] && echo "  font '$FONT_TITLE'" >> "$f"
     echo "  stroke none" >> "$f"
     echo "  fill '$C_TITLE'" >> "$f"
     echo "  font-size $FONT_SZ_TITLE" >> "$f"
     echo "  text-anchor middle" >> "$f"
-    echo "  text $((WIDTH/2)),22 '$gt_line'" >> "$f"
+    echo "  text $((WIDTH/2)),22 '$gt_display'" >> "$f"
+    if [[ -n "$ROUND_TIME" ]]; then
+        echo "  text-anchor end" >> "$f"
+        echo "  text $((WIDTH-14)),22 '$ROUND_TIME'" >> "$f"
+    fi
     # Line 2: map name + number (bottom, smaller font)
     echo "  font-size 16" >> "$f"
+    echo "  text-anchor middle" >> "$f"
     echo "  text $((WIDTH/2)),44 '$map_line'" >> "$f"
     echo "  text-anchor start" >> "$f"
 
