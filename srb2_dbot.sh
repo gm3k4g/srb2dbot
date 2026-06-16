@@ -98,6 +98,8 @@ exec srb2 \
     -port "$PORT" \
     -room "$ROOM" \
     -servername "$SERVERNAME" \
+    -warp MAPF0 \
+    -gametype 7 \
     -file "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua" \
     +rejointimeout 0
     #</dev/null
