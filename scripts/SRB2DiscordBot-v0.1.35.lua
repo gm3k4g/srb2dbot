@@ -579,11 +579,13 @@ local function emit_round_end(prev_map, prev_maptitle)
 	round_json = round_json .. '"spectators":' .. spec_json
 	round_json = round_json .. '}'
 
-	local rf = io.openlocal("client/DiscordBot/RoundResults.json", "w")
-	if rf then
-		rf:write(round_json)
-		rf:close()
-	end
+	pcall(function()
+		local rf = io.openlocal("client/DiscordBot/RoundResults.json", "w")
+		if rf then
+			rf:write(round_json)
+			rf:close()
+		end
+	end)
 
 	local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime .. "|" .. DiscordBot.Data.servertime .. "|" .. players_total .. "|" .. players_red .. "|" .. players_blue .. "|" .. players_spec .. "\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
