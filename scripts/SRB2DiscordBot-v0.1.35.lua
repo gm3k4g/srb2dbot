@@ -522,9 +522,13 @@ end
 
 addHook("MapChange", function(map)
 	-- Emit ROUND_END when the map actually changes after a round end.
-	-- Skip death reloads (same map) and forced `map` commands (GS_LEVEL).
+	-- Skip death reloads (same map), forced `map` commands (GS_LEVEL),
+	-- and gametypes without intermission (co-op, race, tag, hide & seek).
 	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.current_map ~= map
-	   and (gamestate == GS_INTERMISSION or gamestate == GS_NULL) then
+	   and gamestate ~= GS_LEVEL
+	   and gametype ~= GT_COOP and gametype ~= GT_COMPETITION
+	   and gametype ~= GT_RACE and gametype ~= GT_TAG
+	   and gametype ~= GT_HIDEANDSEEK then
 		local players_total = 0
 		local players_red = 0
 		local players_blue = 0
