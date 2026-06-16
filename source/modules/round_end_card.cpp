@@ -59,6 +59,7 @@ public:
         if (event.fields.size() < 15) return std::nullopt;
 
         auto& f = event.fields;
+        std::string gametype_name = f[0];
         std::string map_name     = f[1];
         std::string mode         = f[8];
         std::string red_score    = f[9];
@@ -94,7 +95,7 @@ public:
         std::string out_path = thumb_dir + "/intermission_" + map_name + ".png";
 
         std::string cmd = "'" + script_path + "'"
-            + " --gametype '" + mode + "'"
+            + " --gametype '" + gametype_name + "'"
             + " --map '" + map_name + "'";
         if (!round_time.empty())
             cmd += " --round-time '" + round_time + "'";
@@ -107,7 +108,7 @@ public:
             cmd += " --spectators '" + spec_json + "'";
         if (has_thumb)
             cmd += " --thumb '" + thumb_path + "'";
-        cmd += " --title '" + map_title + "'";
+        cmd += " --title '" + map_title + " (" + map_name + ")'";
         cmd += " --out '" + out_path + "'";
 
         int ret = std::system(cmd.c_str());
