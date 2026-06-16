@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools  -  srb2dbot</title>
+    <style>
+        :root { --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff; --border: #30363d; --code-bg: #161b22; --heading: #f0f6fc; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; }
+        nav { background: #161b22; border-bottom: 1px solid var(--border); padding: 1rem 2rem; position: sticky; top: 0; z-index: 10; }
+        nav a { color: var(--accent); text-decoration: none; margin-right: 1.5rem; font-weight: 500; }
+        main { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        h1, h2, h3 { color: var(--heading); margin: 1.5rem 0 0.75rem; }
+        h1 { font-size: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        h2 { font-size: 1.5rem; }
+        code { background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.9em; }
+        pre { background: var(--code-bg); padding: 1rem; border-radius: 6px; overflow-x: auto; margin-bottom: 1rem; border: 1px solid var(--border); }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+        th, td { text-align: left; padding: 0.5rem 0.75rem; border: 1px solid var(--border); }
+        th { background: var(--code-bg); color: var(--heading); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <strong style="color:var(--heading);margin-right:2rem">srb2dbot v0.1</strong>
+    <a href="index.html">Overview</a>
+    <a href="commands.html">Commands</a>
+    <a href="building.html">Building</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="tools.html">Tools</a>
+</nav>
+
+<main>
+<h1>Companion Tools</h1>
+<p>
+    These bash scripts assist with media generation and testing. All are located
+    in the project root and require <strong>ImageMagick</strong> (<code>magick</code> or <code>convert</code>).
+</p>
+
+<h2>Intermission Overlay Generator</h2>
+<p><code>./generate_intermission.sh</code>  -  creates a transparent PNG overlay that mimics SRB2's intermission results screen.</p>
+
+<h3>Usage</h3>
+<pre><code># FFA mode (single column, sorted by score)
+./generate_intermission.sh \
+    --gametype ffa \
+    --map "MAP01" \
+    --title "Green Flower Zone" \
+    --players '[
+        {"name":"Sonic","score":4500},
+        {"name":"Tails","score":3200},
+        {"name":"Knuckles","score":2800}
+    ]' \
+    --out intermission_ffa.png
+
+# Team mode (blue/red columns with team scores)
+./generate_intermission.sh \
+    --gametype team \
+    --map "MAP01" \
+    --title "Green Flower Zone" \
+    --blue-score 3 \
+    --red-score 5 \
+    --players '[
+        {"name":"Sonic",  "score":4500, "team":"blue"},
+        {"name":"Knuckles","score":2800, "team":"blue"},
+        {"name":"Tails",  "score":3200, "team":"red"},
+        {"name":"Amy",    "score":1500, "team":"red"}
+    ]' \
+    --thumb "~/.srb2/luafiles/client/DiscordBot/thumbnails/MAP01.png" \
+    --out intermission_team.png</code></pre>
+
+<h3>Options</h3>
+<table>
+    <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>--gametype</code></td><td><code>ffa</code></td><td><code>ffa</code> (single column) or <code>team</code> (blue/red columns)</td></tr>
+    <tr><td><code>--map</code></td><td>—</td><td>Map code (e.g. MAP01) shown in the title bar</td></tr>
+    <tr><td><code>--title</code></td><td>—</td><td>Map name shown in the title bar</td></tr>
+    <tr><td><code>--blue-score</code></td><td><code>0</code></td><td>Blue team score label (team mode)</td></tr>
+    <tr><td><code>--red-score</code></td><td><code>0</code></td><td>Red team score label (team mode)</td></tr>
+    <tr><td><code>--players</code></td><td>—</td><td>JSON array of <code>{"name","score","team"}</code> objects</td></tr>
+    <tr><td><code>--players-file</code></td><td>—</td><td>Path to a JSON file containing the players array</td></tr>
+    <tr><td><code>--thumb</code></td><td>—</td><td>Path to a map thumbnail PNG to composite behind the overlay</td></tr>
+    <tr><td><code>--out</code></td><td><strong>required</strong></td><td>Output PNG path</td></tr>
+    <tr><td><code>--width</code></td><td><code>640</code></td><td>Canvas width in pixels</td></tr>
+    <tr><td><code>--height</code></td><td><code>400</code></td><td>Canvas height in pixels</td></tr>
+    <tr><td><code>--verbose</code></td><td>—</td><td>Print debug info</td></tr>
+    <tr><td><code>--help</code></td><td>—</td><td>Show usage help</td></tr>
+</table>
+
+<h3>Player JSON Format</h3>
+<pre><code>[
+    {"name":"Player1","score":1500,"team":"blue"},
+    {"name":"Player2","score":1200,"team":"red"}
+]</code></pre>
+<p>
+    The <code>team</code> field is only used in team mode. Accepted values:
+    <code>"blue"</code> or <code>"red"</code>. Omit or set to <code>null</code>
+    for FFA mode. Players are sorted by score descending within each team.
+</p>
+
+<h3>Output</h3>
+<ul>
+    <li>Transparent PNG overlay with alpha channel</li>
+    <li>If <code>--thumb</code> is provided, the thumbnail is resized to fill the canvas and the overlay is composited on top</li>
+    <li>If no thumbnail is available, only the transparent overlay is output (suitable for manual compositing)</li>
+</ul>
+
+<h2>Thumbnail Grabber</h2>
+<p><code>./generate_thumbnails.sh</code>  -  extracts SRB2 level select pictures (MAPxxP.lmp) from PK3 files and converts them to PNG.</p>
+
+<h3>Usage</h3>
+<pre><code># Scan default SRB2 directory
+./generate_thumbnails.sh
+
+# Specify custom maps and output directories
+./generate_thumbnails.sh /path/to/pk3/files /path/to/output
+
+# Extract PK3s first
+find /path/to/addons -name '*.pk3' -exec unzip -o {} -d {}_FILES \
+    'Level select pictures/*' \;</code></pre>
+
+<h3>Dependencies</h3>
+<ul>
+    <li><strong>ImageMagick</strong> (for both tools)</li>
+    <li><strong>unzip</strong> (for PK3 extraction, thumbnail grabber only)</li>
+</ul>
+</main>
+</body>
+</html>

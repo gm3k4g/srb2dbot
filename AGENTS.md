@@ -66,6 +66,16 @@ doc/             -  HTML documentation
 - **Tests** go in `test/source/` and are registered in `test/CMakeLists.txt`. Test names are descriptive strings.
 - **Documentation** is updated in `doc/` HTML files after significant changes. `DOCS.md` is the index of documentation pages.
 
+## Tools Scripts
+
+| Script | Description |
+|---|---|
+| `generate_thumbnails.sh` | Extracts MAPxxP.lmp level select pictures from PK3 files and converts to PNG via ImageMagick |
+| `generate_intermission.sh` | Generates SRB2-style intermission overlay PNG (transparent) with player rankings sorted by score. Supports FFA (single column) and Team (blue/red columns) modes with team scores. Compositable over map thumbnails |
+| `srb2_dbot.sh` | Launches a local SRB2 test server alongside the bot for development/testing |
+| `build.sh` | CMake build wrapper with auto-detection (NixOS vs Linux) |
+| `test_pipeline.sh` | CI pipeline test runner |
+
 ## Security Constraints
 
 When modifying the codebase, maintain these invariants:

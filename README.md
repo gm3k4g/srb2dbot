@@ -85,11 +85,11 @@ Create `secret.json` from the template and fill in these fields:
 | systemd | For restart/stop commands |
 | bash | Script validation and `srb2_dbot.sh` |
 
-### Thumbnail grabber (runtime)
-| Dependency | Package | Notes |
-|---|---|---|
-| ImageMagick | `imagemagick` | PPM → PNG conversion |
-| unzip | `unzip` | PK3 lump extraction |
+### Tools (runtime)
+| Tool | Script | Dependencies | Notes |
+|---|---|---|---|
+| Thumbnail grabber | `generate_thumbnails.sh` | ImageMagick, unzip | Extracts MAPxxP.lmp level select pictures from PK3 → PNG |
+| Intermission overlay | `generate_intermission.sh` | ImageMagick | Generates transparent SRB2-style intermission result overlay (FFA/Team modes, sorted scores, compositable over thumbnails) |
 
 ### Ubuntu / Debian quick setup
 ```bash
