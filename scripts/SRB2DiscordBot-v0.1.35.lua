@@ -591,22 +591,20 @@ local function emit_round_end(prev_map, prev_maptitle)
 	DiscordBot.Data.round_end_emitted = true
 end
 
--- Track gamestate transitions to emit ROUND_END during intermission (not on new map)
-addHook("ThinkFrame", function()
-	if DiscordBot.Data.last_gamestate == nil then
-		DiscordBot.Data.last_gamestate = gamestate
-		return
-	end
-	if DiscordBot.Data.current_map
-	   and not DiscordBot.Data.round_end_emitted
-	   and ((gamestate == GS_INTERMISSION) or (gamestate == GS_NULL and DiscordBot.Data.last_gamestate ~= GS_NULL)) then
+-- Emit ROUND_END on the first frame of intermission (fires every tick during
+-- GS_INTERMISSION via Y_Ticker; P_Ticker / ThinkFrame is NOT called then).
+addHook("IntermissionThinker", function()
+	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted then
 		emit_round_end(DiscordBot.Data.current_map, DiscordBot.Data.maptitle or "Unknown")
 	end
-	DiscordBot.Data.last_gamestate = gamestate
 end)
 
 addHook("MapChange", function(map)
-	-- Reset the round_end flag so the next intermission can fire again
+	-- Fallback: skipstats path skips intermission, so emit ROUND_END here.
+	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted
+	   and gamestate == GS_NULL then
+		emit_round_end(DiscordBot.Data.current_map, DiscordBot.Data.maptitle or "Unknown")
+	end
 	DiscordBot.Data.round_end_emitted = false
 	DiscordBot.Data.current_map = nil
 
