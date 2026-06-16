@@ -4,7 +4,6 @@
 #include <dpp/dpp.h>
 #include <optional>
 #include <ctime>
-#include <iomanip>
 #include <sstream>
 
 class ChatCardModule : public Module {
@@ -45,7 +44,18 @@ public:
             auto now = std::time(nullptr);
             std::tm tm = *std::localtime(&now);
             std::ostringstream ts;
-            ts << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+            char wday[4] = {};
+            std::strftime(wday, sizeof(wday), "%a", &tm);
+            int day = tm.tm_mday;
+            const char* ord = "th";
+            if (day % 10 == 1 && day != 11) ord = "st";
+            else if (day % 10 == 2 && day != 12) ord = "nd";
+            else if (day % 10 == 3 && day != 13) ord = "rd";
+            char month[16] = {};
+            std::strftime(month, sizeof(month), "%B", &tm);
+            char hm[6] = {};
+            std::strftime(hm, sizeof(hm), "%H:%M", &tm);
+            ts << wday << " " << day << ord << ", " << month << ", " << hm;
             meta += " | " + ts.str();
         }
 
