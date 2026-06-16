@@ -402,9 +402,14 @@ addHook("PlayerMsg", function(player, type, target, msg)
 			end
 		end
 		local jointime = (DiscordBot.join_times and DiscordBot.join_times[#player]) and tostring(DiscordBot.join_times[#player]) or "0"
-		text = "[EVENT:CHAT]|[" .. #player .. "]|" .. player.name .. "|" .. message .. "|" .. (player.mo and player.mo.skin or "") .. "|" .. jointime .. "\n"
+		local flag = (player.powers and player.powers[pw_carryflag] or 0) > 0 and "1" or "0"
+		local team = "none"
+		if gametype == GT_CTF or gametype == GT_TEAMMATCH then
+			team = tostring(player.ctfteam or 0)
+		end
+		text = "[EVENT:CHAT]|[" .. #player .. "]|" .. player.name .. "|" .. message .. "|" .. (player.mo and player.mo.skin or "") .. "|" .. jointime .. "|" .. flag .. "|" .. team .. "\n"
 		if IsPlayerAdmin(player) then
-			text = "[EVENT:CHAT]|[" .. #player .. "]|@" .. player.name .. "|" .. message .. "|" .. (player.mo and player.mo.skin or "") .. "|" .. jointime .. "\n"
+			text = "[EVENT:CHAT]|[" .. #player .. "]|@" .. player.name .. "|" .. message .. "|" .. (player.mo and player.mo.skin or "") .. "|" .. jointime .. "|" .. flag .. "|" .. team .. "\n"
 		end
 		if text then
 			sendit = DiscordBot.Functions.spamchatbug(player, text)

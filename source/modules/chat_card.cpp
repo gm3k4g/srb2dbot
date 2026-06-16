@@ -4,6 +4,8 @@
 #include <dpp/dpp.h>
 #include <optional>
 #include <ctime>
+#include <iomanip>
+#include <sstream>
 
 class ChatCardModule : public Module {
 public:
@@ -17,25 +19,41 @@ public:
         if (event.fields.size() < 3) return std::nullopt;
 
         auto& f = event.fields;
-        std::string node = f[0];
-        std::string name = f[1];
-        std::string message = f[2];
-        for (size_t i = 3; i + 2 < f.size(); i++) {
+        std::string node           = f[0];
+        std::string name           = f[1];
+        std::string message        = f[2];
+        for (size_t i = 3; i + 4 < f.size(); i++) {
             message += "|" + f[i];
         }
-        std::string skin = f.size() >= 4 ? f[f.size() - 2] : "";
-        std::string jointime_str = f.size() >= 5 ? f[f.size() - 1] : "";
+        std::string skin          = f.size() >= 6 ? f[f.size() - 4] : "";
+        std::string jointime_str  = f.size() >= 5 ? f[f.size() - 3] : "";
+        std::string flag          = f.size() >= 6 ? f[f.size() - 2] : "0";
+        std::string team          = f.size() >= 7 ? f[f.size() - 1] : "none";
         if (message.empty()) return std::nullopt;
 
-        dpp::embed embed;
-        embed.set_title(fmt_.empty() ? name : substitute_placeholders(fmt_, {{"name", name}, {"node", node}, {"skin", skin}}));
-        embed.set_description(message);
-        embed.set_color(0x2F3136);
-
-        embed.add_field("Node", node, true);
+        // Build metadata line: [:placard:] PlayerName | :red_square: | 1 | 10m | 2024-01-01 HH:MM:SS
+        std::string meta;
+        if (flag != "0") meta += ":placard: ";
+        meta += fmt_.empty() ? name : substitute_placeholders(fmt_, {{"name", name}, {"node", node}, {"skin", skin}});
+        if (team == "0")       meta += " | :red_square:";
+        else if (team == "1")  meta += " | :blue_square:";
+        meta += " | " + node;
         if (!jointime_str.empty() && jointime_str != "0") {
-            embed.add_field("Online", format_online_time(jointime_str), true);
+            meta += " | " + format_online_time(jointime_str);
         }
+        {
+            auto now = std::time(nullptr);
+            std::tm tm = *std::localtime(&now);
+            std::ostringstream ts;
+            ts << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+            meta += " | " + ts.str();
+        }
+
+        dpp::embed embed;
+        embed.set_description(meta + "\n" + message);
+        if (team == "0")            embed.set_color(0xE74C3C);
+        else if (team == "1")       embed.set_color(0x3498DB);
+        else                        embed.set_color(0x2F3136);
 
         return embed;
     }
