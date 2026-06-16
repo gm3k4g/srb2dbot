@@ -1,5 +1,6 @@
 #include "srb2dbot/module.hpp"
 #include "srb2dbot/utils.hpp"
+#include "version.h"
 #include <dpp/dpp.h>
 #include <fstream>
 #include <sstream>
@@ -42,6 +43,7 @@ public:
             embed.add_field("Players", players_str, true);
         if (!uptime_str.empty())
             embed.add_field("Server uptime", uptime_str, true);
+        embed.add_field("Bot version", version_str(), true);
 
         bot.message_create(dpp::message(channel, "").add_embed(embed),
             [&bot](const dpp::confirmation_callback_t& cb) {
@@ -73,13 +75,33 @@ private:
         while (std::getline(file, line) && idx <= 8) {
             switch (idx) {
                 case 0: stats.server_name = line; break;
-                case 1: stats.map_name = line; break;
+                case 1: strip_map_name(line, stats.map_name); break;
                 case 7: stats.uptime = line; break;
                 case 8: stats.players = line; break;
             }
             ++idx;
         }
         return stats;
+    }
+
+    static void strip_map_name(const std::string& raw, std::string& out) {
+        // Input:  "Lime Forest (MAPF0)"  or  "Greenflower Act 1 (1)"
+        // Output: "Lime Forest"           or  "Greenflower Act 1"
+        auto pos = raw.rfind(" (");
+        if (pos != std::string::npos)
+            out = raw.substr(0, pos);
+        else
+            out = raw;
+    }
+
+    static auto version_str() -> std::string {
+        std::string v(PROJECT_VERSION_MAJOR "." PROJECT_VERSION_MINOR "." PROJECT_VERSION_PATCH);
+        if (v == ".." || v.empty()) {
+            std::string c(PROJECT_COMMIT);
+            if (!c.empty()) return "git-" + c;
+            return "unknown";
+        }
+        return v;
     }
 };
 
