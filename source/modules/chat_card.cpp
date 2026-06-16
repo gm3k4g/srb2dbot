@@ -34,8 +34,8 @@ public:
         std::string meta;
         if (flag != "0") meta += ":placard: ";
         meta += fmt_.empty() ? name : substitute_placeholders(fmt_, {{"name", name}, {"node", node}, {"skin", skin}});
-        if (team == "0")       meta += " :red_square:";
-        else if (team == "1")  meta += " :blue_square:";
+        if (team == "1")       meta += " :red_square:";
+        else if (team == "2")  meta += " :blue_square:";
         if (!jointime_str.empty() && jointime_str != "0") {
             meta += " | " + format_online_time(jointime_str);
         }
@@ -62,8 +62,8 @@ public:
         dpp::embed embed;
         embed.set_title(meta);
         embed.set_description(message);
-        if (team == "0")            embed.set_color(0xE74C3C);
-        else if (team == "1")       embed.set_color(0x3498DB);
+        if (team == "1")            embed.set_color(0xE74C3C);
+        else if (team == "2")       embed.set_color(0x3498DB);
         else                        embed.set_color(0x2F3136);
 
         return embed;
