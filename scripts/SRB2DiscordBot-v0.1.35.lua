@@ -379,7 +379,6 @@ end
 addHook("ThinkFrame", bot_function)
 
 addHook("PlayerMsg", function(player, type, target, msg)
-	if player ~= server then return end
 	if not player then return end
 	if not DiscordBot._player_msg_cache then DiscordBot._player_msg_cache = {} end
 	local cache = DiscordBot._player_msg_cache
