@@ -504,6 +504,15 @@ local function get_gametype_name(gt)
 	return names[gt] or "Unknown"
 end
 
+local function json_escape(s)
+	s = string.gsub(s, '\\', '\\\\')
+	s = string.gsub(s, '"', '\\"')
+	s = string.gsub(s, '\n', '\\n')
+	s = string.gsub(s, '\r', '\\r')
+	s = string.gsub(s, '\t', '\\t')
+	return s
+end
+
 local function map_num_to_mapstr(n)
 	if n < 100 then
 		return string.format("MAP%02d", n)
@@ -525,22 +534,66 @@ addHook("MapChange", function(map)
 	-- Skip death reloads (same map) and forced `map` commands (GS_LEVEL).
 	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.current_map ~= map
 	   and gamestate ~= GS_LEVEL then
+		local gtname = get_gametype_name(gametype)
+		local mapstr = map_num_to_mapstr(DiscordBot.Data.current_map)
+		local prev_maptitle = DiscordBot.Data.maptitle or "Unknown"
+
+		-- Build player arrays for the intermission overlay
+		local players_json = "["
+		local spec_json = "["
+		local first = true
+		local spec_first = true
 		local players_total = 0
 		local players_red = 0
 		local players_blue = 0
 		local players_spec = 0
+		local has_teams = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
 		for p in players.iterate do
 			players_total = $ + 1
 			if p.spectator then
 				players_spec = $ + 1
-			elseif p.ctfteam == 1 then
-				players_red = $ + 1
-			elseif p.ctfteam == 2 then
-				players_blue = $ + 1
+				if not spec_first then spec_json = spec_json .. "," end
+				spec_json = spec_json .. '"' .. json_escape(p.name) .. '"'
+				spec_first = false
+			else
+				local team = "ffa"
+				if p.ctfteam == 1 then team = "red"; players_red = $ + 1
+				elseif p.ctfteam == 2 then team = "blue"; players_blue = $ + 1 end
+				if not first then players_json = players_json .. "," end
+				players_json = players_json .. '{"name":"' .. json_escape(p.name) .. '","score":' .. (p.score or 0) .. ',"team":"' .. team .. '"}'
+				first = false
 			end
 		end
-		local gtname = get_gametype_name(gametype)
-		local mapstr = map_num_to_mapstr(DiscordBot.Data.current_map)
+		players_json = players_json .. "]"
+		spec_json = spec_json .. "]"
+
+		-- Determine game mode for the overlay
+		local mode
+		if has_teams then mode = "team" else mode = "ffa" end
+		local round_seconds = math.floor(leveltime / 35)
+		local round_mins = math.floor(round_seconds / 60)
+		local round_secs = round_seconds % 60
+		local round_time_str = round_mins .. ":" .. string.format("%02d", round_secs)
+
+		-- Write RoundResults.json for the overlay generator
+		local round_json = '{'
+		round_json = round_json .. '"gametype":"' .. json_escape(gtname) .. '",'
+		round_json = round_json .. '"map":"' .. json_escape(mapstr) .. '",'
+		round_json = round_json .. '"title":"' .. json_escape(prev_maptitle) .. '",'
+		round_json = round_json .. '"round_time":"' .. round_time_str .. '",'
+		round_json = round_json .. '"mode":"' .. mode .. '",'
+		round_json = round_json .. '"blue_score":' .. (bluescore or 0) .. ','
+		round_json = round_json .. '"red_score":' .. (redscore or 0) .. ','
+		round_json = round_json .. '"players":' .. players_json .. ','
+		round_json = round_json .. '"spectators":' .. spec_json
+		round_json = round_json .. '}'
+
+		local rf = io.openlocal("client/DiscordBot/RoundResults.json", "w")
+		if rf then
+			rf:write(round_json)
+			rf:close()
+		end
+
 		local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime .. "|" .. DiscordBot.Data.servertime .. "|" .. players_total .. "|" .. players_red .. "|" .. players_blue .. "|" .. players_spec .. "\n"
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
 		DiscordBot.Functions.flush_msgsrb2()

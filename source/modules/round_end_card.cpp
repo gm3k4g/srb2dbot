@@ -6,6 +6,8 @@
 #include <fstream>
 #include <optional>
 #include <filesystem>
+#include <cstdio>
+#include <nlohmann/json.hpp>
 
 class RoundEndCardModule : public Module {
 public:
@@ -50,31 +52,87 @@ public:
         }
         embed.add_field("Players", player_info, true);
 
-        embed.set_timestamp(std::time(nullptr));
         return embed;
     }
 
     auto get_bridge_attachment(const BridgeEvent& event) -> std::optional<std::pair<std::string, std::string>> override {
-        if (!thumbs_enabled_) return std::nullopt;
         if (event.type != "ROUND_END") return std::nullopt;
         if (event.fields.size() < 2) return std::nullopt;
 
-        std::string map_name = event.fields[1];
+        std::string results_path = srb2_dir_ + "/luafiles/client/DiscordBot/RoundResults.json";
+        std::ifstream rf(results_path);
+        if (!rf.is_open()) return std::nullopt;
+
+        nlohmann::json data;
+        try { rf >> data; } catch (...) { return std::nullopt; }
+        rf.close();
+
+        std::string gametype = data.value("gametype", "FFA");
+        std::string map_name = data.value("map", "");
+        std::string title    = data.value("title", "");
+        std::string round_time = data.value("round_time", "");
+        std::string mode     = data.value("mode", "ffa");
+        int blue_score = data.value("blue_score", 0);
+        int red_score  = data.value("red_score", 0);
+
         if (map_name.empty()) return std::nullopt;
 
         std::string thumb_dir = srb2_dir_ + "/luafiles/client/DiscordBot/thumbnails";
         std::filesystem::create_directories(thumb_dir);
         std::string thumb_path = thumb_dir + "/" + map_name + ".png";
-
         bridge_extract_thumbnail(map_name, thumb_dir);
+        bool has_thumb = (access(thumb_path.c_str(), F_OK) == 0);
 
-        if (access(thumb_path.c_str(), F_OK) != 0) return std::nullopt;
+        std::string players_json = data["players"].dump();
+        std::string spec_json = data["spectators"].dump();
 
-        std::ifstream file(thumb_path, std::ios::binary);
+        // Find the intermission script — search common locations
+        std::string script_path;
+        std::vector<std::string> search_paths = {
+            srb2_dir_ + "/generate_intermission.sh",
+            srb2_dir_ + "/luafiles/client/DiscordBot/generate_intermission.sh",
+            "/run/media/einfoed/EXTERNAL1/games/free/srb2/SRB2_TOOLS/srb2dbot/generate_intermission.sh",
+        };
+        for (auto& p : search_paths) {
+            if (access(p.c_str(), X_OK) == 0) { script_path = p; break; }
+        }
+        if (script_path.empty()) {
+            std::cout << "[round_end_card] generate_intermission.sh not found" << std::endl;
+            return std::nullopt;
+        }
+
+        std::string out_path = thumb_dir + "/intermission_" + map_name + ".png";
+
+        std::string cmd = "'" + script_path + "'"
+            + " --gametype '" + mode + "'"
+            + " --map '" + map_name + "'"
+            + " --title '" + title + "'";
+        if (!round_time.empty())
+            cmd += " --round-time '" + round_time + "'";
+        if (mode == "team") {
+            cmd += " --blue-score " + std::to_string(blue_score);
+            cmd += " --red-score " + std::to_string(red_score);
+        }
+        cmd += " --players '" + players_json + "'";
+        if (spec_json != "[]")
+            cmd += " --spectators '" + spec_json + "'";
+        if (has_thumb)
+            cmd += " --thumb '" + thumb_path + "'";
+        cmd += " --out '" + out_path + "'";
+
+        int ret = std::system(cmd.c_str());
+        if (ret != 0) {
+            std::cout << "[round_end_card] generate_intermission.sh failed (code " << ret << ")" << std::endl;
+            return std::nullopt;
+        }
+
+        if (access(out_path.c_str(), F_OK) != 0) return std::nullopt;
+
+        std::ifstream file(out_path, std::ios::binary);
         if (!file.is_open()) return std::nullopt;
 
         std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        return std::make_pair(map_name + ".png", content);
+        return std::make_pair("intermission_" + map_name + ".png", content);
     }
 
 private:
@@ -86,7 +144,7 @@ private:
         std::int64_t tics = 0;
         try { tics = std::stoll(tics_str); } catch (...) { return "0s"; }
         if (tics < 0) return "0s";
-        auto seconds = tics / 35;  // SRB2 runs at 35 fps
+        auto seconds = tics / 35;
         if (seconds < 60) return std::to_string(seconds) + "s";
         auto mins = seconds / 60;
         auto secs = seconds % 60;

@@ -66,6 +66,9 @@ mkdir -p "$HOME/.srb2/luafiles/client/DiscordBot"
 
 # Deploy script to DOWNLOAD so SRB2 auto-loads it once
 cp "$LUA_WAD" "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua"
+# Deploy intermission overlay generator
+cp "$SCRIPT_DIR/generate_intermission.sh" "$HOME/.srb2/generate_intermission.sh"
+chmod +x "$HOME/.srb2/generate_intermission.sh"
 
 echo "=== srb2_dbot ==="
 [[ -n "$BUILD_ARGS" ]] && echo "Mode:   Release"
