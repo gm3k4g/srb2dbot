@@ -164,6 +164,16 @@ find /path/to/addons -name '*.pk3' -exec unzip -o {} -d {}_FILES \
     Nested containment (e.g. a row background inside a panel) is permitted.
 </p>
 
+<h3>Spectators</h3>
+<p>Optional spectator names are displayed at the bottom of the panel in small (11px), semi-transparent text.</p>
+<pre><code>./generate_intermission.sh ... \
+    --spectators '["Guest1","Guest2","Viewer3"]'
+
+# Or from a file
+./generate_intermission.sh ... \
+    --spectators-file spectators.json</code></pre>
+<p>Spectator JSON format: <code>["name1", "name2", ...]</code></p>
+
 <h2>Intermission Test Harness</h2>
 <p><code>./test_intermission.sh</code>  -  generates sample outputs for 2, 4, 8, 12, 16, 18, and 24 players in both FFA and Team modes, verifying that all hitboxes pass validation and outputs are valid transparent PNGs.</p>
 

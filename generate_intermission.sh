@@ -28,6 +28,8 @@ BLUE_SCORE=0
 RED_SCORE=0
 PLAYERS_JSON=""
 PLAYERS_FILE=""
+SPECTATORS_JSON=""
+SPECTATORS_FILE=""
 THUMB=""
 OUTPUT=""
 VERBOSE=false
@@ -160,6 +162,10 @@ Player data (one required):
   --players "<json>"        JSON array of player objects
   --players-file <path>     Read player JSON from file
 
+Spectators (optional):
+  --spectators "<json>"    JSON array of spectator name strings
+  --spectators-file <path> Read spectator names from file
+
 Title bar:
   Top line: {gametype} centered, {round_time} right-aligned
   Bottom line: {title} ({map}) centered
@@ -167,6 +173,10 @@ Title bar:
 Player JSON format:
   [{"name":"P1","score":1500,"team":"blue"}, ...]
   team: "blue"/"red" (team) or omit (FFA).
+
+Spectator JSON format:
+  ["name1", "name2", "name3"]
+  Plain array of strings, no scores.
 USAGE
     exit 0
 }
@@ -182,6 +192,8 @@ while [[ $# -gt 0 ]]; do
         --red-score)    RED_SCORE="$2"; shift 2 ;;
         --players)      PLAYERS_JSON="$2"; shift 2 ;;
         --players-file) PLAYERS_FILE="$2"; shift 2 ;;
+        --spectators)   SPECTATORS_JSON="$2"; shift 2 ;;
+        --spectators-file) SPECTATORS_FILE="$2"; shift 2 ;;
         --thumb)        THUMB="$2"; shift 2 ;;
         --out)          OUTPUT="$2"; shift 2 ;;
         --width)        WIDTH="$2"; shift 2 ;;
@@ -209,6 +221,8 @@ done
 [[ -z "$OUTPUT" ]] && { echo "ERROR: --out is required" >&2; usage; }
 [[ -n "$PLAYERS_FILE" && -n "$PLAYERS_JSON" ]] && { echo "ERROR: Use --players OR --players-file, not both" >&2; exit 1; }
 [[ -n "$PLAYERS_FILE" ]] && PLAYERS_JSON=$(cat "$PLAYERS_FILE")
+[[ -n "$SPECTATORS_FILE" && -n "$SPECTATORS_JSON" ]] && { echo "ERROR: Use --spectators OR --spectators-file, not both" >&2; exit 1; }
+[[ -n "$SPECTATORS_FILE" ]] && SPECTATORS_JSON=$(cat "$SPECTATORS_FILE")
 [[ "$GAMETYPE" != "ffa" && "$GAMETYPE" != "team" ]] && { echo "ERROR: --gametype must be 'ffa' or 'team'" >&2; exit 1; }
 
 # ── Detect ImageMagick ──────────────────────────────────────────────────────
@@ -247,6 +261,25 @@ if [[ -n "$PLAYERS_JSON" ]]; then
 fi
 NUM_PLAYERS=${#PLAYER_NAMES[@]}
 if $VERBOSE; then echo "[intermission] parsed $NUM_PLAYERS players"; fi
+
+# Parse spectator names (JSON array of strings)
+SPECTATOR_NAMES=()
+if [[ -n "$SPECTATORS_JSON" ]]; then
+    flat=$(echo "$SPECTATORS_JSON" | tr -d '\n\r\t')
+    flat="${flat#\[}"; flat="${flat%\]}"
+    flat="${flat#"${flat%%[![:space:]]*}"}"
+    while [[ -n "$flat" ]]; do
+        flat="${flat#"${flat%%[![:space:]]*}"}"
+        if [[ "$flat" =~ ^\"([^\"]*)\"(.*)$ ]]; then
+            SPECTATOR_NAMES+=("${BASH_REMATCH[1]}")
+            flat="${BASH_REMATCH[2]#,}"
+            flat="${flat#,}"
+        else break
+        fi
+    done
+fi
+NUM_SPECTATORS=${#SPECTATOR_NAMES[@]}
+if $VERBOSE; then echo "[intermission] parsed $NUM_SPECTATORS spectators"; fi
 
 # ── Sorting helper ──────────────────────────────────────────────────────────
 sort_desc() {
@@ -435,6 +468,24 @@ _render_rows() {
     done
 }
 
+_render_spectators() {
+    local f=$1 cl=$2 cw=$3 pb=$4
+    [[ $NUM_SPECTATORS -eq 0 ]] && return
+    local spec_y=$((pb - 17))
+    local names=""
+    for ((i=0; i<NUM_SPECTATORS; i++)); do
+        if [[ $i -gt 0 ]]; then names="$names, "; fi
+        names="$names${SPECTATOR_NAMES[$i]}"
+    done
+    if [[ ${#names} -gt 80 ]]; then
+        names="${names:0:77}..."
+    fi
+    [[ -n "$FONT_MONO" ]] && echo "  font '$FONT_MONO'" >> "$f"
+    echo "  fill 'rgba(255,255,255,0.45)'" >> "$f"
+    echo "  font-size 11" >> "$f"
+    echo "  text $((cl+12)),$spec_y 'Spectators: $names'" >> "$f"
+}
+
 # ── FFA mode ────────────────────────────────────────────────────────────────
 gen_ffa_mvg() {
     local f=$1 pt=$2 pb=$3
@@ -475,6 +526,7 @@ gen_ffa_mvg() {
     for ((i=0; i<NUM_PLAYERS; i++)); do all+=("$i"); done
     sort_desc all
     _render_rows "$f" "$cl" "$cw" "$row_top" "$rh" "$pad" "$pb" all
+    _render_spectators "$f" "$cl" "$cw" "$pb"
 }
 
 # ── Team mode ───────────────────────────────────────────────────────────────
@@ -543,6 +595,7 @@ gen_team_mvg() {
 
     _render_rows "$f" "$lx" "$cw" "$row_top" "$rh" "$pad" "$pb" bi
     _render_rows "$f" "$rx" "$cw" "$row_top" "$rh" "$pad" "$pb" ri
+    _render_spectators "$f" "$MARGIN" "$((WIDTH - 2*MARGIN))" "$pb"
 }
 
 # ── Main ─────────────────────────────────────────────────────────────────────
