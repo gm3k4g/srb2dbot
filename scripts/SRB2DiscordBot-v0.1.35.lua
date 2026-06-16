@@ -402,7 +402,10 @@ addHook("PlayerMsg", function(player, type, target, msg)
 			end
 		end
 		local jointime = (DiscordBot.join_times and DiscordBot.join_times[#player]) and tostring(DiscordBot.join_times[#player]) or "0"
-		local flag = (player.powers and player.powers[pw_carryflag] or 0) > 0 and "1" or "0"
+		local flag = "0"
+		if pw_carryflag and player.powers then
+			flag = player.powers[pw_carryflag] and player.powers[pw_carryflag] > 0 and "1" or "0"
+		end
 		local team = "none"
 		if gametype == GT_CTF or gametype == GT_TEAMMATCH then
 			team = tostring(player.ctfteam or 0)
