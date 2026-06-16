@@ -539,7 +539,7 @@ addHook("MapChange", function(map)
 		end
 		local gtname = get_gametype_name(gametype)
 		local mapstr = map_num_to_mapstr(DiscordBot.Data.current_map)
-		local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime .. "|" .. players_total .. "|" .. players_red .. "|" .. players_blue .. "|" .. players_spec .. "\n"
+		local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime .. "|" .. DiscordBot.Data.servertime .. "|" .. players_total .. "|" .. players_red .. "|" .. players_blue .. "|" .. players_spec .. "\n"
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
 		DiscordBot.Functions.flush_msgsrb2()
 	end

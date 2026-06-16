@@ -25,11 +25,12 @@ public:
 
         std::string gt        = event.fields[0];
         std::string map_num   = event.fields[1];
-        std::string game_time = event.fields[2];
-        std::string total_pl  = event.fields.size() >= 4 ? event.fields[3] : "0";
-        std::string red_pl    = event.fields.size() >= 5 ? event.fields[4] : "0";
-        std::string blue_pl   = event.fields.size() >= 6 ? event.fields[5] : "0";
-        std::string spec_pl   = event.fields.size() >= 7 ? event.fields[6] : "0";
+        std::string map_time  = event.fields[2];
+        std::string game_time = event.fields.size() >= 4 ? event.fields[3] : "0";
+        std::string total_pl  = event.fields.size() >= 5 ? event.fields[4] : "0";
+        std::string red_pl    = event.fields.size() >= 6 ? event.fields[5] : "0";
+        std::string blue_pl   = event.fields.size() >= 7 ? event.fields[6] : "0";
+        std::string spec_pl   = event.fields.size() >= 8 ? event.fields[7] : "0";
 
         dpp::embed embed;
         embed.set_title("The round has ended.");
@@ -37,6 +38,7 @@ public:
         embed.set_timestamp(std::time(nullptr));
 
         embed.add_field("Map", map_num, true);
+        embed.add_field("Map time", format_game_time(map_time), true);
         embed.add_field("Game time", format_game_time(game_time), true);
 
         std::string player_info = total_pl + " total";
@@ -46,7 +48,7 @@ public:
         if (std::stoi(spec_pl) > 0) {
             player_info += " | Spectators: " + spec_pl;
         }
-        embed.add_field("Players", player_info, false);
+        embed.add_field("Players", player_info, true);
 
         embed.set_timestamp(std::time(nullptr));
         return embed;
