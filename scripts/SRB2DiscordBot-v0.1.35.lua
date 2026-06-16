@@ -587,7 +587,9 @@ end
 -- GS_INTERMISSION via Y_Ticker; P_Ticker / ThinkFrame is NOT called then).
 addHook("IntermissionThinker", function()
 	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted then
-		emit_round_end(DiscordBot.Data.current_map, DiscordBot.Data.maptitle or "Unknown")
+		local title = DiscordBot.Data.maptitle
+		if title == nil or title == "" then title = "Unknown" end
+		emit_round_end(DiscordBot.Data.current_map, title)
 	end
 end)
 
@@ -595,7 +597,9 @@ addHook("MapChange", function(map)
 	-- Fallback: skipstats path skips intermission, so emit ROUND_END here.
 	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted
 	   and gamestate == GS_NULL then
-		emit_round_end(DiscordBot.Data.current_map, DiscordBot.Data.maptitle or "Unknown")
+		local title = DiscordBot.Data.maptitle
+		if title == nil or title == "" then title = "Unknown" end
+		emit_round_end(DiscordBot.Data.current_map, title)
 	end
 	DiscordBot.Data.round_end_emitted = false
 	DiscordBot.Data.current_map = nil

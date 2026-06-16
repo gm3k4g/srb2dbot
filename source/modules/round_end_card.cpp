@@ -127,7 +127,7 @@ public:
 
         std::string cmd;
         for (auto& a : args) {
-            cmd += a;
+            cmd += "'" + a + "'";
             cmd.push_back(' ');
         }
 
