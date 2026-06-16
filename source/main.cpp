@@ -3,6 +3,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <cstdlib>
+#include <cstdio>
 #include <filesystem>
 #include <string>
 #include <sstream>
@@ -245,7 +246,6 @@ int main() {
               << std::endl;
 
     if (bridge_channel_id != "0") {
-        size_t seek_start = 0;
         bool dbot_synced = false;
         int dbot_sync_retries = 0;
         std::unordered_map<std::string, std::time_t> seen_joins;
@@ -255,7 +255,7 @@ int main() {
         constexpr std::time_t LINE_DEDUP_WINDOW = 3;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
 
-        bot.start_timer([&bot, &registry, messages_path, &seek_start, &dbot_synced,
+        bot.start_timer([&bot, &registry, messages_path, &dbot_synced,
                          &dbot_sync_retries, &seen_joins, &seen_lines, bridge_channel_sf, &guild_emojis,
 
 
@@ -274,108 +274,110 @@ int main() {
 #endif
             }
 
-            size_t seek_end = bridge_get_lines(messages_path);
-            if (seek_end > seek_start) {
-                std::string content = bridge_read_range(messages_path, seek_start, seek_end);
-                if (content.size() > 1) {
-                    content = bridge_replace_emojis(content, guild_emojis);
-                    std::istringstream lines(content);
-                    std::string line;
-                    std::vector<dpp::embed> pending_embeds;
+            // Atomically rename Messages.txt to .tmp so Lua never sees
+            // a truncated file.  rename(2) is POSIX-atomic: Lua's open fd
+            // continues writing to the old inode (now .tmp), and the next
+            // io.openlocal("...", "a+") creates a fresh Messages.txt.
+            std::string tmp_path = messages_path + ".tmp";
+            if (std::rename(messages_path.c_str(), tmp_path.c_str()) == 0) {
+                std::ifstream tmp_file(tmp_path);
+                if (tmp_file.is_open()) {
+                    std::string content((std::istreambuf_iterator<char>(tmp_file)),
+                                         std::istreambuf_iterator<char>());
+                    tmp_file.close();
+                    std::remove(tmp_path.c_str());
 
-                    while (std::getline(lines, line)) {
-                        if (line.empty()) continue;
-                        if (auto event = bridge_parse_event(line)) {
-                            std::string dedup_key = line;
-                            if (event->type == "CHAT" && event->fields.size() >= 3) {
-                                dedup_key = "CHAT|" + event->fields[1] + "|" + event->fields[2];
-                            } else if (event->type == "SERVER_CHAT" && event->fields.size() >= 1) {
-                                dedup_key = "SERVER_CHAT|" + event->fields[0];
-                            }
-                            {
-                                auto now = std::time(nullptr);
-                                auto it = seen_lines.find(dedup_key);
-                                if (it != seen_lines.end() && (now - it->second) < LINE_DEDUP_WINDOW) continue;
-                                seen_lines[dedup_key] = now;
-                            }
-                            if (event->type == "PLAYER_JOIN" && event->fields.size() >= 2) {
-                                std::string key = event->fields[0] + "|" + event->fields[1];
-                                auto now = std::time(nullptr);
-                                auto it = seen_joins.find(key);
-                                if (it != seen_joins.end() && (now - it->second) < JOIN_DEDUP_WINDOW) continue;
-                                seen_joins[key] = now;
-                            } else if (event->type == "PLAYER_QUIT" && event->fields.size() >= 2) {
-                                seen_joins.erase(event->fields[0] + "|" + event->fields[1]);
-                            }
-                            auto embed_opt = registry.handle_bridge_event(*event);
-                            if (embed_opt.has_value()) {
+                    if (content.size() > 1) {
+                        content = bridge_replace_emojis(content, guild_emojis);
+                        std::istringstream lines(content);
+                        std::string line;
+                        std::vector<dpp::embed> pending_embeds;
+
+                        while (std::getline(lines, line)) {
+                            if (line.empty()) continue;
+                            if (auto event = bridge_parse_event(line)) {
+                                std::string dedup_key = line;
+                                if (event->type == "CHAT" && event->fields.size() >= 3) {
+                                    dedup_key = "CHAT|" + event->fields[1] + "|" + event->fields[2];
+                                } else if (event->type == "SERVER_CHAT" && event->fields.size() >= 1) {
+                                    dedup_key = "SERVER_CHAT|" + event->fields[0];
+                                }
+                                {
+                                    auto now = std::time(nullptr);
+                                    auto it = seen_lines.find(dedup_key);
+                                    if (it != seen_lines.end() && (now - it->second) < LINE_DEDUP_WINDOW) continue;
+                                    seen_lines[dedup_key] = now;
+                                }
+                                if (event->type == "PLAYER_JOIN" && event->fields.size() >= 2) {
+                                    std::string key = event->fields[0] + "|" + event->fields[1];
+                                    auto now = std::time(nullptr);
+                                    auto it = seen_joins.find(key);
+                                    if (it != seen_joins.end() && (now - it->second) < JOIN_DEDUP_WINDOW) continue;
+                                    seen_joins[key] = now;
+                                } else if (event->type == "PLAYER_QUIT" && event->fields.size() >= 2) {
+                                    seen_joins.erase(event->fields[0] + "|" + event->fields[1]);
+                                }
+                                auto embed_opt = registry.handle_bridge_event(*event);
+                                if (embed_opt.has_value()) {
 #ifndef NDEBUG
-                                std::cout << "[bridge] SRB2→Discord: " << event->type << " raw=" << line << std::endl;
+                                    std::cout << "[bridge] SRB2→Discord: " << event->type << " raw=" << line << std::endl;
 #endif
-                                auto attach = registry.get_bridge_attachment(*event);
-                                if (attach.has_value()) {
-                                    // Flush pending, then send thumbnailed embed individually
-                                    if (!pending_embeds.empty()) {
-                                        dpp::message evt_batch(bridge_channel_sf, "");
-                                        for (auto& e : pending_embeds) evt_batch.add_embed(e);
-                                        bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
+                                    auto attach = registry.get_bridge_attachment(*event);
+                                    if (attach.has_value()) {
+                                        if (!pending_embeds.empty()) {
+                                            dpp::message evt_batch(bridge_channel_sf, "");
+                                            for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                                            bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
+                                                if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
+                                            });
+                                            pending_embeds.clear();
+                                        }
+                                        embed_opt->set_image("attachment://" + attach->first);
+                                        dpp::message thumb_msg(bridge_channel_sf, "");
+                                        thumb_msg.add_embed(*embed_opt);
+                                        thumb_msg.add_file(attach->first, attach->second);
+                                        bot.message_create(thumb_msg, [](const dpp::confirmation_callback_t& cb) {
                                             if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
                                         });
-                                        pending_embeds.clear();
+                                    } else {
+                                        pending_embeds.push_back(*embed_opt);
                                     }
-                                    embed_opt->set_image("attachment://" + attach->first);
-                                    dpp::message thumb_msg(bridge_channel_sf, "");
-                                    thumb_msg.add_embed(*embed_opt);
-                                    thumb_msg.add_file(attach->first, attach->second);
-                                    bot.message_create(thumb_msg, [](const dpp::confirmation_callback_t& cb) {
+                                }
+                                if (pending_embeds.size() >= 10) {
+                                    dpp::message evt_batch(bridge_channel_sf, "");
+                                    for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                                    bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
                                         if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
                                     });
-                                } else {
-                                    pending_embeds.push_back(*embed_opt);
+                                    pending_embeds.clear();
                                 }
                             }
-                            // No fallback  -  if no module produced an embed, the event is silently skipped
-                            if (pending_embeds.size() >= 10) {
-                                dpp::message evt_batch(bridge_channel_sf, "");
-                                for (auto& e : pending_embeds) evt_batch.add_embed(e);
-                                bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
-                                    if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
-                                });
-                                pending_embeds.clear();
-                            }
                         }
-                        // Lines not matching [EVENT:...] are silently ignored
+                        if (!pending_embeds.empty()) {
+                            dpp::message evt_batch(bridge_channel_sf, "");
+                            for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                            bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
+                                if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
+                            });
+                        }
                     }
-                    if (!pending_embeds.empty()) {
-                        dpp::message evt_batch(bridge_channel_sf, "");
-                        for (auto& e : pending_embeds) evt_batch.add_embed(e);
-                        bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
-                            if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
-                        });
-                    }
+                } else {
+                    std::remove(tmp_path.c_str());
                 }
-                seek_start = seek_end;
-                {
-                    // Truncate file after reading to prevent unbounded growth.
-                    // Race: Lua may write between read and truncate — acceptable
-                    // loss for a chat bridge; next tick starts from 0.
-                    std::ofstream truncate_file(messages_path, std::ios::trunc);
-                    seek_start = 0;
+            }
+            {
+                auto now = std::time(nullptr);
+                for (auto it = seen_lines.begin(); it != seen_lines.end(); ) {
+                    if (now - it->second >= LINE_DEDUP_WINDOW)
+                        it = seen_lines.erase(it);
+                    else
+                        ++it;
                 }
-                {
-                    auto now = std::time(nullptr);
-                    for (auto it = seen_lines.begin(); it != seen_lines.end(); ) {
-                        if (now - it->second >= LINE_DEDUP_WINDOW)
-                            it = seen_lines.erase(it);
-                        else
-                            ++it;
-                    }
-                    for (auto it = seen_joins.begin(); it != seen_joins.end(); ) {
-                        if (now - it->second >= JOIN_DEDUP_WINDOW)
-                            it = seen_joins.erase(it);
-                        else
-                            ++it;
-                    }
+                for (auto it = seen_joins.begin(); it != seen_joins.end(); ) {
+                    if (now - it->second >= JOIN_DEDUP_WINDOW)
+                        it = seen_joins.erase(it);
+                    else
+                        ++it;
                 }
             }
         }, 2);
