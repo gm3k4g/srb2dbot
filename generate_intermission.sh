@@ -23,6 +23,7 @@ set -euo pipefail
 GAMETYPE="ffa"
 MAP=""
 TITLE=""
+ROUND_TIME=""
 BLUE_SCORE=0
 RED_SCORE=0
 PLAYERS_JSON=""
@@ -146,6 +147,21 @@ Other:
   --verbose                 Print debug info
   --help                    Show this help
 
+Map info:
+  --map <name>              Map number/code (e.g. MAP01)
+  --title "<name>"          Map name (e.g. "Green Flower Zone")
+  --round-time "<string>"   Round duration shown in title bar (e.g. "2:30")
+
+Scores (team mode):
+  --blue-score <n>          Blue team score
+  --red-score <n>           Red team score
+
+Player data (one required):
+  --players "<json>"        JSON array of player objects
+  --players-file <path>     Read player JSON from file
+
+Title bar format:  {title} ({map}) - {gametype} - {round_time}
+
 Player JSON format:
   [{"name":"P1","score":1500,"team":"blue"}, ...]
   team: "blue"/"red" (team) or omit (FFA).
@@ -159,6 +175,7 @@ while [[ $# -gt 0 ]]; do
         --gametype)     GAMETYPE="$2"; shift 2 ;;
         --map)          MAP="$2"; shift 2 ;;
         --title)        TITLE="$2"; shift 2 ;;
+        --round-time)   ROUND_TIME="$2"; shift 2 ;;
         --blue-score)   BLUE_SCORE="$2"; shift 2 ;;
         --red-score)    RED_SCORE="$2"; shift 2 ;;
         --players)      PLAYERS_JSON="$2"; shift 2 ;;
@@ -256,8 +273,25 @@ gen_mvg() {
     echo "  fill '$C_SEP'" >> "$f"
     echo "  rectangle 0,$((HEADER_H-1)) $WIDTH,$HEADER_H" >> "$f"
 
-    local title_text="$MAP${TITLE:+ - $TITLE}"
-    [[ -z "$title_text" ]] && title_text="Round Results"
+    local gt_display="FFA"
+    [[ "$GAMETYPE" == "team" ]] && gt_display="Team"
+    local title_text=""
+    if [[ -n "$TITLE" && -n "$MAP" ]]; then
+        title_text="$TITLE ($MAP)"
+    elif [[ -n "$TITLE" ]]; then
+        title_text="$TITLE"
+    elif [[ -n "$MAP" ]]; then
+        title_text="$MAP"
+    fi
+    if [[ -n "$title_text" && -n "$ROUND_TIME" ]]; then
+        title_text="$title_text - $gt_display - $ROUND_TIME"
+    elif [[ -n "$ROUND_TIME" ]]; then
+        title_text="$gt_display - $ROUND_TIME"
+    elif [[ -n "$title_text" ]]; then
+        title_text="$title_text - $gt_display"
+    else
+        title_text="Round Results"
+    fi
     [[ -n "$FONT_TITLE" ]] && echo "  font '$FONT_TITLE'" >> "$f"
     echo "  stroke none" >> "$f"
     echo "  fill '$C_TITLE'" >> "$f"
@@ -510,6 +544,28 @@ gen_team_mvg() {
 # ── Main ─────────────────────────────────────────────────────────────────────
 _compute_hitboxes
 hitbox_check
+
+# Warn if players exceed panel capacity
+{ 
+    pt=$((HEADER_H + HEADER_GAP))
+    pb=$((HEIGHT - BOTTOM_GAP))
+    if [[ "$GAMETYPE" == "ffa" ]]; then
+        hdr_h=36; hdr_gap=14
+        row_top=$((pt + hdr_h + hdr_gap))
+        max_rows=$(( (pb - 2 - row_top) / ROW_H_FFA ))
+        if [[ $NUM_PLAYERS -gt $max_rows ]]; then
+            echo "WARNING: Only $max_rows of $NUM_PLAYERS players fit in panel ($((NUM_PLAYERS - max_rows)) clipped)" >&2
+        fi
+    else
+        hdr_h=40; hdr_gap=16
+        row_top=$((pt + hdr_h + hdr_gap))
+        max_per_col=$(( (pb - 2 - row_top) / ROW_H_TEAM ))
+        max_total=$(( max_per_col * 2 ))
+        if [[ $NUM_PLAYERS -gt $max_total ]]; then
+            echo "WARNING: Only $max_total of $NUM_PLAYERS players fit ($((NUM_PLAYERS - max_total)) clipped)" >&2
+        fi
+    fi
+}
 
 MVG=$(gen_mvg)
 if $VERBOSE; then echo "[intermission] MVG: $MVG"; fi

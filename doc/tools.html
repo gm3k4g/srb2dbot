@@ -76,8 +76,9 @@
 <table>
     <tr><th>Option</th><th>Default</th><th>Description</th></tr>
     <tr><td><code>--gametype</code></td><td><code>ffa</code></td><td><code>ffa</code> (single column) or <code>team</code> (blue/red columns)</td></tr>
-    <tr><td><code>--map</code></td><td>—</td><td>Map code (e.g. MAP01) shown in the title bar</td></tr>
-    <tr><td><code>--title</code></td><td>—</td><td>Map name shown in the title bar</td></tr>
+    <tr><td><code>--map</code></td><td>—</td><td>Map code (e.g. MAP01, MAPF0) shown in title bar</td></tr>
+    <tr><td><code>--title</code></td><td>—</td><td>Map name shown in title bar (e.g. "Green Flower Zone")</td></tr>
+    <tr><td><code>--round-time</code></td><td>—</td><td>Round duration shown in title bar (e.g. "2:30")</td></tr>
     <tr><td><code>--blue-score</code></td><td><code>0</code></td><td>Blue team score label (team mode)</td></tr>
     <tr><td><code>--red-score</code></td><td><code>0</code></td><td>Red team score label (team mode)</td></tr>
     <tr><td><code>--players</code></td><td>—</td><td>JSON array of <code>{"name","score","team"}</code> objects</td></tr>
@@ -116,6 +117,20 @@
     <code>"blue"</code> or <code>"red"</code>. Omit or set to <code>null</code>
     for FFA mode. Players are sorted by score descending within each team.
 </p>
+
+<h3>Title Bar Format</h3>
+<p>The header bar displays: <code>{title} ({map}) - {gametype} - {round_time}</code></p>
+<ul>
+    <li>Example: <strong>Green Flower Zone (MAP01) - FFA - 2:30</strong></li>
+    <li>Gametype displays as <code>FFA</code> or <code>Team</code></li>
+    <li>If a field is omitted it is excluded from the title</li>
+</ul>
+
+<h3>Clipping Warning</h3>
+<p>If more players are provided than fit in the panel area, a warning is printed to stderr:</p>
+<pre><code>WARNING: Only 9 of 12 players fit in panel (3 clipped)
+WARNING: Only 20 of 24 players fit (4 clipped)</code></pre>
+<p>FFA mode fits up to 9 rows, team mode fits up to 10 rows per column (20 total).</p>
 
 <h3>Output</h3>
 <ul>

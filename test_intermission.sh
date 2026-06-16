@@ -45,7 +45,11 @@ test_n() {
     players_json "$n" "P" "$mode" > /tmp/_intermission_test_players.json
 
     echo -n "[$mode ${n}p] "
+    local round_time="$((RANDOM % 3 + 1)):$((RANDOM % 59 + 1))"
     if "$GEN" --gametype "$mode" $extra \
+        --map "MAP$(printf '%02d' $((n % 25 + 1)))" \
+        --title "Green Flower Zone" \
+        --round-time "$round_time" \
         --players-file /tmp/_intermission_test_players.json \
         --width 640 --height 400 \
         --out "$out" 2>&1; then
