@@ -434,8 +434,6 @@ addHook("ThinkFrame", function()
 	if not DiscordBot.pending_joins then return end
 	for player in players.iterate do
 		if DiscordBot.pending_joins[#player] then
-			DiscordBot.pending_joins[#player] = nil
-			if not DiscordBot.join_emitted then DiscordBot.join_emitted = {} end
 			if DiscordBot.join_emitted[#player] then
 				-- already emitted for this node, skip duplicate
 			else

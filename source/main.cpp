@@ -356,6 +356,13 @@ int main() {
                 }
                 seek_start = seek_end;
                 {
+                    // Truncate file after reading to prevent unbounded growth.
+                    // Race: Lua may write between read and truncate — acceptable
+                    // loss for a chat bridge; next tick starts from 0.
+                    std::ofstream truncate_file(messages_path, std::ios::trunc);
+                    seek_start = 0;
+                }
+                {
                     auto now = std::time(nullptr);
                     for (auto it = seen_lines.begin(); it != seen_lines.end(); ) {
                         if (now - it->second >= LINE_DEDUP_WINDOW)
