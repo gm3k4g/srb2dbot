@@ -34,7 +34,6 @@ public:
         std::string meta;
         if (flag != "0") meta += ":placard: ";
         meta += fmt_.empty() ? name : substitute_placeholders(fmt_, {{"name", name}, {"node", node}, {"skin", skin}});
-        meta += " " + node;
         if (team == "0")       meta += " :red_square:";
         else if (team == "1")  meta += " :blue_square:";
         if (!jointime_str.empty() && jointime_str != "0") {
@@ -58,6 +57,7 @@ public:
             ts << wday << " " << day << ord << ", " << month << ", " << hm;
             meta += " | " + ts.str();
         }
+        meta += " | " + node;
 
         dpp::embed embed;
         embed.set_title(meta);
