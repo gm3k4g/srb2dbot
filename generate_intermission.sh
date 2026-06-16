@@ -130,10 +130,12 @@ PLAYER_SCORES=()
 PLAYER_TEAMS=()
 
 if [[ -n "$PLAYERS_JSON" ]]; then
-    flat=$(echo "$PLAYERS_JSON" | tr -d '\n\r\t' | sed 's/  *//g')
+    flat=$(echo "$PLAYERS_JSON" | tr -d '\n\r\t')
     flat="${flat#\[}"
     flat="${flat%\]}"
+    flat="${flat#"${flat%%[![:space:]]*}"}"
     while [[ -n "$flat" ]]; do
+        flat="${flat#"${flat%%[![:space:]]*}"}"
         if [[ "$flat" =~ ^\{([^}]*)\}(.*)$ ]]; then
             obj="${BASH_REMATCH[1]}"
             flat="${BASH_REMATCH[2]#,}"
