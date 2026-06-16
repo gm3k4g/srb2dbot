@@ -266,7 +266,6 @@ int main() {
                 if (!shutdown_sent) {
                     shutdown_sent = true;
                     registry.on_shutdown(bot, bridge_channel_sf);
-                    bot.shutdown();
                 }
                 return;
             }

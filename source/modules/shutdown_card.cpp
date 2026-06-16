@@ -44,9 +44,10 @@ public:
             embed.add_field("Server uptime", uptime_str, true);
 
         bot.message_create(dpp::message(channel, "").add_embed(embed),
-            [](const dpp::confirmation_callback_t& cb) {
+            [&bot](const dpp::confirmation_callback_t& cb) {
                 if (cb.is_error()) std::cout << "[shutdown_card] message_create error: " << cb.get_error().human_readable << std::endl;
                 std::cout << "[shutdown_card] shutdown message sent" << std::endl;
+                bot.shutdown();
             });
     }
 
