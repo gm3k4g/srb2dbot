@@ -27,6 +27,7 @@ auto create_server_start_card_module(dpp::snowflake channel, const std::string& 
 auto create_chat_card_module(const std::string& fmt) -> std::unique_ptr<Module>;
 auto create_server_chat_card_module(const std::string& msg) -> std::unique_ptr<Module>;
 auto create_csay_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_shutdown_card_module(const std::string& msg, const std::string& srb2_dir) -> std::unique_ptr<Module>;
 // create_thumbnails_module removed  -  thumbnails integrated into round_start_card
 
 auto ModuleRegistry::load_from_config(const std::string& config_path, const RegistryContext& ctx) -> bool {
@@ -55,6 +56,7 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         modules_.push_back(create_chat_card_module(""));
         modules_.push_back(create_server_chat_card_module(""));
         modules_.push_back(create_csay_card_module(""));
+        modules_.push_back(create_shutdown_card_module("", ctx.srb2_dir));
         return true;
     }
 
@@ -163,6 +165,9 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
     try_add_format("chat_card",            [&](auto& fmt){ return create_chat_card_module(fmt); });
     try_add_format("server_chat_card",     [&](auto& fmt){ return create_server_chat_card_module(fmt); });
     try_add_format("csay_card",            [&](auto& fmt){ return create_csay_card_module(fmt); });
+    try_add_msg("shutdown_card", [&](auto& msg){
+        return create_shutdown_card_module(msg, ctx.srb2_dir);
+    });
 
     return true;
 }
@@ -215,6 +220,12 @@ auto ModuleRegistry::on_ready(dpp::cluster& bot, dpp::snowflake bridge_channel) 
 auto ModuleRegistry::on_timer_tick(dpp::cluster& bot) -> void {
     for (auto& mod : modules_) {
         mod->on_timer_tick(bot);
+    }
+}
+
+auto ModuleRegistry::on_shutdown(dpp::cluster& bot, dpp::snowflake channel) -> void {
+    for (auto& mod : modules_) {
+        mod->on_shutdown(bot, channel);
     }
 }
 

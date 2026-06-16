@@ -265,14 +265,8 @@ int main() {
                 static bool shutdown_sent = false;
                 if (!shutdown_sent) {
                     shutdown_sent = true;
-                    dpp::embed shutdown_embed;
-                    shutdown_embed.set_title("Bot is going down");
-                    shutdown_embed.set_color(0xE74C3C);
-                    bot.message_create(dpp::message(bridge_channel_sf, "").add_embed(shutdown_embed),
-                        [&bot](const dpp::confirmation_callback_t& cb) {
-                            if (cb.is_error()) std::cout << "[bridge] shutdown message error: " << cb.get_error().human_readable << std::endl;
-                            bot.shutdown();
-                        });
+                    registry.on_shutdown(bot, bridge_channel_sf);
+                    bot.shutdown();
                 }
                 return;
             }

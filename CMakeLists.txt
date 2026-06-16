@@ -60,6 +60,7 @@ set(SOURCES
     source/modules/chat_card.cpp
     source/modules/server_chat_card.cpp
     source/modules/csay_card.cpp
+    source/modules/shutdown_card.cpp
     source/modules/server_start_card.cpp
 )
 

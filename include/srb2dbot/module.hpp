@@ -24,6 +24,7 @@ public:
     virtual auto get_bridge_attachment(const BridgeEvent& event) -> std::optional<std::pair<std::string, std::string>> { return std::nullopt; }
     virtual auto on_ready(dpp::cluster& bot, dpp::snowflake bridge_channel) -> void {}
     virtual auto on_timer_tick(dpp::cluster&) -> void {}
+    virtual auto on_shutdown(dpp::cluster& bot, dpp::snowflake channel) -> void {}
 };
 
 struct RegistryContext {
@@ -46,6 +47,7 @@ public:
     auto get_bridge_attachment(const BridgeEvent& event) -> std::optional<std::pair<std::string, std::string>>;
     auto on_ready(dpp::cluster& bot, dpp::snowflake bridge_channel) -> void;
     auto on_timer_tick(dpp::cluster& bot) -> void;
+    auto on_shutdown(dpp::cluster& bot, dpp::snowflake channel) -> void;
     auto is_module_enabled(std::string_view name) const -> bool;
 
 private:
