@@ -87,6 +87,7 @@ The `PlayerMsg` hook in SRB2 can fire **twice** for a single chat message (engin
 
 ### Fix applied in `source/main.cpp`:
 - **Removed phantom newline**: No longer writes `\n` to `Messages.txt` on startup. The code already handles empty files correctly (`seek_start == seek_end == 0` → skip).
+- **Content-based dedup key**: The `seen_lines` dedup now uses a content-based identity key instead of the full raw line for CHAT/SERVER_CHAT events. For CHAT events, the key is `"CHAT|" + player_name + "|" + message`, which ignores the `jointime` field that can differ between duplicate fires. For SERVER_CHAT, the key is `"SERVER_CHAT|" + message`. This prevents the C++ dedup from missing duplicates when fields like `jointime` change between fires that span different `leveltime` ticks.
 
 ## Current TODO List
 

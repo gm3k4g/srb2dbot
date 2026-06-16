@@ -285,13 +285,19 @@ int main() {
 
                     while (std::getline(lines, line)) {
                         if (line.empty()) continue;
-                        {
-                            auto now = std::time(nullptr);
-                            auto it = seen_lines.find(line);
-                            if (it != seen_lines.end() && (now - it->second) < LINE_DEDUP_WINDOW) continue;
-                            seen_lines[line] = now;
-                        }
                         if (auto event = bridge_parse_event(line)) {
+                            std::string dedup_key = line;
+                            if (event->type == "CHAT" && event->fields.size() >= 3) {
+                                dedup_key = "CHAT|" + event->fields[1] + "|" + event->fields[2];
+                            } else if (event->type == "SERVER_CHAT" && event->fields.size() >= 1) {
+                                dedup_key = "SERVER_CHAT|" + event->fields[0];
+                            }
+                            {
+                                auto now = std::time(nullptr);
+                                auto it = seen_lines.find(dedup_key);
+                                if (it != seen_lines.end() && (now - it->second) < LINE_DEDUP_WINDOW) continue;
+                                seen_lines[dedup_key] = now;
+                            }
                             if (event->type == "PLAYER_JOIN" && event->fields.size() >= 2) {
                                 std::string key = event->fields[0] + "|" + event->fields[1];
                                 auto now = std::time(nullptr);
