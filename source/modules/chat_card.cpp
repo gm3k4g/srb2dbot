@@ -50,7 +50,8 @@ public:
         }
 
         dpp::embed embed;
-        embed.set_description(meta + "\n" + message);
+        embed.set_title(meta);
+        embed.set_description(message);
         if (team == "0")            embed.set_color(0xE74C3C);
         else if (team == "1")       embed.set_color(0x3498DB);
         else                        embed.set_color(0x2F3136);
