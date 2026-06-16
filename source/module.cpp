@@ -14,7 +14,7 @@ auto create_server_module(bool fifo) -> std::unique_ptr<Module>;
 auto create_player_module(bool fifo) -> std::unique_ptr<Module>;
 auto create_relay_module(const std::string& bridge_channel, const std::string& bot_id, bool fifo) -> std::unique_ptr<Module>;
 auto create_round_start_card_module(const std::string& msg, bool thumbs, const std::string& srb2_dir) -> std::unique_ptr<Module>;
-auto create_round_end_card_module(const std::string& msg) -> std::unique_ptr<Module>;
+auto create_round_end_card_module(const std::string& msg, bool thumbs, const std::string& srb2_dir) -> std::unique_ptr<Module>;
 auto create_flag_capture_card_module() -> std::unique_ptr<Module>;
 auto create_flag_drop_card_module() -> std::unique_ptr<Module>;
 auto create_flag_pickup_card_module() -> std::unique_ptr<Module>;
@@ -42,7 +42,7 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         modules_.push_back(create_player_module(ctx.fifo_available));
         modules_.push_back(create_relay_module(ctx.bridge_channel_id, ctx.bot_id, ctx.fifo_available));
         modules_.push_back(create_round_start_card_module("", false, ctx.srb2_dir));
-        modules_.push_back(create_round_end_card_module(""));
+        modules_.push_back(create_round_end_card_module("", false, ctx.srb2_dir));
         modules_.push_back(create_flag_capture_card_module());
         modules_.push_back(create_flag_drop_card_module());
         modules_.push_back(create_flag_pickup_card_module());
@@ -153,7 +153,15 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         }
         return create_round_start_card_module(msg, thumbs, ctx.srb2_dir);
     });
-    try_add_msg("round_end_card",       [&](auto& msg){ return create_round_end_card_module(msg); });
+    try_add_msg("round_end_card",       [&](auto& msg){
+        bool thumbs = false;
+        for (auto& [key, val] : mods.items()) {
+            if (val.contains("round_end_card") && val["round_end_card"].is_object()) {
+                thumbs = val["round_end_card"].value("thumbnails", false);
+            }
+        }
+        return create_round_end_card_module(msg, thumbs, ctx.srb2_dir);
+    });
     try_add("flag_capture_card",     [&]{ return create_flag_capture_card_module(); });
     try_add("flag_drop_card",        [&]{ return create_flag_drop_card_module(); });
     try_add("flag_pickup_card",      [&]{ return create_flag_pickup_card_module(); });

@@ -29,7 +29,7 @@
             "shutdown_card": {
                 "_note": "Available fields: {server_name}, {map}, {uptime}, {players}",
                 "enabled": true,
-                "message": ":red_circle: Bot is going down | {map} | {players} | Uptime {uptime}"
+                "message": ":red_circle: :robot: srb2dbot is going down"
             }
         },
         "auto": {
@@ -49,9 +49,9 @@
                 "thumbnails": true
             },
             "round_end_card": {
-                "_note": "Available fields: {gametype}, {map_num}, {map_title}",
-                "enabled": false,
-                "message": "{map_num}: {map_title} - {gametype}"
+                "_note": "Available fields: none (uses fixed format)",
+                "enabled": true,
+                "thumbnails": true
             },
             "flag_capture_card": false,
             "flag_drop_card": false,

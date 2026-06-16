@@ -521,6 +521,29 @@ local function map_num_to_mapstr(n)
 end
 
 addHook("MapChange", function(map)
+	-- Emit ROUND_END for the previous map before starting the new one
+	if DiscordBot.Data.current_map ~= nil then
+		local players_total = 0
+		local players_red = 0
+		local players_blue = 0
+		local players_spec = 0
+		for p in players.iterate do
+			players_total = $ + 1
+			if p.spectator then
+				players_spec = $ + 1
+			elseif p.ctfteam == 1 then
+				players_red = $ + 1
+			elseif p.ctfteam == 2 then
+				players_blue = $ + 1
+			end
+		end
+		local gtname = get_gametype_name(gametype)
+		local mapstr = map_num_to_mapstr(DiscordBot.Data.current_map)
+		local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime .. "|" .. players_total .. "|" .. players_red .. "|" .. players_blue .. "|" .. players_spec .. "\n"
+		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
+		DiscordBot.Functions.flush_msgsrb2()
+	end
+
 	local mapname = mapheaderinfo[map]
 	local maptitle = "Unknown Map"
 	if mapname and mapname.lvlttl then
