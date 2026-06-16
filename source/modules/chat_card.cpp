@@ -36,7 +36,7 @@ public:
         meta += fmt_.empty() ? name : substitute_placeholders(fmt_, {{"name", name}, {"node", node}, {"skin", skin}});
         if (team == "0")       meta += " | :red_square:";
         else if (team == "1")  meta += " | :blue_square:";
-        meta += " | " + node;
+        meta += " " + node;
         if (!jointime_str.empty() && jointime_str != "0") {
             meta += " | " + format_online_time(jointime_str);
         }
