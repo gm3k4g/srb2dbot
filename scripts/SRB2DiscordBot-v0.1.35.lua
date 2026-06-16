@@ -529,75 +529,86 @@ local function map_num_to_mapstr(n)
 	return "MAP" .. first .. second
 end
 
-addHook("MapChange", function(map)
-	-- Emit ROUND_END when the map actually changes after a round end.
-	-- Skip death reloads (same map) and forced `map` commands (GS_LEVEL).
-	if DiscordBot.Data.current_map ~= nil and DiscordBot.Data.current_map ~= map
-	   and gamestate ~= GS_LEVEL then
-		local gtname = get_gametype_name(gametype)
-		local mapstr = map_num_to_mapstr(DiscordBot.Data.current_map)
-		local prev_maptitle = DiscordBot.Data.maptitle or "Unknown"
+local function emit_round_end(prev_map, prev_maptitle)
+	local gtname = get_gametype_name(gametype)
+	local mapstr = map_num_to_mapstr(prev_map)
 
-		-- Build player arrays for the intermission overlay
-		local players_json = "["
-		local spec_json = "["
-		local first = true
-		local spec_first = true
-		local players_total = 0
-		local players_red = 0
-		local players_blue = 0
-		local players_spec = 0
-		local has_teams = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
-		for p in players.iterate do
-			players_total = $ + 1
-			if p.spectator then
-				players_spec = $ + 1
-				if not spec_first then spec_json = spec_json .. "," end
-				spec_json = spec_json .. '"' .. json_escape(p.name) .. '"'
-				spec_first = false
-			else
-				local team = "ffa"
-				if p.ctfteam == 1 then team = "red"; players_red = $ + 1
-				elseif p.ctfteam == 2 then team = "blue"; players_blue = $ + 1 end
-				if not first then players_json = players_json .. "," end
-				players_json = players_json .. '{"name":"' .. json_escape(p.name) .. '","score":' .. (p.score or 0) .. ',"team":"' .. team .. '"}'
-				first = false
-			end
+	local players_json = "["
+	local spec_json = "["
+	local first = true
+	local spec_first = true
+	local players_total = 0
+	local players_red = 0
+	local players_blue = 0
+	local players_spec = 0
+	local has_teams = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
+	for p in players.iterate do
+		players_total = $ + 1
+		if p.spectator then
+			players_spec = $ + 1
+			if not spec_first then spec_json = spec_json .. "," end
+			spec_json = spec_json .. '"' .. json_escape(p.name) .. '"'
+			spec_first = false
+		else
+			local team = "ffa"
+			if p.ctfteam == 1 then team = "red"; players_red = $ + 1
+			elseif p.ctfteam == 2 then team = "blue"; players_blue = $ + 1 end
+			if not first then players_json = players_json .. "," end
+			players_json = players_json .. '{"name":"' .. json_escape(p.name) .. '","score":' .. (p.score or 0) .. ',"team":"' .. team .. '"}'
+			first = false
 		end
-		players_json = players_json .. "]"
-		spec_json = spec_json .. "]"
-
-		-- Determine game mode for the overlay
-		local mode
-		if has_teams then mode = "team" else mode = "ffa" end
-		local round_seconds = math.floor(leveltime / 35)
-		local round_mins = math.floor(round_seconds / 60)
-		local round_secs = round_seconds % 60
-		local round_time_str = round_mins .. ":" .. string.format("%02d", round_secs)
-
-		-- Write RoundResults.json for the overlay generator
-		local round_json = '{'
-		round_json = round_json .. '"gametype":"' .. json_escape(gtname) .. '",'
-		round_json = round_json .. '"map":"' .. json_escape(mapstr) .. '",'
-		round_json = round_json .. '"title":"' .. json_escape(prev_maptitle) .. '",'
-		round_json = round_json .. '"round_time":"' .. round_time_str .. '",'
-		round_json = round_json .. '"mode":"' .. mode .. '",'
-		round_json = round_json .. '"blue_score":' .. (bluescore or 0) .. ','
-		round_json = round_json .. '"red_score":' .. (redscore or 0) .. ','
-		round_json = round_json .. '"players":' .. players_json .. ','
-		round_json = round_json .. '"spectators":' .. spec_json
-		round_json = round_json .. '}'
-
-		local rf = io.openlocal("client/DiscordBot/RoundResults.json", "w")
-		if rf then
-			rf:write(round_json)
-			rf:close()
-		end
-
-		local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime .. "|" .. DiscordBot.Data.servertime .. "|" .. players_total .. "|" .. players_red .. "|" .. players_blue .. "|" .. players_spec .. "\n"
-		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
-		DiscordBot.Functions.flush_msgsrb2()
 	end
+	players_json = players_json .. "]"
+	spec_json = spec_json .. "]"
+
+	local mode = has_teams and "team" or "ffa"
+	local round_seconds = (leveltime - leveltime % 35) / 35
+	local round_mins = (round_seconds - round_seconds % 60) / 60
+	local round_secs = round_seconds % 60
+	local round_time_str = round_mins .. ":" .. string.format("%02d", round_secs)
+
+	local round_json = '{'
+	round_json = round_json .. '"gametype":"' .. json_escape(gtname) .. '",'
+	round_json = round_json .. '"map":"' .. json_escape(mapstr) .. '",'
+	round_json = round_json .. '"title":"' .. json_escape(prev_maptitle) .. '",'
+	round_json = round_json .. '"round_time":"' .. round_time_str .. '",'
+	round_json = round_json .. '"mode":"' .. mode .. '",'
+	round_json = round_json .. '"blue_score":' .. (bluescore or 0) .. ','
+	round_json = round_json .. '"red_score":' .. (redscore or 0) .. ','
+	round_json = round_json .. '"players":' .. players_json .. ','
+	round_json = round_json .. '"spectators":' .. spec_json
+	round_json = round_json .. '}'
+
+	local rf = io.openlocal("client/DiscordBot/RoundResults.json", "w")
+	if rf then
+		rf:write(round_json)
+		rf:close()
+	end
+
+	local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime .. "|" .. DiscordBot.Data.servertime .. "|" .. players_total .. "|" .. players_red .. "|" .. players_blue .. "|" .. players_spec .. "\n"
+	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
+	DiscordBot.Functions.flush_msgsrb2()
+	DiscordBot.Data.round_end_emitted = true
+end
+
+-- Track gamestate transitions to emit ROUND_END during intermission (not on new map)
+addHook("ThinkFrame", function()
+	if DiscordBot.Data.last_gamestate == nil then
+		DiscordBot.Data.last_gamestate = gamestate
+		return
+	end
+	if DiscordBot.Data.current_map
+	   and not DiscordBot.Data.round_end_emitted
+	   and ((gamestate == GS_INTERMISSION) or (gamestate == GS_NULL and DiscordBot.Data.last_gamestate ~= GS_NULL)) then
+		emit_round_end(DiscordBot.Data.current_map, DiscordBot.Data.maptitle or "Unknown")
+	end
+	DiscordBot.Data.last_gamestate = gamestate
+end)
+
+addHook("MapChange", function(map)
+	-- Reset the round_end flag so the next intermission can fire again
+	DiscordBot.Data.round_end_emitted = false
+	DiscordBot.Data.current_map = nil
 
 	local mapname = mapheaderinfo[map]
 	local maptitle = "Unknown Map"
