@@ -392,14 +392,14 @@ void test_sanitize_srb2_control_characters() {
     }
     PASS();
 
-    // Printable ASCII pass-through (all chars 0x20-0x7E EXCEPT ^)
-    TEST("SRB2 control: printable ASCII 0x20-0x7E passes through (except ^)");
+    // Printable ASCII pass-through (all chars 0x20-0x7E EXCEPT ^ and ;)
+    TEST("SRB2 control: printable ASCII 0x20-0x7E passes through (except ^ and ;)");
     {
         std::string input;
         std::string expected;
         for (int i = 0x20; i <= 0x7E; ++i) {
             input += static_cast<char>(i);
-            if (i != 0x5E) expected += static_cast<char>(i);  // skip ^
+            if (i != 0x5E && i != 0x3B) expected += static_cast<char>(i);  // skip ^ and ;
         }
         CHECK(sanitize_message_for_srb2(input) == expected);
     }
@@ -436,11 +436,12 @@ void test_sanitize_srb2_control_characters() {
     }
     PASS();
 
-    // Verify semicolons survive sanitize_message_for_srb2
-    // (they are blocked at the pipe level, not here)
-    TEST("SRB2 control: semicolons survive (blocked at pipe level)");
+    // Verify semicolons are now STRIPPED by sanitize_message_for_srb2
+    // (COM_BufInsertText feeds into SRB2's console parser, which splits on ;)
+    TEST("SRB2 control: semicolons stripped from all paths");
     {
-        CHECK(sanitize_message_for_srb2("hel;quit;o") == "hel;quit;o");
+        CHECK(sanitize_message_for_srb2("hel;quit;o") == "helquito");
+        CHECK(sanitize_message_for_srb2("say hello;quit") == "say helloquit");
     }
     PASS();
 }
