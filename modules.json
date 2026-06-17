@@ -14,7 +14,7 @@
             "chat_card": {
                 "_note": "Available fields: {name}, {node}, {skin}",
                 "enabled": true,
-                "format": ":skin: {name}"
+                "format": ":{skin}: {name}"
             },
             "server_chat_card": {
                 "_note": "Available fields: none (format only)",
@@ -29,7 +29,7 @@
             "shutdown_card": {
                 "_note": "Available fields: {server_name}, {map}, {uptime}, {players}",
                 "enabled": true,
-                "message": ":red_circle: :robot: srb2dbot is going down"
+                "message": ":red_circle: :robot: srb2dbot is down"
             }
         },
         "auto": {
