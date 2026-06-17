@@ -15,6 +15,104 @@
 #include <unordered_map>
 #include <vector>
 
+auto sanitize_for_discord(const std::string& input) -> std::string {
+    std::string result;
+    result.reserve(input.size() * 2);
+
+    for (size_t i = 0; i < input.size(); ++i) {
+        char c = input[i];
+
+        // Break @everyone and @here mentions
+        if (c == '@' && i + 8 <= input.size()) {
+            auto rest = std::string_view(input).substr(i);
+            if (rest.starts_with("@everyone") || rest.starts_with("@here")) {
+                result += "@\u200B";
+                continue;
+            }
+        }
+
+        // Handle Discord mentions (<@user>, <@!user>, <@&role>, <#channel>) — strip these
+        // Only keep custom emojis (<:name:id>, <a:name:id>)
+        if (c == '<' && i + 2 < input.size()) {
+            char n1 = input[i + 1];
+            auto end = input.find('>', i + 2);
+
+            // Custom emoji: <:name:id> or <a:name:id>
+            if ((n1 == ':' || (n1 == 'a' && i + 3 < input.size() && input[i + 2] == ':')) && end != std::string::npos) {
+                auto last_colon = input.rfind(':', end - 1);
+                if (last_colon != std::string::npos && last_colon > i + 2) {
+                    auto id_str = input.substr(last_colon + 1, end - last_colon - 1);
+                    if (!id_str.empty() && std::all_of(id_str.begin(), id_str.end(), ::isdigit)) {
+                        result.append(input, i, end - i + 1);
+                        i = end;
+                        continue;
+                    }
+                }
+            }
+
+            // Mention (<@..., <#...): strip entirely
+            if ((n1 == '@' || n1 == '#') && end != std::string::npos) {
+                i = end;
+                continue;
+            }
+        }
+
+        // Replace bare URLs with [LINK]
+        if ((c == 'h' || c == 'H') && i + 6 < input.size()) {
+            auto rest = std::string_view(input).substr(i);
+            if ((rest.size() >= 7 && (rest.substr(0, 7) == "http://" || rest.substr(0, 7) == "HTTP://"))
+                || (rest.size() >= 8 && (rest.substr(0, 8) == "https://" || rest.substr(0, 8) == "HTTPS://"))) {
+                auto url_end = input.find(' ', i);
+                if (url_end == std::string::npos) url_end = input.size();
+                result += "[LINK]";
+                i = url_end - 1;
+                continue;
+            }
+        }
+
+        // Escape Discord markdown characters
+        bool at_start = result.empty();
+        switch (c) {
+            case '\\': result += "\\\\"; break;
+            case '*':  result += "\\*"; break;
+            case '_':  result += "\\_"; break;
+            case '~':  result += "\\~"; break;
+            case '`':  result += "\\`"; break;
+            case '[':  result += "\\["; break;
+            case ']':  result += "\\]"; break;
+            case '(':  result += "\\("; break;
+            case ')':  result += "\\)"; break;
+            case '\n': result += ' '; break;
+            case '|':
+                if (i + 1 < input.size() && input[i + 1] == '|') {
+                    result += "\\|\\|";
+                    ++i;
+                } else {
+                    result.push_back('|');
+                }
+                break;
+            case '#':
+                if (at_start) { result += "\\#"; } else { result.push_back('#'); }
+                break;
+            case '>':
+                if (at_start) { result += "\\>"; } else { result.push_back('>'); }
+                break;
+            case '-':
+                if (at_start && i + 1 < input.size() && input[i + 1] == ' ') {
+                    result += "\\-";
+                } else {
+                    result.push_back('-');
+                }
+                break;
+            default:
+                result.push_back(c);
+                break;
+        }
+    }
+
+    return result;
+}
+
 auto sanitize_message_for_srb2(const std::string& content) -> std::string {
     std::string result = content;
 

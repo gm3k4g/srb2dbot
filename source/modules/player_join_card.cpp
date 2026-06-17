@@ -13,7 +13,7 @@ public:
     auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override { return {}; }
     auto handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed> override {
         if (event.type != "PLAYER_JOIN") return std::nullopt;
-        std::string player = event.fields.size() >= 1 ? event.fields[0] : "Someone";
+        std::string player = event.fields.size() >= 1 ? sanitize_for_discord(event.fields[0]) : "Someone";
         std::string node = event.fields.size() >= 2 ? event.fields[1] : "";
         dpp::embed embed;
         embed.set_title(msg_.empty() ? ":bust_in_silhouette: **" + player + "** has joined the game." : substitute_placeholders(msg_, {{"player", player}, {"node", node}}));

@@ -19,12 +19,13 @@ public:
 
         auto& f = event.fields;
         std::string node           = f[0];
-        std::string name           = f[1];
+        std::string name           = sanitize_for_discord(f[1]);
         std::string message        = f[2];
         for (size_t i = 3; i + 4 < f.size(); i++) {
             message += "|" + f[i];
         }
-        std::string skin          = f.size() >= 6 ? f[f.size() - 4] : "";
+        message = sanitize_for_discord(message);
+        std::string skin          = f.size() >= 6 ? sanitize_for_discord(f[f.size() - 4]) : "";
         std::string jointime_str  = f.size() >= 5 ? f[f.size() - 3] : "";
         std::string flag          = f.size() >= 6 ? f[f.size() - 2] : "0";
         std::string team          = f.size() >= 7 ? f[f.size() - 1] : "none";

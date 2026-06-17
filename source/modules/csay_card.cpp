@@ -14,9 +14,9 @@ public:
         if (event.type != "CSAY") return std::nullopt;
         if (event.fields.empty()) return std::nullopt;
 
-        std::string message = event.fields[0];
+        std::string message = sanitize_for_discord(event.fields[0]);
         for (size_t i = 1; i < event.fields.size(); i++) {
-            message += "|" + event.fields[i];
+            message += "|" + sanitize_for_discord(event.fields[i]);
         }
 
         dpp::embed embed;

@@ -59,7 +59,6 @@ public:
         if (event.fields.size() < 15) return std::nullopt;
 
         auto& f = event.fields;
-        std::string gametype_name = f[0];
         std::string map_name     = f[1];
         std::string mode         = f[8];
         std::string red_score    = f[9];
@@ -105,7 +104,7 @@ public:
         // Build command without any single-quote wrapping (use --*-file instead)
         std::vector<std::string> args = {
             script_path,
-            "--gametype", gametype_name,
+            "--gametype", mode,
             "--map", map_name,
         };
         if (!round_time.empty()) {
@@ -122,7 +121,7 @@ public:
         if (has_thumb) {
             args.push_back("--thumb"); args.push_back(thumb_path);
         }
-        args.push_back("--title"); args.push_back(map_title + " (" + map_name + ")");
+        args.push_back("--title"); args.push_back(map_title);
         args.push_back("--out"); args.push_back(out_path);
 
         std::string cmd;

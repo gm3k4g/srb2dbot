@@ -14,9 +14,9 @@ public:
         if (event.type != "SERVER_CHAT") return std::nullopt;
         if (event.fields.size() < 2) return std::nullopt;
 
-        std::string message = event.fields[0];
+        std::string message = sanitize_for_discord(event.fields[0]);
         for (size_t i = 1; i + 1 < event.fields.size(); i++) {
-            message += "|" + event.fields[i];
+            message += "|" + sanitize_for_discord(event.fields[i]);
         }
         if (message.empty()) return std::nullopt;
 
