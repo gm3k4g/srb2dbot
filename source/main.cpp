@@ -253,7 +253,7 @@ int main() {
         std::unordered_map<std::string, std::time_t> seen_lines;
         constexpr int DBOT_SYNC_MAX_RETRIES = 15;
         constexpr std::time_t JOIN_DEDUP_WINDOW = 5;
-        constexpr std::time_t LINE_DEDUP_WINDOW = 3;
+        constexpr std::time_t LINE_DEDUP_WINDOW = 1;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
 
         bot.start_timer([&bot, &registry, messages_path, &dbot_synced,
@@ -306,7 +306,9 @@ int main() {
                             if (line.empty()) continue;
                             if (auto event = bridge_parse_event(line)) {
                                 std::string dedup_key = line;
-                                if (event->type == "SERVER_CHAT" && event->fields.size() >= 1) {
+                                if (event->type == "CHAT" && event->fields.size() >= 3) {
+                                    dedup_key = "CHAT|" + event->fields[1] + "|" + event->fields[2];
+                                } else if (event->type == "SERVER_CHAT" && event->fields.size() >= 1) {
                                     dedup_key = "SERVER_CHAT|" + event->fields[0];
                                 }
                                 {
