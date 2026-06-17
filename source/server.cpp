@@ -71,29 +71,29 @@ auto pipe_srb2_server_do(const std::string& data) -> bool {
 
 auto pipe_srb2_server_say(const std::string& msg) -> bool {
     for (unsigned char c : msg) {
-        if (c == '\n' || c == '\r' || c == ';' || (c < 0x20 && c != '\t') || c > 0x7E) {
+        if (c == '\n' || c == '\r' || (c < 0x20 && c != '\t') || c > 0x7E) {
             return false;
         }
     }
-    return pipe_write("say " + msg);
+    return pipe_write("say \"" + msg + "\"");
 }
 
 auto pipe_srb2_kick_player(const std::string& player) -> bool {
     for (unsigned char c : player) {
-        if (c == '\n' || c == '\r' || c == ';' || (c < 0x20 && c != '\t') || c > 0x7E) {
+        if (c == '\n' || c == '\r' || (c < 0x20 && c != '\t') || c > 0x7E) {
             return false;
         }
     }
-    return pipe_write("kick " + player);
+    return pipe_write("kick \"" + player + "\"");
 }
 
 auto pipe_srb2_ban_player(const std::string& player) -> bool {
     for (unsigned char c : player) {
-        if (c == '\n' || c == '\r' || c == ';' || (c < 0x20 && c != '\t') || c > 0x7E) {
+        if (c == '\n' || c == '\r' || (c < 0x20 && c != '\t') || c > 0x7E) {
             return false;
         }
     }
-    return pipe_write("ban " + player);
+    return pipe_write("ban \"" + player + "\"");
 }
 
 auto detect_fifo_support() -> bool {

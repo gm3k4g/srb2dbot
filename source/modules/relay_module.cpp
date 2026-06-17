@@ -42,17 +42,21 @@ public:
             display_name = event.msg.author.username;
         }
         for (auto& c : display_name) {
-            if (c == '<' || c == '>' || c == '|' || c == '\\' || c == '"' || c == '^' || c == ';' || static_cast<unsigned char>(c) > 0x7E) c = '_';
+            if (c == '<' || c == '>' || c == '|' || c == '\\' || c == '"' || c == '^' || static_cast<unsigned char>(c) > 0x7E) c = '_';
         }
 
-        // Write to discordmessage.txt — Lua reads and dispatches this file
-        // every ~2 seconds via bot_function() → server_log discord.
+        // Quote the message to protect ; from SRB2's console command separator
+        // Escape any internal double-quotes to avoid breaking the quoting
+        for (auto& c : sanitized) {
+            if (c == '"') c = '\'';
+        }
+
         std::string home = dir_srb2_str();
         std::string bridge_path = home + "/luafiles/client/DiscordBot";
         std::filesystem::create_directories(bridge_path);
         std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
         if (disc_file.is_open()) {
-            disc_file << "<" << display_name << "> " << sanitized << "\n";
+            disc_file << "<" << display_name << "> \"" << sanitized << "\"\n";
         }
 #ifndef NDEBUG
         std::cout << "[bridge] Discord→SRB2: <" << display_name << "> " << sanitized << std::endl;
