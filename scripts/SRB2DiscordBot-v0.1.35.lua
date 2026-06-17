@@ -214,27 +214,21 @@ COM_AddCommand("server_log", function(player, arg, text)
 		if DiscordBot.Data.debug then COM_BufInsertText(server, "echo [DBOT] server_log discord running") end
 		local d_msg = io.openlocal("client/DiscordBot/discordmessage.txt", "r")
 		if d_msg then
-			local clear = false
-			while true do
-				local line = d_msg:read("*l") or ""
-				if line == "" then break end
-				if #line > 220 then
-					COM_BufInsertText(server, "discord_message " .. string.sub(line, 1, 220))
-					local remainder = string.sub(line, 221)
-					if #remainder > 0 then
-						COM_BufInsertText(server, "discord_message " .. remainder)
-					end
-				else
-					COM_BufInsertText(server, "discord_message " .. line)
-				end
-				clear = true
-			end
+			local content = d_msg:read("*a") or ""
 			d_msg:close()
-			if clear == true then
-				local d_clear = io.openlocal("client/DiscordBot/discordmessage.txt", "w")
-				if d_clear then
-					d_clear:write("")
-					d_clear:close()
+			local d_trunc = io.openlocal("client/DiscordBot/discordmessage.txt", "w")
+			if d_trunc then d_trunc:close() end
+			if content ~= "" then
+				for line in content:gmatch("[^\n]+") do
+					if #line > 220 then
+						COM_BufInsertText(server, "discord_message " .. string.sub(line, 1, 220))
+						local remainder = string.sub(line, 221)
+						if #remainder > 0 then
+							COM_BufInsertText(server, "discord_message " .. remainder)
+						end
+					else
+						COM_BufInsertText(server, "discord_message " .. line)
+					end
 				end
 			end
 		end
