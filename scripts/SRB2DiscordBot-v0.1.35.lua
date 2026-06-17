@@ -397,13 +397,11 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		local message = msg
 		local sendit = false
 		if server == player then
-			if isdedicatedserver == true then
-				text = "[EVENT:SERVER_CHAT]|" .. message .. "|FEE75C\n"
-				DiscordBot.Functions.spamchatbug(player, text)
-				DiscordBot.Functions.flush_msgsrb2()
-				chatprint("<\x82~\x80Server>" .. " " .. message)
-				return true
-			end
+			text = "[EVENT:SERVER_CHAT]|" .. message .. "|FEE75C\n"
+			DiscordBot.Functions.spamchatbug(player, text)
+			DiscordBot.Functions.flush_msgsrb2()
+			chatprint("<\x82~\x80Server>" .. " " .. message)
+			return true
 		end
 		local jointime = (DiscordBot.join_times and DiscordBot.join_times[#player]) and tostring(DiscordBot.join_times[#player]) or "0"
 		local flag = player.gotflag and player.gotflag > 0 and "1" or "0"
