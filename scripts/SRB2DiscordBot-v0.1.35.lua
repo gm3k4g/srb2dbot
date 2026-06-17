@@ -16,6 +16,7 @@ DiscordBot.Data.countemeralds = 0
 DiscordBot.Data.servertime = 0
 DiscordBot.Data.current_map = nil
 DiscordBot.Data.debug = false
+DiscordBot.Data._discord_seek_pos = 0
 
 DiscordBot.Functions = {}
 DiscordBot.Commands = {}
@@ -214,22 +215,31 @@ COM_AddCommand("server_log", function(player, arg, text)
 		if DiscordBot.Data.debug then COM_BufInsertText(server, "echo [DBOT] server_log discord running") end
 		local d_msg = io.openlocal("client/DiscordBot/discordmessage.txt", "r")
 		if d_msg then
-			local content = d_msg:read("*a") or ""
-			d_msg:close()
-			local d_trunc = io.openlocal("client/DiscordBot/discordmessage.txt", "w")
-			if d_trunc then d_trunc:close() end
-			if content ~= "" then
-				for line in content:gmatch("[^\n]+") do
-					if #line > 220 then
-						COM_BufInsertText(server, "discord_message " .. string.sub(line, 1, 220))
-						local remainder = string.sub(line, 221)
-						if #remainder > 0 then
-							COM_BufInsertText(server, "discord_message " .. remainder)
+			local fsize = d_msg:seek("end")
+			if fsize > 65536 then
+				d_msg:close()
+				local d_clear = io.openlocal("client/DiscordBot/discordmessage.txt", "w")
+				if d_clear then d_clear:close() end
+				DiscordBot.Data._discord_seek_pos = 0
+			else
+				d_msg:seek("set", DiscordBot.Data._discord_seek_pos)
+				while true do
+					local line = d_msg:read("*l")
+					if not line then break end
+					if #line > 0 then
+						if #line > 220 then
+							COM_BufInsertText(server, "discord_message " .. string.sub(line, 1, 220))
+							local remainder = string.sub(line, 221)
+							if #remainder > 0 then
+								COM_BufInsertText(server, "discord_message " .. remainder)
+							end
+						else
+							COM_BufInsertText(server, "discord_message " .. line)
 						end
-					else
-						COM_BufInsertText(server, "discord_message " .. line)
 					end
 				end
+				DiscordBot.Data._discord_seek_pos = d_msg:seek()
+				d_msg:close()
 			end
 		end
 	end
