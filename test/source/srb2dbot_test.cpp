@@ -297,6 +297,154 @@ void test_sanitize_message_for_srb2() {
     PASS();
 }
 
+void test_sanitize_srb2_control_characters() {
+    // ── Exhaustive control-character filtering test harness ──
+    // Verifies that ONLY printable ASCII (0x20-0x7E except ^) survives,
+    // and that ALL SRB2 chat-modifying control sequences are neutralized.
+
+    // All 32 C0 control characters → stripped (except newline which becomes \\n)
+    TEST("SRB2 control: all C0 controls 0x00-0x1F stripped");
+    {
+        std::string input;
+        for (int i = 0; i < 32; ++i) {
+            if (i == '\n') continue;  // newline converted to \\n, not stripped
+            input += static_cast<char>(i);
+        }
+        CHECK(sanitize_message_for_srb2(input).empty());
+    }
+    PASS();
+
+    // DEL → stripped
+    TEST("SRB2 control: DEL 0x7F stripped");
+    CHECK(sanitize_message_for_srb2(std::string(1, '\x7F')).empty());
+    PASS();
+
+    // All high bytes 0x80-0xFF (SRB2 direct color codes) → stripped
+    TEST("SRB2 control: high bytes 0x80-0xFF stripped");
+    {
+        std::string input;
+        for (int i = 0x80; i <= 0xFF; ++i) input += static_cast<char>(i);
+        CHECK(sanitize_message_for_srb2(input).empty());
+    }
+    PASS();
+
+    // ^0-^9 color codes → digit-only survives
+    TEST("SRB2 control: caret color codes ^0-^9 stripped to digit");
+    {
+        std::string result = sanitize_message_for_srb2("^1red ^2green ^3blue");
+        CHECK(result == "1red 2green 3blue");
+    }
+    PASS();
+
+    // ^a-^z style codes (small text ^s, normal ^n etc.) → letter survives
+    TEST("SRB2 control: caret style codes ^a-^z stripped to letter");
+    {
+        std::string result = sanitize_message_for_srb2("^shello ^nworld");
+        CHECK(result == "shello nworld");
+    }
+    PASS();
+
+    // ^A-^Z uppercase → letter survives
+    TEST("SRB2 control: uppercase caret codes ^A-^Z stripped");
+    {
+        std::string result = sanitize_message_for_srb2("^Ssmall ^Nnormal");
+        CHECK(result == "Ssmall Nnormal");
+    }
+    PASS();
+
+    // ^^ literal-caret escape → both stripped
+    TEST("SRB2 control: double caret ^^ stripped entirely");
+    CHECK(sanitize_message_for_srb2("^^").empty());
+    PASS();
+
+    // Lone ^ stripped, text around it preserved
+    TEST("SRB2 control: lone caret stripped from text");
+    {
+        CHECK(sanitize_message_for_srb2("a ^ b") == "a  b");
+        CHECK(sanitize_message_for_srb2("^start") == "start");
+        CHECK(sanitize_message_for_srb2("end^") == "end");
+        CHECK(sanitize_message_for_srb2("^") == "");
+    }
+    PASS();
+
+    // Multi-byte UTF-8 sequences → every non-ASCII byte stripped
+    TEST("SRB2 control: multi-byte UTF-8 stripped");
+    {
+        CHECK(sanitize_message_for_srb2("\xC3\xB1") == "");       // 2-byte: ñ
+        CHECK(sanitize_message_for_srb2("\xE5\xAD\x97") == "");   // 3-byte: 字
+        CHECK(sanitize_message_for_srb2("\xF0\x9F\x98\x80") == ""); // 4-byte: 😀
+        CHECK(sanitize_message_for_srb2("hi\xC3\xB1there") == "hithere");
+        CHECK(sanitize_message_for_srb2("\xE5\xAD\x97hello\xF0\x9F\x98\x80") == "hello");
+    }
+    PASS();
+
+    // Tab (0x09) → stripped (it's < 0x20)
+    TEST("SRB2 control: tab stripped");
+    {
+        CHECK(sanitize_message_for_srb2("hello\tworld") == "helloworld");
+    }
+    PASS();
+
+    // Vertical tab, form feed → stripped
+    TEST("SRB2 control: vertical-tab and form-feed stripped");
+    {
+        CHECK(sanitize_message_for_srb2("a\x0B" "b\x0C" "c") == "abc");
+    }
+    PASS();
+
+    // Printable ASCII pass-through (all chars 0x20-0x7E EXCEPT ^)
+    TEST("SRB2 control: printable ASCII 0x20-0x7E passes through (except ^)");
+    {
+        std::string input;
+        std::string expected;
+        for (int i = 0x20; i <= 0x7E; ++i) {
+            input += static_cast<char>(i);
+            if (i != 0x5E) expected += static_cast<char>(i);  // skip ^
+        }
+        CHECK(sanitize_message_for_srb2(input) == expected);
+    }
+    PASS();
+
+    // Combined attack: SRB2 colors + high bytes + controls + Unicode
+    TEST("SRB2 control: combined attack fully neutralized");
+    {
+        std::string result = sanitize_message_for_srb2(
+            "\x01"            // SOH control
+            "^1red"          // caret color
+            "\x89"           // yellow high-byte
+            "\x7F"           // DEL
+            "\xF0\x9F\x98\x80" // 😀 emoji
+            "\t"             // tab
+            "^s^W*"         // small text then uppercase then literal *
+        );
+        // What remains: "1red*sW*" — no, ^s → s, ^W → W, * stays
+        // Let me trace: \x01→stripped, ^1→1, red→red, \x89→stripped, \x7F→stripped,
+        // 4 emoji bytes→stripped, \t→stripped, ^s→s, ^W→W, *→*
+        CHECK(result == "1redsW*");
+    }
+    PASS();
+
+    // Empty and whitespace edge cases
+    TEST("SRB2 control: empty stays empty");
+    CHECK(sanitize_message_for_srb2("") == "");
+    PASS();
+
+    TEST("SRB2 control: spaces and punctuation survive");
+    {
+        std::string result = sanitize_message_for_srb2("  hello, world!  ");
+        CHECK(result == "  hello, world!  ");
+    }
+    PASS();
+
+    // Verify semicolons survive sanitize_message_for_srb2
+    // (they are blocked at the pipe level, not here)
+    TEST("SRB2 control: semicolons survive (blocked at pipe level)");
+    {
+        CHECK(sanitize_message_for_srb2("hel;quit;o") == "hel;quit;o");
+    }
+    PASS();
+}
+
 void test_bridge_get_lines() {
     std::string tmp = "/tmp/srb2dbot_test_getlines.txt";
     {
@@ -513,6 +661,7 @@ auto main() -> int {
     test_sanitize_filename();
     test_link_filename_str();
     test_sanitize_message_for_srb2();
+    test_sanitize_srb2_control_characters();
     test_bridge_get_lines();
     test_bridge_read_range();
     test_bridge_replace_emojis();
