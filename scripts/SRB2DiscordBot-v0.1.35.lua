@@ -118,7 +118,7 @@ DiscordBot.Functions.statsofserver = function()
 				statms = ':ping_red:'
 			end
 			if player.mo and player.spectator ~= true then
-				iconskin = ":" .. player.mo.skin .. ":"
+				iconskin = ":" .. (skins[player.skin] and skins[player.skin].name or "") .. ":"
 			end
 			if player.spectator == true then
 				iconskin = ':spectator:'
@@ -409,9 +409,9 @@ addHook("PlayerMsg", function(player, type, target, msg)
 				team = tostring(player.ctfteam or 0)
 			end
 		end
-		text = "[EVENT:CHAT]|[" .. #player .. "]|" .. player.name .. "|" .. message .. "|" .. (player.mo and player.mo.skin or "") .. "|" .. jointime .. "|" .. flag .. "|" .. team .. "\n"
+		text = "[EVENT:CHAT]|[" .. #player .. "]|" .. player.name .. "|" .. message .. "|" .. (skins[player.skin] and skins[player.skin].name or "") .. "|" .. jointime .. "|" .. flag .. "|" .. team .. "\n"
 		if IsPlayerAdmin(player) then
-			text = "[EVENT:CHAT]|[" .. #player .. "]|@" .. player.name .. "|" .. message .. "|" .. (player.mo and player.mo.skin or "") .. "|" .. jointime .. "|" .. flag .. "|" .. team .. "\n"
+			text = "[EVENT:CHAT]|[" .. #player .. "]|@" .. player.name .. "|" .. message .. "|" .. (skins[player.skin] and skins[player.skin].name or "") .. "|" .. jointime .. "|" .. flag .. "|" .. team .. "\n"
 		end
 		if text then
 			sendit = DiscordBot.Functions.spamchatbug(player, text)
