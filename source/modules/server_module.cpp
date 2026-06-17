@@ -1,3 +1,4 @@
+#include "srb2dbot/bridge.hpp"
 #include "srb2dbot/module.hpp"
 #include "srb2dbot/server.hpp"
 #include "version.h"
@@ -32,7 +33,7 @@ public:
         std::string result;
 
         if (cmd == CMD_SERVER_DO) {
-            std::string serv_cmd = std::get<std::string>(event.get_parameter("server_command"));
+            std::string serv_cmd = sanitize_message_for_srb2(std::get<std::string>(event.get_parameter("server_command")));
             if (!fifo_available_) {
                 result = "```FIFO not available - use srb2-fifo binary for pipe commands.```";
             } else {

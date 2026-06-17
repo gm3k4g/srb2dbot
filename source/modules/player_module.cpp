@@ -46,7 +46,7 @@ public:
         }
 
         if (cmd == CMD_KICK_PLAYER) {
-            std::string player = std::get<std::string>(event.get_parameter("player"));
+            std::string player = sanitize_message_for_srb2(std::get<std::string>(event.get_parameter("player")));
             bool kicked = false;
             std::stringstream result;
             if (!fifo_available_) {
@@ -65,7 +65,7 @@ public:
         }
 
         if (cmd == CMD_BAN_PLAYER) {
-            std::string player = std::get<std::string>(event.get_parameter("player"));
+            std::string player = sanitize_message_for_srb2(std::get<std::string>(event.get_parameter("player")));
             bool banned = false;
             std::stringstream result;
             if (!fifo_available_) {
