@@ -287,6 +287,14 @@ void test_sanitize_message_for_srb2() {
     TEST("bridge: preserves original characters");
     CHECK(sanitize_message_for_srb2("  hello   world  ") == "  hello   world  ");
     PASS();
+
+    TEST("bridge: strips SRB2 color code caret");
+    CHECK(sanitize_message_for_srb2("^1hello ^2world") == "1hello 2world");
+    PASS();
+
+    TEST("bridge: strips lone caret");
+    CHECK(sanitize_message_for_srb2("what ^ means") == "what  means");
+    PASS();
 }
 
 void test_bridge_get_lines() {

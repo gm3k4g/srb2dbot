@@ -42,7 +42,7 @@ public:
             display_name = event.msg.author.username;
         }
         for (auto& c : display_name) {
-            if (c == '<' || c == '>' || c == '|' || c == '\\' || c == '"') c = '_';
+            if (c == '<' || c == '>' || c == '|' || c == '\\' || c == '"' || c == '^') c = '_';
         }
 
         // Write to discordmessage.txt — Lua reads and dispatches this file
