@@ -1,19 +1,11 @@
 -- srb2dbot-mini.lua  —  Minimal SRB2→Discord bridge
 -- The ONLY feature: write player chat, server chat, player join/quit,
 -- and round start/end events to Messages.txt for the C++ bot to read.
--- No CV_NETVAR, no rate limiting, no server_log command.
+-- No CV_NETVAR, no rate limiting, no dedup, no server_log command.
 -- Keep it as simple as possible.
 
 if rawget(_G, "DiscordBotMini") then return end
 rawset(_G, "DiscordBotMini", true)
-
--- Dedup state in _G directly (NOT on DiscordBot which gets NetVar deep-copied).
--- SRB2's PlayerMsg hook fires twice for each chat message regardless of return
--- value. We dedup by (node, type, target, msg) at the same leveltime.
-if not rawget(_G, "_dbot_mini_dedup") then
-	rawset(_G, "_dbot_mini_dedup", {})
-end
-local dedup = _G._dbot_mini_dedup
 
 local function write_event(line)
 	local f = io.openlocal("client/DiscordBot/Messages.txt", "a+")
@@ -92,16 +84,10 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	if type == 0 then
 		if server ~= player and target and target ~= 0 then return end
 		if server == player then
-			local key = "0|" .. tostring(type) .. "|" .. tostring(target) .. "|" .. msg
-			if dedup[key] == leveltime then return true end
-			dedup[key] = leveltime
 			write_event("[EVENT:SERVER_CHAT]|" .. msg .. "|FEE75C\n")
 			chatprint("<\x82~\x80Server> " .. msg)
 			return true
 		end
-		local key = tostring(#player) .. "|" .. tostring(type) .. "|" .. tostring(target) .. "|" .. msg
-		if dedup[key] == leveltime then return false end
-		dedup[key] = leveltime
 		local skinname = (skins[player.skin] and skins[player.skin].name) or ""
 		local flag = (player.gotflag and player.gotflag > 0) and "1" or "0"
 		local team = "none"
@@ -115,9 +101,6 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		write_event("[EVENT:CHAT]|[" .. #player .. "]|" .. prefix .. player.name .. "|" .. msg .. "|" .. skinname .. "|0|" .. flag .. "|" .. team .. "\n")
 		return false
 	elseif type == 3 then
-		local key = tostring(#player) .. "|" .. tostring(type) .. "|" .. tostring(target) .. "|" .. msg
-		if dedup[key] == leveltime then return end
-		dedup[key] = leveltime
 		write_event("[EVENT:CSAY]|" .. msg .. "\n")
 	end
 end)
