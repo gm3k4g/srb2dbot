@@ -92,22 +92,25 @@ When modifying the codebase, maintain these invariants:
 
 The `PlayerMsg` hook in SRB2 can fire **multiple times** for a single chat message (engine-level behavior, not a script bug). The fires do **not** always occur at the same `leveltime` — they can span 1-3 different game ticks. This caused duplicate `[EVENT:CHAT]` or `[EVENT:SERVER_CHAT]` lines in `Messages.txt` and thus duplicate Discord posts.
 
-**Root cause discovered from logs**: Every message appeared twice with `join_times` values 2 seconds apart. SRB2's NetVar sync deep-copies the `DiscordBot` global table when a player joins/leaves, replacing it with a copy that loses table identity for closures. This wiped the dedup cache (`_player_msg_cache`) and the join guard (`join_emitted`), causing:
-1. The join ThinkFrame to re-process the player (new `os.time()` → different jointime), emitting a second `PLAYER_JOIN` that was silently dropped by C++ `seen_joins` dedup (masking the problem)
+**Root cause discovered from logs**: Every message appeared twice with `join_times` values 2 seconds apart. SRB2's NetVar sync deep-copies the `DiscordBot.Data` table when a player joins/leaves (because CVs with `CV_NETVAR` trigger NetVar sync). State tables stored on `DiscordBot.Data` were wiped by the deep-copy, causing:
+1. The join ThinkFrame to re-process the player (new `os.time()` → different jointime), emitting a second `PLAYER_JOIN`
 2. The engine multi-fire to pass through the now-empty dedup cache, producing duplicate CHAT events
 
-**Second root cause discovered from logs**: After fixing the NetVar deep-copy issue, messages were *still* duplicated — now with duplicate PLAYER_JOIN visible too. Investigation revealed that `srb2_dbot.sh` copied the Lua script to `~/.srb2/DOWNLOAD/` (auto-loaded by SRB2) **and** passed the same file via `-file`, causing the script to execute twice. Each execution registered its own hook set with its own file-local dedup state, so neither copy suppressed the other's events.
+**Second root cause discovered from logs**: After fixing the NetVar deep-copy issue, messages were *still* duplicated — now with duplicate PLAYER_JOIN visible too. Investigation revealed that `srb2_dbot.sh` copied the Lua script to `~/.srb2/DOWNLOAD/` (auto-loaded by SRB2) **and** passed the same file via `-file`, causing the script to execute twice. Each execution registered its own hook set, so neither copy suppressed the other's events.
 
 ### Fix applied in `scripts/SRB2DiscordBot-v0.1.35.lua`:
 - **Double-load guard**: `if rawget(_G, "DiscordBot") and DiscordBot.version then return end` at the top prevents the second execution from registering duplicate hooks.
-- **File-local state tables**: `_player_msg_cache`, `_pending_joins`, `_join_emitted`, and `_join_times` are now declared as `local` variables at the top of the script (captured by hook closures). File-local variables are NOT in `_G` and are immune to SRB2's NetVar deep-copy, which only affects global tables. This prevents the dedup cache and join guard from being wiped on player join/leave.
+- **Dedup state on `DiscordBot.*` (not `DiscordBot.Data`)**: `_player_msg_cache`, `_pending_joins`, `_join_emitted`, and `_join_times` are stored as direct properties of the `DiscordBot` global table. `DiscordBot.Data` is the only sub-table that SRB2's NetVar deep-copies (it's the table linked to `CV_NETVAR` CVar registration). Direct properties of `DiscordBot` survive the deep-copy. This also ensures that if the script is somehow double-loaded (guard fails), both copies share dedup state via `_G["DiscordBot"]`.
 - **PlayerMsg 5-tic dedup window**: Tracks `(player_node, type, target, msg)` combined with `leveltime` at the top of the hook. On a repeat fire within 5 tics (`leveltime - cache[key] <= 5`), returns `true` to suppress the duplicate without writing to `Messages.txt`. At 35 tics/second, 5 tics ≈ 143ms. The engine multi-fire spans 1-3 tics, well within the window. Human typing (even rapid "a" four times in a second) is ≈250ms apart (≈8.75 tics), safely outside the 5-tic window.
 - **`server_log msg` handler**: Added `~= ''` guard to match `flush_msgsrb2()`, preventing spurious file open/write/close cycles when `msgsrb2` is empty.
+
+### Fix applied in `srb2_dbot.sh`:
+- **Single-load via DOWNLOAD only**: Script is copied to `~/.srb2/DOWNLOAD/` (auto-loaded by SRB2) and is NOT also passed via `-file`. Previously, both paths loaded the script twice, registering every hook twice.
 
 ### Fix applied in `source/main.cpp`:
 - **Removed phantom newline**: No longer writes `\n` to `Messages.txt` on startup. The code already handles empty files correctly (`seek_start == seek_end == 0` → skip).
 - **Removed content-based CHAT/SERVER_CHAT dedup**: The `seen_lines` map and `LINE_DEDUP_WINDOW` constant were removed. The previous content-based dedup (`"CHAT|player_name|message"`) with a 1-second window suppressed legitimate repeated messages from the same player within that window. With the Lua 5-tic dedup handling the engine multi-fire, the C++ content-based dedup is no longer needed.
-- **Removed PLAYER_JOIN `seen_joins` dedup**: The `seen_joins` map, `JOIN_DEDUP_WINDOW` constant, and associated cleanup loop were removed. This C++ dedup was silently dropping duplicate PLAYER_JOIN events (5-second window), masking the real root cause. With file-local `_join_emitted` in Lua now immune to NetVar deep-copy, the Lua guard properly prevents duplicate PLAYER_JOIN events at the source.
+- **Removed PLAYER_JOIN `seen_joins` dedup**: The `seen_joins` map, `JOIN_DEDUP_WINDOW` constant, and associated cleanup loop were removed. This C++ dedup was silently dropping duplicate PLAYER_JOIN events (5-second window), masking the real root cause. With the Lua `_join_emitted` guard on `DiscordBot.*` (immune to NetVar deep-copy), the Lua guard properly prevents duplicate PLAYER_JOIN events at the source.
 
 ## Current TODO List
 

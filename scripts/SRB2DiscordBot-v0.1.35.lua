@@ -1,20 +1,20 @@
 -- Double-load guard: SRB2 auto-loads all .lua in DOWNLOAD/ and srb2_dbot.sh
 -- also passes the same file via -file, causing the script to execute twice.
 -- The second execution would register duplicate hooks with its own separate
--- file-local state, producing duplicate events. Return early on re-entry.
+-- state, producing duplicate events. Return early on re-entry.
 if rawget(_G, "DiscordBot") and DiscordBot.version then return end
-
--- File-local tables: immune to SRB2's NetVar deep-copy which replaces
--- the DiscordBot global and all its sub-tables when a player joins/leaves.
--- Closures below capture these locals, so their identity is preserved
--- even if DiscordBot itself is deep-copied.
-local _player_msg_cache = {}
-local _pending_joins = {}
-local _join_emitted = {}
-local _join_times = {}
 
 rawset(_G, "DiscordBot", {})
 DiscordBot.version = "0.1.35"
+-- Dedup state on DiscordBot.* (NOT DiscordBot.Data, which is CV_NETVAR-synced
+-- and deep-copied on player join/leave). Direct properties of DiscordBot are
+-- NOT NetVar-synced and survive across join/leave transitions. This also
+-- ensures that if the script is double-loaded, both copies share the same
+-- dedup tables via _G["DiscordBot"].
+DiscordBot._player_msg_cache = {}
+DiscordBot._pending_joins = {}
+DiscordBot._join_emitted = {}
+DiscordBot._join_times = {}
 DiscordBot.Data = {}
 DiscordBot.Data.msgsrb2 = ''
 DiscordBot.Data.pcmtsrb2 = ''
@@ -399,12 +399,14 @@ addHook("ThinkFrame", bot_function)
 
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
+	if not DiscordBot._player_msg_cache then DiscordBot._player_msg_cache = {} end
+	local cache = DiscordBot._player_msg_cache
 	local cache_key = tostring(#player) .. "|" .. tostring(type) .. "|" .. tostring(target) .. "|" .. msg
 	local PLAYERMSG_DEDUP_TICS = 5
-	if _player_msg_cache[cache_key] and leveltime - _player_msg_cache[cache_key] <= PLAYERMSG_DEDUP_TICS then
+	if cache[cache_key] and leveltime - cache[cache_key] <= PLAYERMSG_DEDUP_TICS then
 		return true
 	end
-	_player_msg_cache[cache_key] = leveltime
+	cache[cache_key] = leveltime
 	if type == 0 then
 		if server ~= player and target and target ~= 0 then return end
 		local text = nil
@@ -417,7 +419,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 			chatprint("<\x82~\x80Server>" .. " " .. message)
 			return true
 		end
-		local jointime = _join_times[#player] and tostring(_join_times[#player]) or "0"
+		local jointime = (DiscordBot._join_times and DiscordBot._join_times[#player]) and tostring(DiscordBot._join_times[#player]) or "0"
 		local flag = player.gotflag and player.gotflag > 0 and "1" or "0"
 		local team = "none"
 		if not player.spectator then
@@ -448,17 +450,21 @@ addHook("PlayerMsg", function(player, type, target, msg)
 end)
 
 addHook("PlayerJoin", function(playernum)
-	_pending_joins[playernum] = true
+	if not DiscordBot._pending_joins then DiscordBot._pending_joins = {} end
+	DiscordBot._pending_joins[playernum] = true
 end)
 
 addHook("ThinkFrame", function()
+	if not DiscordBot._pending_joins then return end
 	for player in players.iterate do
-		if _pending_joins[#player] then
-			if _join_emitted[#player] then
+		if DiscordBot._pending_joins[#player] then
+			if not DiscordBot._join_emitted then DiscordBot._join_emitted = {} end
+			if DiscordBot._join_emitted[#player] then
 				-- already emitted for this node, skip duplicate
 			else
-				_join_emitted[#player] = true
-				_join_times[#player] = os.time()
+				DiscordBot._join_emitted[#player] = true
+				DiscordBot._join_times = DiscordBot._join_times or {}
+				DiscordBot._join_times[#player] = os.time()
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:PLAYER_JOIN]|" .. player.name .. "|" .. #player .. "\n"
 				DiscordBot.Functions.flush_msgsrb2()
 			end
@@ -483,9 +489,9 @@ end
 
 addHook("PlayerQuit", function(player, reason)
 	if DiscordBot.Commands.cv_joinquit.value ~= 1 then return end
-	_pending_joins[#player] = nil
-	_join_emitted[#player] = nil
-	_join_times[#player] = nil
+	if DiscordBot._pending_joins then DiscordBot._pending_joins[#player] = nil end
+	if DiscordBot._join_emitted then DiscordBot._join_emitted[#player] = nil end
+	if DiscordBot._join_times then DiscordBot._join_times[#player] = nil end
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:PLAYER_QUIT]|" .. player.name .. "|" .. #player .. "|" .. reason_to_string(reason) .. "\n"
 	if reason == KR_KICK then
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:KICK_PLAYER]|" .. player.name .. "|" .. #player .. "|" .. reason_to_string(reason) .. "\n"
