@@ -64,10 +64,7 @@ LUA_WAD=$(find_wad) || {
 
 mkdir -p "$HOME/.srb2/luafiles/client/DiscordBot"
 
-# Deploy script to DOWNLOAD/ so SRB2 auto-loads it. We do NOT also pass -file
-# for the same path — SRB2 would copy it to DOWNLOAD/ internally and load it
-# twice (auto-load + -file), registering every hook twice with separate
-# file-local dedup state, producing duplicate events.
+# Deploy script to DOWNLOAD/ so SRB2 loads it via -file below
 cp "$LUA_WAD" "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua"
 # Deploy intermission overlay generator
 cp "$SCRIPT_DIR/generate_intermission.sh" "$HOME/.srb2/generate_intermission.sh"
@@ -106,5 +103,6 @@ exec srb2 \
     -servername "$SERVERNAME" \
     -warp MAPF0 \
     -gametype 7 \
+    -file "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua" \
     +rejointimeout 0
     #</dev/null

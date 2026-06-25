@@ -1,7 +1,5 @@
--- Double-load guard: SRB2 auto-loads all .lua in DOWNLOAD/ and srb2_dbot.sh
--- also passes the same file via -file, causing the script to execute twice.
--- The second execution would register duplicate hooks with its own separate
--- state, producing duplicate events. Return early on re-entry.
+-- Double-load guard: prevent re-initialization if this script somehow
+-- executes more than once (e.g. loaded via multiple -file args).
 if rawget(_G, "DiscordBot") and DiscordBot.version then return end
 
 rawset(_G, "DiscordBot", {})
@@ -403,9 +401,13 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	local cache = DiscordBot._player_msg_cache
 	local cache_key = tostring(#player) .. "|" .. tostring(type) .. "|" .. tostring(target) .. "|" .. msg
 	local PLAYERMSG_DEDUP_TICS = 5
+	local tf = io.openlocal("client/DiscordBot/trace.txt", "a+")
+	if tf then tf:write("[DBOT_TRACE] PlayerMsg node=" .. #player .. " type=" .. tostring(type) .. " msg='" .. msg .. "' leveltime=" .. tostring(leveltime) .. " DiscordBot=" .. tostring(DiscordBot) .. "\n") end
 	if cache[cache_key] and leveltime - cache[cache_key] <= PLAYERMSG_DEDUP_TICS then
+		if tf then tf:write("[DBOT_TRACE]   DEDUP HIT (cached at " .. tostring(cache[cache_key]) .. ", " .. (leveltime - cache[cache_key]) .. " tics ago)\n") tf:close() end
 		return true
 	end
+	if tf then tf:write("[DBOT_TRACE]   DEDUP MISS — allowing through, cache set\n") tf:close() end
 	cache[cache_key] = leveltime
 	if type == 0 then
 		if server ~= player and target and target ~= 0 then return end
@@ -452,6 +454,8 @@ end)
 addHook("PlayerJoin", function(playernum)
 	if not DiscordBot._pending_joins then DiscordBot._pending_joins = {} end
 	DiscordBot._pending_joins[playernum] = true
+	local f = io.openlocal("client/DiscordBot/trace.txt", "a+")
+	if f then f:write("[DBOT_TRACE] PlayerJoin playernum=" .. tostring(playernum) .. " leveltime=" .. tostring(leveltime) .. " DiscordBot=" .. tostring(DiscordBot) .. "\n") f:close() end
 end)
 
 addHook("ThinkFrame", function()
@@ -459,15 +463,24 @@ addHook("ThinkFrame", function()
 	for player in players.iterate do
 		if DiscordBot._pending_joins[#player] then
 			if not DiscordBot._join_emitted then DiscordBot._join_emitted = {} end
-			if DiscordBot._join_emitted[#player] then
-				-- already emitted for this node, skip duplicate
-			else
+			local f = io.openlocal("client/DiscordBot/trace.txt", "a+")
+			if f then
+				f:write("[DBOT_TRACE] ThinkFrame processing pending join for " .. #player .. " leveltime=" .. tostring(leveltime) .. "\n")
+				f:write("[DBOT_TRACE]   _join_emitted[" .. #player .. "]=" .. tostring(DiscordBot._join_emitted[#player]) .. "\n")
+				f:write("[DBOT_TRACE]   DiscordBot table: " .. tostring(DiscordBot) .. "\n")
+			end
+			if not DiscordBot._join_emitted[#player] then
 				DiscordBot._join_emitted[#player] = true
 				DiscordBot._join_times = DiscordBot._join_times or {}
 				DiscordBot._join_times[#player] = os.time()
+				if f then f:write("[DBOT_TRACE]   EMITTING PLAYER_JOIN jointime=" .. tostring(DiscordBot._join_times[#player]) .. "\n") end
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:PLAYER_JOIN]|" .. player.name .. "|" .. #player .. "\n"
 				DiscordBot.Functions.flush_msgsrb2()
+			else
+				if f then f:write("[DBOT_TRACE]   SKIPPED (already emitted)\n") end
 			end
+			DiscordBot._pending_joins[#player] = nil
+			if f then f:write("[DBOT_TRACE]   cleared _pending_joins[" .. #player .. "]\n") f:close() end
 			if DiscordBot.Config.auto_pause and paused == true then
 				DiscordBot.Data.paused = false
 				COM_BufInsertText(server, "pause")
