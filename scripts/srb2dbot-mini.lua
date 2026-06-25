@@ -1,19 +1,52 @@
--- srb2dbot-mini.lua  —  Minimal SRB2→Discord bridge
--- The ONLY feature: write player chat, server chat, player join/quit,
--- and round start/end events to Messages.txt for the C++ bot to read.
--- No CV_NETVAR, no rate limiting, no dedup, no server_log command.
--- Keep it as simple as possible.
+-- srb2dbot-mini.lua  —  Minimal SRB2→Discord bridge (hooks only, no file I/O)
+--
+-- All hooks are registered but write_event() is a no-op.
+-- Implement write_event() yourself to send events to Discord.
+--
+-- See the bottom of this file for implementation instructions.
 
 if rawget(_G, "DiscordBotMini") then return end
 rawset(_G, "DiscordBotMini", true)
 
+local current_map = nil
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- WRITE EVENT — implement this yourself
+-- ═══════════════════════════════════════════════════════════════════════
+-- `line` is a pipe-delimited string ending in \n, e.g.:
+--   [EVENT:CHAT]|[1]|Sonic|hello|sonic|0|0|none
+--   [EVENT:SERVER_CHAT]|text|FEE75C
+--   [EVENT:PLAYER_JOIN]|Sonic|1
+--   [EVENT:PLAYER_QUIT]|Sonic|1|Left
+--   [EVENT:ROUND_START]|CTF|MAPF0|Lime Forest
+--   [EVENT:ROUND_END]|CTF|MAPF0|0|0|0|0|0|ffa|0|0|0:00|Unknown|[]|[]
+--   [EVENT:CSAY]|text
+--   [EVENT:KICK_PLAYER]|Sonic|1|Kicked
+--   [EVENT:BAN_PLAYER]|Sonic|1|Banned
+--
+-- The C++ bot polls this file every 2 seconds, renames it to .tmp,
+-- reads all lines, parses each one, and sends Discord embeds.
+-- Your job: make write_event() append `line` to Messages.txt.
+--
+-- File path: ~/.srb2/luafiles/client/DiscordBot/Messages.txt
+-- Use io.openlocal() which is relative to ~/.srb2/luafiles/
+--
+-- Example implementation:
+--   local function write_event(line)
+--       local f = io.openlocal("client/DiscordBot/Messages.txt", "a+")
+--       if f then
+--           f:write(line)
+--           f:close()
+--       end
+--   end
+
 local function write_event(line)
-	local f = io.openlocal("client/DiscordBot/Messages.txt", "a+")
-	if f then
-		f:write(line)
-		f:close()
-	end
+	-- TODO: implement file writing here
 end
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- HOOKS — these call write_event() when events happen in-game
+-- ═══════════════════════════════════════════════════════════════════════
 
 local function map_num_to_mapstr(n)
 	if n < 100 then return string.format("MAP%02d", n) end
@@ -56,8 +89,6 @@ local function reason_to_string(r)
 	elseif r == KR_LEAVE then return "Left" end
 	return "Unknown"
 end
-
-local current_map = nil
 
 addHook("MapChange", function(map)
 	if current_map ~= nil then
