@@ -289,6 +289,14 @@ int main() {
                     std::string content((std::istreambuf_iterator<char>(tmp_file)),
                                          std::istreambuf_iterator<char>());
                     tmp_file.close();
+                    if (!content.empty()) {
+                        std::cout << "[bridge] raw content from .tmp (" << content.size() << " bytes):" << std::endl;
+                        std::istringstream raw_lines(content);
+                        std::string raw_line;
+                        while (std::getline(raw_lines, raw_line)) {
+                            if (!raw_line.empty()) std::cout << "[bridge]   line: " << raw_line << std::endl;
+                        }
+                    }
                     std::remove(tmp_path.c_str());
 
                     if (content.size() > 1) {
