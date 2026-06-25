@@ -99,7 +99,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		local prefix = ""
 		if IsPlayerAdmin(player) then prefix = "@" end
 		write_event("[EVENT:CHAT]|[" .. #player .. "]|" .. prefix .. player.name .. "|" .. msg .. "|" .. skinname .. "|0|" .. flag .. "|" .. team .. "\n")
-		return false
+		return true
 	elseif type == 3 then
 		write_event("[EVENT:CSAY]|" .. msg .. "\n")
 	end
