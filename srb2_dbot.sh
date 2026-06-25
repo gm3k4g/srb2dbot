@@ -106,6 +106,6 @@ exec srb2 \
     -servername "$SERVERNAME" \
     -warp MAPF0 \
     -gametype 7 \
-    -file "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua" \
+    -file "$LUA_WAD" \
     +rejointimeout 0
     #</dev/null
