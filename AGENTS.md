@@ -96,7 +96,10 @@ The `PlayerMsg` hook in SRB2 can fire **multiple times** for a single chat messa
 1. The join ThinkFrame to re-process the player (new `os.time()` → different jointime), emitting a second `PLAYER_JOIN` that was silently dropped by C++ `seen_joins` dedup (masking the problem)
 2. The engine multi-fire to pass through the now-empty dedup cache, producing duplicate CHAT events
 
+**Second root cause discovered from logs**: After fixing the NetVar deep-copy issue, messages were *still* duplicated — now with duplicate PLAYER_JOIN visible too. Investigation revealed that `srb2_dbot.sh` copied the Lua script to `~/.srb2/DOWNLOAD/` (auto-loaded by SRB2) **and** passed the same file via `-file`, causing the script to execute twice. Each execution registered its own hook set with its own file-local dedup state, so neither copy suppressed the other's events.
+
 ### Fix applied in `scripts/SRB2DiscordBot-v0.1.35.lua`:
+- **Double-load guard**: `if rawget(_G, "DiscordBot") and DiscordBot.version then return end` at the top prevents the second execution from registering duplicate hooks.
 - **File-local state tables**: `_player_msg_cache`, `_pending_joins`, `_join_emitted`, and `_join_times` are now declared as `local` variables at the top of the script (captured by hook closures). File-local variables are NOT in `_G` and are immune to SRB2's NetVar deep-copy, which only affects global tables. This prevents the dedup cache and join guard from being wiped on player join/leave.
 - **PlayerMsg 5-tic dedup window**: Tracks `(player_node, type, target, msg)` combined with `leveltime` at the top of the hook. On a repeat fire within 5 tics (`leveltime - cache[key] <= 5`), returns `true` to suppress the duplicate without writing to `Messages.txt`. At 35 tics/second, 5 tics ≈ 143ms. The engine multi-fire spans 1-3 tics, well within the window. Human typing (even rapid "a" four times in a second) is ≈250ms apart (≈8.75 tics), safely outside the 5-tic window.
 - **`server_log msg` handler**: Added `~= ''` guard to match `flush_msgsrb2()`, preventing spurious file open/write/close cycles when `msgsrb2` is empty.

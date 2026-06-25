@@ -1,3 +1,9 @@
+-- Double-load guard: SRB2 auto-loads all .lua in DOWNLOAD/ and srb2_dbot.sh
+-- also passes the same file via -file, causing the script to execute twice.
+-- The second execution would register duplicate hooks with its own separate
+-- file-local state, producing duplicate events. Return early on re-entry.
+if rawget(_G, "DiscordBot") and DiscordBot.version then return end
+
 -- File-local tables: immune to SRB2's NetVar deep-copy which replaces
 -- the DiscordBot global and all its sub-tables when a player joins/leaves.
 -- Closures below capture these locals, so their identity is preserved
