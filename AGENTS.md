@@ -90,15 +90,15 @@ When modifying the codebase, maintain these invariants:
 
 ## Double-Post Fix (PlayerMsg)
 
-The `PlayerMsg` hook in SRB2 can fire **twice** for a single chat message (engine-level behavior, not a script bug). This previously caused duplicate `[EVENT:CHAT]` lines in `Messages.txt` with different `jointime` fields, which bypassed the C++ line-level dedup.
+The `PlayerMsg` hook in SRB2 can fire **twice** for a single chat message (engine-level behavior, not a script bug). Both fires occur at the same `leveltime` (same game tick). This previously caused duplicate `[EVENT:CHAT]` lines in `Messages.txt`.
 
 ### Fix applied in `scripts/SRB2DiscordBot-v0.1.35.lua`:
-- **PlayerMsg dedup**: Tracks `(player_node, type, target, msg)` combined with `leveltime` at the top of the hook. On the second fire within the same tick, returns `true` to suppress the duplicate without writing to `Messages.txt`.
+- **PlayerMsg same-tick dedup**: Tracks `(player_node, type, target, msg)` combined with `leveltime` at the top of the hook. On the second fire **at the same `leveltime`** (i.e. `cache[key] == leveltime`), returns `true` to suppress the duplicate without writing to `Messages.txt`. Previous implementations used a 10-tic window which also suppressed legitimate rapid repeats (e.g. a player typing "a" four times within a second — only the first would get through). The same-tick check is sufficient because the engine double-fire occurs within a single frame.
 - **`server_log msg` handler**: Added `~= ''` guard to match `flush_msgsrb2()`, preventing spurious file open/write/close cycles when `msgsrb2` is empty.
 
 ### Fix applied in `source/main.cpp`:
 - **Removed phantom newline**: No longer writes `\n` to `Messages.txt` on startup. The code already handles empty files correctly (`seek_start == seek_end == 0` → skip).
-- **Content-based dedup key**: The `seen_lines` dedup now uses a content-based identity key instead of the full raw line for CHAT/SERVER_CHAT events. For CHAT events, the key is `"CHAT|" + player_name + "|" + message`, which ignores the `jointime` field that can differ between duplicate fires. For SERVER_CHAT, the key is `"SERVER_CHAT|" + message`. This prevents the C++ dedup from missing duplicates when fields like `jointime` change between fires that span different `leveltime` ticks.
+- **Removed content-based CHAT/SERVER_CHAT dedup**: The `seen_lines` map and `LINE_DEDUP_WINDOW` constant were removed. The previous content-based dedup (`"CHAT|player_name|message"`) with a 1-second window suppressed legitimate repeated messages from the same player within that window. With the Lua same-tick dedup handling the engine double-fire, the C++ content-based dedup is no longer needed. PLAYER_JOIN dedup (5-second window) is retained separately to prevent join-event spam.
 
 ## Current TODO List
 

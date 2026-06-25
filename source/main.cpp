@@ -250,14 +250,12 @@ int main() {
         bool dbot_synced = false;
         int dbot_sync_retries = 0;
         std::unordered_map<std::string, std::time_t> seen_joins;
-        std::unordered_map<std::string, std::time_t> seen_lines;
         constexpr int DBOT_SYNC_MAX_RETRIES = 15;
         constexpr std::time_t JOIN_DEDUP_WINDOW = 5;
-        constexpr std::time_t LINE_DEDUP_WINDOW = 1;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
 
         bot.start_timer([&bot, &registry, messages_path, &dbot_synced,
-                         &dbot_sync_retries, &seen_joins, &seen_lines, bridge_channel_sf, &guild_emojis,
+                         &dbot_sync_retries, &seen_joins, bridge_channel_sf, &guild_emojis,
 
 
                          fifo_available](dpp::timer) {
@@ -305,18 +303,6 @@ int main() {
                         while (std::getline(lines, line)) {
                             if (line.empty()) continue;
                             if (auto event = bridge_parse_event(line)) {
-                                std::string dedup_key = line;
-                                if (event->type == "CHAT" && event->fields.size() >= 3) {
-                                    dedup_key = "CHAT|" + event->fields[1] + "|" + event->fields[2];
-                                } else if (event->type == "SERVER_CHAT" && event->fields.size() >= 1) {
-                                    dedup_key = "SERVER_CHAT|" + event->fields[0];
-                                }
-                                {
-                                    auto now = std::time(nullptr);
-                                    auto it = seen_lines.find(dedup_key);
-                                    if (it != seen_lines.end() && (now - it->second) < LINE_DEDUP_WINDOW) continue;
-                                    seen_lines[dedup_key] = now;
-                                }
                                 if (event->type == "PLAYER_JOIN" && event->fields.size() >= 2) {
                                     std::string key = event->fields[0] + "|" + event->fields[1];
                                     auto now = std::time(nullptr);
@@ -376,12 +362,6 @@ int main() {
             }
             {
                 auto now = std::time(nullptr);
-                for (auto it = seen_lines.begin(); it != seen_lines.end(); ) {
-                    if (now - it->second >= LINE_DEDUP_WINDOW)
-                        it = seen_lines.erase(it);
-                    else
-                        ++it;
-                }
                 for (auto it = seen_joins.begin(); it != seen_joins.end(); ) {
                     if (now - it->second >= JOIN_DEDUP_WINDOW)
                         it = seen_joins.erase(it);

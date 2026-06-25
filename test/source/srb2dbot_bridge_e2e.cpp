@@ -303,6 +303,110 @@ void test_bridge_event_pipeline() {
     std::remove(msg_tmp.c_str());
 }
 
+void test_rapid_identical_chat_events() {
+    std::string msg_tmp = "/tmp/srb2dbot_e2e_rapid_msg.txt";
+
+    TEST("E2E: rapid identical CHAT events all preserved (no content dedup)");
+
+    {
+        std::ofstream f(msg_tmp, std::ios::trunc);
+    }
+    size_t seek = 0;
+
+    // Simulate a player sending "a" four times in rapid succession.
+    // Each message produces a distinct [EVENT:CHAT] line. The Lua same-tick
+    // dedup suppresses only the engine double-fire (same leveltime), so all
+    // four legitimate lines should arrive in Messages.txt. The C++ bot no
+    // longer applies a content-based dedup window for CHAT events, so all
+    // four should be parsed and forwarded.
+    {
+        std::ofstream f(msg_tmp, std::ios::app);
+        f << "[EVENT:CHAT]|[1]|Player1|a|sonic|100|0|none\n";
+        f << "[EVENT:CHAT]|[1]|Player1|a|sonic|100|0|none\n";
+        f << "[EVENT:CHAT]|[1]|Player1|a|sonic|100|0|none\n";
+        f << "[EVENT:CHAT]|[1]|Player1|a|sonic|100|0|none\n";
+    }
+
+    size_t lines = bridge_get_lines(msg_tmp);
+    CHECK(lines == 4);
+
+    std::string content = bridge_read_range(msg_tmp, seek, lines);
+    CHECK(!content.empty());
+
+    // Verify all four events are present
+    size_t count = 0;
+    size_t pos = 0;
+    while ((pos = content.find("[EVENT:CHAT]", pos)) != std::string::npos) {
+        count++;
+        pos += 12;
+    }
+    CHECK(count == 4);
+
+    // Verify each event parses successfully
+    size_t pos2 = 0;
+    size_t parsed = 0;
+    std::string remaining = content;
+    while (true) {
+        size_t nl = remaining.find('\n', pos2);
+        if (nl == std::string::npos) break;
+        std::string line = remaining.substr(pos2, nl - pos2);
+        if (!line.empty()) {
+            auto evt = bridge_parse_event(line);
+            CHECK(evt.has_value());
+            if (evt) {
+                CHECK(evt->type == "CHAT");
+                CHECK(evt->fields.size() >= 3);
+                parsed++;
+            }
+        }
+        pos2 = nl + 1;
+    }
+    CHECK(parsed == 4);
+
+    seek = lines;
+    PASS();
+
+    std::remove(msg_tmp.c_str());
+}
+
+void test_rapid_identical_server_chat_events() {
+    std::string msg_tmp = "/tmp/srb2dbot_e2e_rapid_srvmsg.txt";
+
+    TEST("E2E: rapid identical SERVER_CHAT events all preserved");
+
+    {
+        std::ofstream f(msg_tmp, std::ios::trunc);
+    }
+    size_t seek = 0;
+
+    // Server sends the same message three times rapidly
+    {
+        std::ofstream f(msg_tmp, std::ios::app);
+        f << "[EVENT:SERVER_CHAT]|hello|FEE75C\n";
+        f << "[EVENT:SERVER_CHAT]|hello|FEE75C\n";
+        f << "[EVENT:SERVER_CHAT]|hello|FEE75C\n";
+    }
+
+    size_t lines = bridge_get_lines(msg_tmp);
+    CHECK(lines == 3);
+
+    std::string content = bridge_read_range(msg_tmp, seek, lines);
+    CHECK(!content.empty());
+
+    size_t count = 0;
+    size_t pos = 0;
+    while ((pos = content.find("[EVENT:SERVER_CHAT]", pos)) != std::string::npos) {
+        count++;
+        pos += 19;
+    }
+    CHECK(count == 3);
+
+    seek = lines;
+    PASS();
+
+    std::remove(msg_tmp.c_str());
+}
+
 auto main() -> int {
     std::cout << "=== srb2dbot bridge E2E test suite ===\n\n";
 
@@ -310,6 +414,8 @@ auto main() -> int {
     test_srb2_to_discord_e2e();
     test_bridge_full_cycle();
     test_bridge_event_pipeline();
+    test_rapid_identical_chat_events();
+    test_rapid_identical_server_chat_events();
 
     std::cout << "\n=== " << failures << " test(s) failed ===\n";
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;

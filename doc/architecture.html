@@ -102,15 +102,15 @@
 <p>Both files are cleared on bot startup. The bridge channel and bot identity are configured in <code>secret.json</code>.</p>
 
 <h3>Double-Post Prevention</h3>
-<p>The <code>PlayerMsg</code> hook in SRB2 can fire twice for a single chat message. The companion Lua script prevents duplicate Discord posts through two mechanisms:</p>
+<p>The <code>PlayerMsg</code> hook in SRB2 can fire twice for a single chat message (both fires at the same <code>leveltime</code>). The companion Lua script prevents duplicate Discord posts through two mechanisms:</p>
 <ul>
-    <li><strong>Frame-level dedup in PlayerMsg:</strong> Each message is tracked by <code>(player_node, type, target, msg)</code> combined with <code>leveltime</code>. On a second fire within the same tick, <code>true</code> is returned to suppress the duplicate without writing to <code>Messages.txt</code>.</li>
+    <li><strong>Same-tick dedup in PlayerMsg:</strong> Each message is tracked by <code>(player_node, type, target, msg)</code> combined with <code>leveltime</code>. On a second fire <strong>at the same <code>leveltime</code></strong> (i.e. <code>cache[key] == leveltime</code>), <code>true</code> is returned to suppress the duplicate without writing to <code>Messages.txt</code>. Previous implementations used a 10-tic window which also suppressed legitimate rapid repeats (e.g. a player typing "a" four times within a second). The same-tick check is sufficient because the engine double-fire occurs within a single frame.</li>
     <li><strong>Guard fix in server_log msg:</strong> The handler now checks <code>DiscordBot.Data.msgsrb2 ~= ''</code> alongside the existing truthy check, preventing file open/write/close cycles when the buffer is empty (empty string is truthy in Lua).</li>
 </ul>
 <p>The C++ bot applies two additional measures:</p>
 <ul>
     <li><strong>No phantom newline:</strong> The bot no longer writes <code>\n</code> to <code>Messages.txt</code> on startup, eliminating the phantom empty line that was previously tracked as line 1.</li>
-    <li><strong>Content-based dedup key:</strong> The <code>seen_lines</code> dedup in the polling timer now uses a content-based identity key instead of the full raw line for CHAT/SERVER_CHAT events. For CHAT events, the key is <code>"CHAT|" + player_name + "|" + message</code>, ignoring the <code>jointime</code> field that can differ between duplicate fires. For SERVER_CHAT, the key is <code>"SERVER_CHAT|" + message</code>. This prevents the C++ dedup from missing duplicates when the two fires span different <code>leveltime</code> ticks.</li>
+    <li><strong>No content-based CHAT/SERVER_CHAT dedup:</strong> The previous <code>seen_lines</code> content-based dedup (<code>"CHAT|player_name|message"</code> with a 1-second window) was removed because it suppressed legitimate repeated messages from the same player within that window (e.g. sending "a" twice within 1 second). With the Lua same-tick dedup handling the engine double-fire, the C++ content-based dedup is no longer needed. PLAYER_JOIN dedup (5-second window) is retained separately to prevent join-event spam.</li>
 </ul>
 
 <h2>Key Files</h2>
