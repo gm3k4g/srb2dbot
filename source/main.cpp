@@ -249,14 +249,11 @@ int main() {
     if (bridge_channel_id != "0") {
         bool dbot_synced = false;
         int dbot_sync_retries = 0;
-        std::unordered_map<std::string, std::time_t> seen_joins;
         constexpr int DBOT_SYNC_MAX_RETRIES = 15;
-        constexpr std::time_t JOIN_DEDUP_WINDOW = 5;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
 
         bot.start_timer([&bot, &registry, messages_path, &dbot_synced,
-                         &dbot_sync_retries, &seen_joins, bridge_channel_sf, &guild_emojis,
-
+                         &dbot_sync_retries, bridge_channel_sf, &guild_emojis,
 
                          fifo_available](dpp::timer) {
             if (g_shutdown_requested) {
@@ -303,15 +300,6 @@ int main() {
                         while (std::getline(lines, line)) {
                             if (line.empty()) continue;
                             if (auto event = bridge_parse_event(line)) {
-                                if (event->type == "PLAYER_JOIN" && event->fields.size() >= 2) {
-                                    std::string key = event->fields[0] + "|" + event->fields[1];
-                                    auto now = std::time(nullptr);
-                                    auto it = seen_joins.find(key);
-                                    if (it != seen_joins.end() && (now - it->second) < JOIN_DEDUP_WINDOW) continue;
-                                    seen_joins[key] = now;
-                                } else if (event->type == "PLAYER_QUIT" && event->fields.size() >= 2) {
-                                    seen_joins.erase(event->fields[0] + "|" + event->fields[1]);
-                                }
                                 auto embed_opt = registry.handle_bridge_event(*event);
                                 if (embed_opt.has_value()) {
 #ifndef NDEBUG
@@ -358,15 +346,6 @@ int main() {
                     }
                 } else {
                     std::remove(tmp_path.c_str());
-                }
-            }
-            {
-                auto now = std::time(nullptr);
-                for (auto it = seen_joins.begin(); it != seen_joins.end(); ) {
-                    if (now - it->second >= JOIN_DEDUP_WINDOW)
-                        it = seen_joins.erase(it);
-                    else
-                        ++it;
                 }
             }
         }, 2);
