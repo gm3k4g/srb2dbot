@@ -42,18 +42,18 @@ kill_pid_file() {
 kill_pid_file "$BOT_PID_FILE" "srb2dbot"
 kill_pid_file "$SRB2_PID_FILE" "SRB2"
 
-LUA_WAD="$SCRIPT_DIR/scripts/srb2dbot-mini.lua"
+LUA_WAD="$SCRIPT_DIR/scripts/discord_bridge.lua"
 if [[ ! -f "$LUA_WAD" ]]; then
-    echo "ERROR: srb2dbot-mini.lua not found at $LUA_WAD" >&2
+    echo "ERROR: discord_bridge.lua not found at $LUA_WAD" >&2
     exit 1
 fi
 
 mkdir -p "$HOME/.srb2/luafiles/client/DiscordBot"
 
 # Deploy script to DOWNLOAD/ so SRB2 loads it via -file below
-cp "$LUA_WAD" "$HOME/.srb2/DOWNLOAD/srb2dbot-mini.lua"
-# Remove stale copy of the old full script to avoid confusion
-rm -f "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua"
+cp "$LUA_WAD" "$HOME/.srb2/DOWNLOAD/discord_bridge.lua"
+# Remove stale copies of old scripts to avoid confusion
+rm -f "$HOME/.srb2/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua" "$HOME/.srb2/DOWNLOAD/srb2dbot-mini.lua"
 # Deploy intermission overlay generator
 cp "$SCRIPT_DIR/generate_intermission.sh" "$HOME/.srb2/generate_intermission.sh"
 chmod +x "$HOME/.srb2/generate_intermission.sh"
@@ -91,6 +91,6 @@ exec srb2 \
     -servername "$SERVERNAME" \
     -warp MAPF0 \
     -gametype 7 \
-    -file "$HOME/.srb2/DOWNLOAD/srb2dbot-mini.lua" \
+    -file "$HOME/.srb2/DOWNLOAD/discord_bridge.lua" \
     +rejointimeout 0
     #</dev/null

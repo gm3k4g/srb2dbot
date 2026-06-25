@@ -41,7 +41,11 @@ local current_map = nil
 --   end
 
 local function write_event(line)
-	-- TODO: implement file writing here
+    local f = io.openlocal("client/DiscordBot/Messages.txt", "a+")
+    if f then
+        f:write(line)
+        f:close()
+    end
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
