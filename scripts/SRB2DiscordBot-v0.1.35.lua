@@ -387,7 +387,8 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	if not DiscordBot._player_msg_cache then DiscordBot._player_msg_cache = {} end
 	local cache = DiscordBot._player_msg_cache
 	local cache_key = tostring(#player) .. "|" .. tostring(type) .. "|" .. tostring(target) .. "|" .. msg
-	if cache[cache_key] == leveltime then
+	local PLAYERMSG_DEDUP_TICS = 5
+	if cache[cache_key] and leveltime - cache[cache_key] <= PLAYERMSG_DEDUP_TICS then
 		return true
 	end
 	cache[cache_key] = leveltime

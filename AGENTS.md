@@ -90,15 +90,15 @@ When modifying the codebase, maintain these invariants:
 
 ## Double-Post Fix (PlayerMsg)
 
-The `PlayerMsg` hook in SRB2 can fire **twice** for a single chat message (engine-level behavior, not a script bug). Both fires occur at the same `leveltime` (same game tick). This previously caused duplicate `[EVENT:CHAT]` lines in `Messages.txt`.
+The `PlayerMsg` hook in SRB2 can fire **multiple times** for a single chat message (engine-level behavior, not a script bug). The fires do **not** always occur at the same `leveltime` — they can span 1-3 different game ticks. This caused duplicate `[EVENT:CHAT]` or `[EVENT:SERVER_CHAT]` lines in `Messages.txt` and thus duplicate Discord posts.
 
 ### Fix applied in `scripts/SRB2DiscordBot-v0.1.35.lua`:
-- **PlayerMsg same-tick dedup**: Tracks `(player_node, type, target, msg)` combined with `leveltime` at the top of the hook. On the second fire **at the same `leveltime`** (i.e. `cache[key] == leveltime`), returns `true` to suppress the duplicate without writing to `Messages.txt`. Previous implementations used a 10-tic window which also suppressed legitimate rapid repeats (e.g. a player typing "a" four times within a second — only the first would get through). The same-tick check is sufficient because the engine double-fire occurs within a single frame.
+- **PlayerMsg 5-tic dedup window**: Tracks `(player_node, type, target, msg)` combined with `leveltime` at the top of the hook. On a repeat fire within 5 tics (`leveltime - cache[key] <= 5`), returns `true` to suppress the duplicate without writing to `Messages.txt`. At 35 tics/second, 5 tics ≈ 143ms. The engine multi-fire spans 1-3 tics, well within the window. Human typing (even rapid "a" four times in a second) is ≈250ms apart (≈8.75 tics), safely outside the 5-tic window. A previous 10-tic window was too broad (it suppressed repeats 250ms apart) and a same-tick check was too narrow (engine fires span different ticks).
 - **`server_log msg` handler**: Added `~= ''` guard to match `flush_msgsrb2()`, preventing spurious file open/write/close cycles when `msgsrb2` is empty.
 
 ### Fix applied in `source/main.cpp`:
 - **Removed phantom newline**: No longer writes `\n` to `Messages.txt` on startup. The code already handles empty files correctly (`seek_start == seek_end == 0` → skip).
-- **Removed content-based CHAT/SERVER_CHAT dedup**: The `seen_lines` map and `LINE_DEDUP_WINDOW` constant were removed. The previous content-based dedup (`"CHAT|player_name|message"`) with a 1-second window suppressed legitimate repeated messages from the same player within that window. With the Lua same-tick dedup handling the engine double-fire, the C++ content-based dedup is no longer needed. PLAYER_JOIN dedup (5-second window) is retained separately to prevent join-event spam.
+- **Removed content-based CHAT/SERVER_CHAT dedup**: The `seen_lines` map and `LINE_DEDUP_WINDOW` constant were removed. The previous content-based dedup (`"CHAT|player_name|message"`) with a 1-second window suppressed legitimate repeated messages from the same player within that window. With the Lua 5-tic dedup handling the engine multi-fire, the C++ content-based dedup is no longer needed. PLAYER_JOIN dedup (5-second window) is retained separately to prevent join-event spam.
 
 ## Current TODO List
 
