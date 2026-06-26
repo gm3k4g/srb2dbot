@@ -108,7 +108,7 @@ The `PlayerJoin` hook in SRB2 fires **multiple times** during the connection han
 - **Removed phantom newline**: No longer writes `\n` to `Messages.txt` on startup. The code already handles empty files correctly (`seek_start == seek_end == 0` → skip).
 - **Removed content-based CHAT/SERVER_CHAT dedup**: The `seen_lines` map and `LINE_DEDUP_WINDOW` constant were removed. The previous content-based dedup suppressed legitimate repeated messages within a 1-second window.
 - **Removed PLAYER_JOIN `seen_joins` dedup**: The `seen_joins` map, `JOIN_DEDUP_WINDOW` constant, and associated cleanup loop were removed. The Lua `_join_emitted` guard prevents duplicate PLAYER_JOIN events at the source.
-- **Seek-based Messages.txt reading**: Replaced the rename-delete pattern with `bridge_get_lines()` / `bridge_read_range()` so Messages.txt stays on disk for inspection. The bot tracks `lines_seen` and only reads new lines each 2-second poll cycle.
+- **Rename-based Messages.txt reading**: Uses POSIX-atomic `rename(2)` to move Messages.txt → .tmp before reading, then archives .tmp copies for inspection. Lua's `io.openlocal("a+")` creates a fresh Messages.txt for subsequent writes, preventing read/write races. `bridge_get_lines()` / `bridge_read_range()` exist in bridge.cpp for test usage and forward compatibility but the main poll loop uses the rename pattern.
 - **`SRB2DBOT_SRB2_HOME` env var**: `dir_srb2_str()` checks this env var before falling back to the password database. Can also be configured via `srb2_home` in `modules.json`.
 
 ### Fix applied in `srb2_dbot.sh`:
