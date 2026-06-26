@@ -165,30 +165,41 @@ cd build && ctest --output-on-failure
 <pre><code>cmake --preset ci-ubuntu
 cmake --build build -j$(nproc)</code></pre>
 
-<h2>Deployment (NixOS → Standard Linux)</h2>
-<p>
-    Binaries built on NixOS embed Nix store paths for the ELF interpreter
-    (<code>/nix/store/.../ld-linux-x86-64.so.2</code>). Standard Linux puts
-    it at <code>/lib64/ld-linux-x86-64.so.2</code>. Trying to execute the
-    binary on a non-NixOS system gives <code>ENOENT</code> because the
-    dynamic linker path doesn't exist.
-</p>
-<p>
-    Fix is two commands after the build:
-</p>
-<pre><code># Build release (statically links C++ runtime, reduces deps)
-./build.sh --release
+<h2>Docker Portable Build (NixOS → Debian 12)</h2>
 
-# Rewrite ELF interpreter to standard path
-nix-shell -p patchelf --run "patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 build/srb2dbot"
-
-# Copy to server (target needs libdpp, libssl, libopus from their package manager)
-scp build/srb2dbot user@server:~/.srb2dbot/</code></pre>
+<h3>The Problem</h3>
 <p>
-    Release builds also pass <code>-static-libstdc++ -static-libgcc</code>,
-    so the target system doesn't need the exact same GCC version's runtime
-    libraries.
+    NixOS ships glibc 2.40+. Debian 12 ships glibc 2.36. A binary compiled
+    on NixOS links against <code>GLIBC_2.38</code> symbols that don't exist
+    on Debian 12, causing: <code>version 'GLIBC_2.38' not found</code>.
 </p>
+
+<h3>Solution</h3>
+<p>
+    Build inside a Debian 12 Docker container. The <code>Dockerfile</code>
+    compiles D++ 10.1.5 from source and produces a runtime image.
+    <code>docker-build.sh</code> extracts the binary and libdpp to
+    <code>build-portable/</code>.
+</p>
+
+<pre><code># Requires: Docker
+./docker-build.sh
+
+# Output in build-portable/:
+#   srb2dbot             - the portable binary (glibc 2.36, /lib64/ld-linux)
+#   libdpp.so.10.1.5     - D++ runtime library (RPATH=$ORIGIN)
+
+# Deploy to server:
+scp build-portable/srb2dbot build-portable/libdpp.so.10.1.5 user@server:~/.srb2dbot/
+# On server: sudo apt install libssl3 libopus0 ca-certificates</code></pre>
+
+<h3>Notes</h3>
+<ul>
+    <li>First build: ~10 minutes (compiles D++ from source)</li>
+    <li>Subsequent builds: ~1 minute (Docker cache)</li>
+    <li>libdpp.so must be in the same directory as the binary</li>
+    <li>Release builds pass <code>-static-libstdc++ -static-libgcc</code></li>
+</ul>
 
 <h2>Configuration</h2>
 <p>After building, create a <code>secret.json</code> file:</p>

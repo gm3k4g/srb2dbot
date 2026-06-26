@@ -1,0 +1,6 @@
+build/
+build-portable/
+deploy/
+.git/
+**/node_modules/
+**/.DS_Store

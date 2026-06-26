@@ -122,20 +122,23 @@ cmake --build build -j$(nproc)
 cp secret.json.default secret.json
 # Fill in the fields described below</code></pre>
 
-<h2>Deployment (NixOS → Standard Linux)</h2>
+<h2>Deployment (NixOS → Debian 12)</h2>
 <p>
-    On <strong>NixOS</strong>, the binary's ELF interpreter points to
-    <code>/nix/store/.../ld-linux-x86-64.so.2</code>. Standard Linux puts
-    it at <code>/lib64/</code>. Fix with:
+    NixOS ships glibc 2.40+; Debian 12 has glibc 2.36. Binaries built on
+    NixOS require <code>GLIBC_2.38</code> symbols unavailable on Debian 12.
+    Use Docker to build inside a Debian 12 container:
 </p>
-<pre><code># Build release (statically links C++ runtime)
-./build.sh --release
+<pre><code># Build portable binary (output: build-portable/)
+./docker-build.sh
 
-# Fix ELF interpreter for portability
-nix-shell -p patchelf --run "patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 build/srb2dbot"
+# SCP to server
+scp build-portable/srb2dbot build-portable/libdpp.so.10.1.5 user@server:~/.srb2dbot/
 
-# SCP to server (target needs libdpp-dev, libssl3, libopus0)
-scp build/srb2dbot user@server:~/.srb2dbot/</code></pre>
+# On server: sudo apt install libssl3 libopus0 ca-certificates</code></pre>
+<p>
+    First build takes ~10 minutes (compiles D++ from source). Subsequent
+    builds are cached and take ~1 minute. Requires Docker.
+</p>
 
 <h2>Configuration</h2>
 <p>Create <code>secret.json</code> from the template:</p>

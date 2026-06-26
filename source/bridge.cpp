@@ -1,4 +1,5 @@
 #include "srb2dbot/bridge.hpp"
+#include <algorithm>
 #include <cctype>
 #include <cstdint>
 #include <cstdio>

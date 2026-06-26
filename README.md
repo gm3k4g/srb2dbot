@@ -43,22 +43,21 @@ The **chat bridge** forwards Discord messages to SRB2 via `~/.srb2/luafiles/clie
 
 Events are written to `Messages.txt` immediately when they occur (SERVER_START, ROUND_START/END, player join/quit) via a shared helper, rather than waiting for the periodic flush cycle. On bot startup, a `dbot_sync` command is sent to the SRB2 server to request re-emission of the current server state, ensuring events are visible within the next poll cycle even after a restart.
 
-## Deployment (NixOS → Standard Linux)
+## Deployment (NixOS → Debian 12)
 
-On NixOS, the binary's ELF interpreter points to `/nix/store/.../ld-linux-x86-64.so.2`, which doesn't exist on standard Linux. Fix with:
+NixOS ships glibc 2.40+; Debian 12 has glibc 2.36. Binaries built on NixOS won't run on Debian 12. Use Docker to build a compatible binary:
 
 ```bash
-# Build release (statically links C++ runtime)
-./build.sh --release
+# Build in Debian 12 container, outputs to ./build-portable/
+./docker-build.sh
 
-# Fix the ELF interpreter for portability
-nix-shell -p patchelf --run "patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 build/srb2dbot"
+# SCP to server
+scp build-portable/srb2dbot build-portable/libdpp.so.10.1.5 user@server:~/.srb2dbot/
 
-# SCP to server (target needs libdpp, libssl, libopus installed)
-scp build/srb2dbot user@server:~/.srb2dbot/
+# On server: sudo apt install libssl3 libopus0 ca-certificates
 ```
 
-That's it — two commands after the build.
+The first build (~10 min) compiles D++ from source. Subsequent builds are cached and take ~1 min.
 
 ## Configuration
 

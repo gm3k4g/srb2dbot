@@ -156,19 +156,14 @@
     <tr><td>FIFO truncation</td><td><code>write()</code> retry loop handles partial writes and <code>EAGAIN</code></td></tr>
 </table>
 
-<h2>Deployment</h2>
+<h2>Deployment (NixOS → Debian 12)</h2>
 <p>
-    Binaries built on NixOS embed Nix store paths in the ELF interpreter
-    (<code>/nix/store/.../ld-linux-x86-64.so.2</code>). To deploy to standard
-    Linux, rewrite the interpreter with <code>patchelf</code>:
-</p>
-<pre><code># After build, fix the ELF interpreter
-nix-shell -p patchelf --run "patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 build/srb2dbot"</code></pre>
-<p>
-    Release builds also use <code>-static-libstdc++ -static-libgcc</code>,
-    eliminating the need for matching GCC runtime libraries on the target.
-    The target must have <code>libdpp</code>, <code>libssl3</code>,
-    <code>libopus0</code>, and <code>libz1</code> installed via apt/dnf/pacman.
+    NixOS ships glibc 2.40+; Debian 12 ships glibc 2.36. A binary compiled
+    on NixOS requires <code>GLIBC_2.38</code> symbols unavailable on Debian
+    12. The <code>Dockerfile</code> builds inside a <code>debian:bookworm</code>
+    container, producing a binary that links against glibc 2.36.
+    <code>docker-build.sh</code> extracts the binary and libdpp to
+    <code>build-portable/</code>.
 </p>
 
 <h2>CI Pipeline</h2>

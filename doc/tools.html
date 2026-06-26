@@ -174,20 +174,34 @@ find /path/to/addons -name '*.pk3' -exec unzip -o {} -d {}_FILES \
     --spectators-file spectators.json</code></pre>
 <p>Spectator JSON format: <code>["name1", "name2", ...]</code></p>
 
-<h2>Deployment</h2>
+<h2>Docker Portable Build</h2>
 <p>
-    No special deploy script needed. Release builds on NixOS need one
-    <code>patchelf</code> command to fix the ELF interpreter:
+    <code>./docker-build.sh</code>  -  builds srb2dbot inside a Debian 12
+    Docker container so the binary links against glibc 2.36 (Debian 12).
 </p>
-<pre><code>./build.sh --release
-nix-shell -p patchelf --run "patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 build/srb2dbot"
-scp build/srb2dbot user@server:~/.srb2dbot/</code></pre>
+
+<h3>Why</h3>
 <p>
-    The <code>-static-libstdc++ -static-libgcc</code> flags in Release builds
-    eliminate the need for matching GCC runtime libraries on the target.
-    The target still needs <code>libdpp</code>, <code>libssl</code>,
-    <code>libopus</code>, and <code>libz</code> from its package manager.
+    NixOS ships glibc 2.40+. Debian 12 has glibc 2.36. Binaries built on
+    NixOS need <code>GLIBC_2.38</code> symbols unavailable on Debian 12.
+    Docker provides an isolated Debian 12 build environment.
 </p>
+
+<h3>Usage</h3>
+<pre><code>./docker-build.sh</code></pre>
+<p>Output: <code>build-portable/srb2dbot</code> + <code>build-portable/libdpp.so.10.1.5</code></p>
+
+<h3>Deploy</h3>
+<pre><code>scp build-portable/srb2dbot build-portable/libdpp.so.10.1.5 user@server:~/.srb2dbot/
+# On server: sudo apt install libssl3 libopus0 ca-certificates</code></pre>
+
+<h3>Implementation</h3>
+<p><code>Dockerfile</code> multi-stage build:</p>
+<ol>
+    <li><strong>Builder</strong>  -  debian:bookworm, compiles D++ 10.1.5 from source, builds srb2dbot</li>
+    <li><strong>Runtime</strong>  -  debian:bookworm-slim + libssl3 + libopus0 + libdpp.so + srb2dbot</li>
+</ol>
+<p><code>docker-build.sh</code> uses <code>docker cp</code> to extract the binary and libdpp to the host.</p>
 
 <h2>Intermission Test Harness</h2>
 <p><code>./test_intermission.sh</code>  -  generates sample outputs for 2, 4, 8, 12, 16, 18, and 24 players in both FFA and Team modes, verifying that all hitboxes pass validation and outputs are valid transparent PNGs.</p>
