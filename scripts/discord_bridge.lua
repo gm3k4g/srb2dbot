@@ -13,6 +13,7 @@ if rawget(_G, "DiscordBotMini") then return end
 rawset(_G, "DiscordBotMini", true)
 
 local current_map = nil
+local join_emitted = {}
 
 local function write_event(line)
 	local f = io.openlocal("client/DiscordBot/Messages.txt", "a+")
@@ -105,15 +106,19 @@ addHook("PlayerMsg", function(player, type, target, msg)
 end)
 
 addHook("PlayerJoin", function(playernum)
+	if join_emitted[playernum] then return end
 	for player in players.iterate do
 		if #player == playernum then
+			join_emitted[playernum] = true
 			write_event("[EVENT:PLAYER_JOIN]|" .. player.name .. "|" .. #player .. "\n")
+			chatprint("\x82" .. player.name .. "\x80 entered the game")
 			break
 		end
 	end
 end)
 
 addHook("PlayerQuit", function(player, reason)
+	join_emitted[#player] = nil
 	local reason_str = reason_to_string(reason)
 	write_event("[EVENT:PLAYER_QUIT]|" .. player.name .. "|" .. #player .. "|" .. reason_str .. "\n")
 	if reason == KR_KICK then
