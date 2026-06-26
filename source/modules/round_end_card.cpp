@@ -59,7 +59,8 @@ public:
         if (event.fields.size() < 15) return std::nullopt;
 
         auto& f = event.fields;
-        std::string map_name     = f[1];
+        std::string gametype_name = f[0];
+        std::string map_name      = f[1];
         std::string mode         = f[8];
         std::string red_score    = f[9];
         std::string blue_score   = f[10];
@@ -105,6 +106,7 @@ public:
         std::vector<std::string> args = {
             script_path,
             "--gametype", mode,
+            "--gametype-name", gametype_name,
             "--map", map_name,
         };
         if (!round_time.empty()) {

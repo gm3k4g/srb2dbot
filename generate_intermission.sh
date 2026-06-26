@@ -107,6 +107,7 @@ Required:
 
 Game type:
   --gametype <type>         "ffa" or "team" (default: ffa)
+  --gametype-name <name>    Gametype display name (e.g. "Co-op", "CTF")
 
 Map info:
   --map <name>              Map number/code (e.g. MAP01)
@@ -184,8 +185,9 @@ USAGE
 # ── Parse arguments ─────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --gametype)     GAMETYPE="$2"; shift 2 ;;
-        --map)          MAP="$2"; shift 2 ;;
+        --gametype)      GAMETYPE="$2"; shift 2 ;;
+        --gametype-name) GAMETYPE_NAME="$2"; shift 2 ;;
+        --map)           MAP="$2"; shift 2 ;;
         --title)        TITLE="$2"; shift 2 ;;
         --round-time)   ROUND_TIME="$2"; shift 2 ;;
         --blue-score)   BLUE_SCORE="$2"; shift 2 ;;
@@ -308,8 +310,8 @@ gen_mvg() {
     echo "  fill '$C_SEP'" >> "$f"
     echo "  rectangle 0,$((HEADER_H-1)) $WIDTH,$HEADER_H" >> "$f"
 
-    local gt_display="FFA"
-    [[ "$GAMETYPE" == "team" ]] && gt_display="Team"
+    local gt_display="${GAMETYPE_NAME:-FFA}"
+    [[ -z "${GAMETYPE_NAME:-}" && "$GAMETYPE" == "team" ]] && gt_display="Team"
     local map_line=""
     if [[ -n "$TITLE" && -n "$MAP" ]]; then
         map_line="$TITLE ($MAP)"
