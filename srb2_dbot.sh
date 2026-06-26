@@ -49,9 +49,9 @@ if [[ ! -f "$LUA_WAD" ]]; then
 fi
 
 SRB2_SERVER_HOME="$HOME/.srb2_server"
-# With -home, SRB2 places data directly in this directory (no .srb2 append)
-SRB2_DATA_DIR="$SRB2_SERVER_HOME"
-echo "[srb2_dbot] Setting up server home (data dir): $SRB2_DATA_DIR"
+# SRB2 appends .srb2 to HOME, so the actual data directory is:
+SRB2_DATA_DIR="$SRB2_SERVER_HOME/.srb2"
+echo "[srb2_dbot] Setting up server home: $SRB2_SERVER_HOME (data: $SRB2_DATA_DIR)"
 mkdir -p "$SRB2_DATA_DIR"
 mkdir -p "$SRB2_DATA_DIR/luafiles/client/DiscordBot"
 mkdir -p "$SRB2_DATA_DIR/DOWNLOAD"
@@ -87,12 +87,11 @@ echo "[srb2_dbot] Bot started (PID $BOT_PID)"
 echo "[srb2_dbot] Waiting 3 seconds for bot to connect..."
 sleep 3
 
-echo "[srb2_dbot] Starting SRB2 server (home=$SRB2_SERVER_HOME)..."
+echo "[srb2_dbot] Starting SRB2 server (HOME=$SRB2_SERVER_HOME)..."
 command -v srb2 &>/dev/null || export PATH="$HOME/.local/bin:$PATH"
 echo "$$" > "$SRB2_PID_FILE"
-exec srb2 \
+HOME="$SRB2_SERVER_HOME" exec srb2 \
     -dedicated \
-    -home "$SRB2_SERVER_HOME" \
     -port "$PORT" \
     -room "$ROOM" \
     -servername "$SERVERNAME" \
