@@ -122,6 +122,29 @@ cmake --build build -j$(nproc)
 cp secret.json.default secret.json
 # Fill in the fields described below</code></pre>
 
+<h2>Deployment (NixOS → Standard Linux)</h2>
+<p>
+    On <strong>NixOS</strong>, the binary links against Nix store libraries
+    (<code>/nix/store/.../ld-linux-x86-64.so.2</code>). To deploy to a
+    standard Linux server, use the deployment script:
+</p>
+<pre><code># Build a portable tarball with bundled libraries
+./deploy.sh
+
+# Output: deploy/srb2dbot-0.1.45-x86_64.tar.gz
+
+# Copy to server
+scp deploy/srb2dbot-0.1.45-x86_64.tar.gz user@server:~/.srb2dbot/
+ssh user@server
+cd ~/.srb2dbot && tar xzf srb2dbot-0.1.45-x86_64.tar.gz
+# Configure secret.json and modules.json, then run:
+./srb2dbot</code></pre>
+<p>
+    The script uses <code>patchelf</code> to rewrite the ELF interpreter and
+    RPATH, bundles all shared libraries into a <code>lib/</code> directory
+    alongside the binary, and produces a portable tarball.
+</p>
+
 <h2>Configuration</h2>
 <p>Create <code>secret.json</code> from the template:</p>
 <pre><code>{

@@ -69,13 +69,14 @@ doc/             -  HTML documentation
 ## Tools Scripts
 
 | Script | Description |
-|---|---|
+|---|---|---|
 | `srb2dbot@.service` | **systemd user template service**. Install to `~/.config/systemd/user/`. Enable: `systemctl --user enable --now srb2dbot@srb2b`. Requires `secret.json` + `modules.json` in `~/.srb2dbot/`. Binds to `srb2@%i.service`. |
 | `generate_thumbnails.sh` | Extracts MAPxxP.lmp level select pictures from PK3 files and converts to PNG via ImageMagick |
 | `generate_intermission.sh` | Generates SRB2-style intermission overlay PNG (transparent) with player rankings sorted by score. Supports FFA (single column) and Team (blue/red columns) modes with team scores. Compositable over map thumbnails. Configurable layout parameters (margin, row-height, column-gap, font sizes). Includes built-in hitbox validation that errors on rectangle overlaps |
 | `test_intermission.sh` | Test harness that generates sample outputs for 2/4/8/12/16/18/24 players in both FFA and Team modes. Validates all outputs are transparent PNGs |
 | `srb2_dbot.sh` | Launches a local SRB2 test server alongside the bot for development/testing |
 | `build.sh` | CMake build wrapper with auto-detection (NixOS vs Linux) |
+| `deploy.sh` | Produces a portable tarball with bundled shared libraries for deployment to standard Linux (uses patchelf to rewrite NixOS ELF interpreter & RPATH) |
 | `test_pipeline.sh` | CI pipeline test runner |
 
 ## Security Constraints

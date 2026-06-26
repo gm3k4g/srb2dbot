@@ -156,6 +156,19 @@
     <tr><td>FIFO truncation</td><td><code>write()</code> retry loop handles partial writes and <code>EAGAIN</code></td></tr>
 </table>
 
+<h2>Deployment</h2>
+<p>
+    Binaries built on NixOS embed Nix store paths in the ELF header
+    (interpreter and RPATH). The <code>deploy.sh</code> script uses
+    <code>patchelf</code> to rewrite these for portability:
+</p>
+<ul>
+    <li>Sets <code>RPATH</code> to <code>$ORIGIN/lib</code></li>
+    <li>Bundles all shared libraries (libdpp, libstdc++, libssl, etc.) into <code>lib/</code></li>
+    <li>Rewrites the ELF interpreter to a standard path</li>
+    <li>Produces <code>deploy/srb2dbot-&lt;version&gt;-&lt;arch&gt;.tar.gz</code></li>
+</ul>
+
 <h2>CI Pipeline</h2>
 <p>CMake presets provide automated builds for Ubuntu (GCC/clang with clang-tidy, cppcheck), macOS (AppleClang), and Windows (MSVC). Dev mode enables CTest, clang-format linting, codespell, and code coverage with gcov/lcov.</p>
 </main>

@@ -35,4 +35,6 @@ secret.json
 # Dev symlinks
 srb2discb
 source/version.h
-deploy.sh
+
+# Deploy output
+deploy/

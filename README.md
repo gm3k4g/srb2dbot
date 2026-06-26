@@ -43,6 +43,26 @@ The **chat bridge** forwards Discord messages to SRB2 via `~/.srb2/luafiles/clie
 
 Events are written to `Messages.txt` immediately when they occur (SERVER_START, ROUND_START/END, player join/quit) via a shared helper, rather than waiting for the periodic flush cycle. On bot startup, a `dbot_sync` command is sent to the SRB2 server to request re-emission of the current server state, ensuring events are visible within the next poll cycle even after a restart.
 
+## Deployment
+
+On **NixOS**, the binary links against Nix store libraries (`/nix/store/...`). To run on standard Linux, use the deployment script:
+
+```bash
+# Build a portable binary with bundled libraries
+./deploy.sh
+
+# Output: deploy/srb2dbot-0.1.45-x86_64.tar.gz
+
+# Copy to your server
+scp deploy/srb2dbot-0.1.45-x86_64.tar.gz user@server:~/.srb2dbot/
+ssh user@server
+cd ~/.srb2dbot && tar xzf srb2dbot-0.1.45-x86_64.tar.gz
+# Edit secret.json and modules.json
+./srb2dbot
+```
+
+The script bundles all shared libraries and rewrites the ELF interpreter for portability.
+
 ## Configuration
 
 Create `secret.json` from the template and fill in these fields:

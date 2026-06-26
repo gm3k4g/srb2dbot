@@ -174,6 +174,34 @@ find /path/to/addons -name '*.pk3' -exec unzip -o {} -d {}_FILES \
     --spectators-file spectators.json</code></pre>
 <p>Spectator JSON format: <code>["name1", "name2", ...]</code></p>
 
+<h2>Deploy Script</h2>
+<p><code>./deploy.sh</code>  -  produces a portable tarball of the srb2dbot binary with bundled shared libraries for deployment to standard Linux distributions.</p>
+
+<h3>Usage</h3>
+<pre><code># Build and package
+./deploy.sh
+
+# Custom output and build directories
+./deploy.sh --output /tmp/deploy --build build --jobs 8</code></pre>
+
+<h3>What It Does</h3>
+<ol>
+    <li>Builds the binary in Release mode</li>
+    <li>Uses <code>ldd</code> to discover all shared library dependencies</li>
+    <li>Copies libraries into <code>lib/</code> alongside the binary</li>
+    <li>Uses <code>patchelf</code> to set <code>RPATH=$ORIGIN/lib</code> and rewrite the ELF interpreter to a portable path</li>
+    <li>Copies <code>secret.json.default</code> and <code>modules.json</code> into the package</li>
+    <li>Creates <code>deploy/srb2dbot-&lt;version&gt;-&lt;arch&gt;.tar.gz</code></li>
+</ol>
+
+<h3>Why This Exists</h3>
+<p>
+    On NixOS, compiled binaries reference the Nix store for the dynamic linker
+    and all shared libraries (<code>/nix/store/.../ld-linux-x86-64.so.2</code>).
+    These paths don't exist on standard Linux systems, causing <code>execve</code>
+    to fail with <code>ENOENT</code>. This script bridges that gap.
+</p>
+
 <h2>Intermission Test Harness</h2>
 <p><code>./test_intermission.sh</code>  -  generates sample outputs for 2, 4, 8, 12, 16, 18, and 24 players in both FFA and Team modes, verifying that all hitboxes pass validation and outputs are valid transparent PNGs.</p>
 

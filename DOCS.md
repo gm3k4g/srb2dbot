@@ -6,11 +6,11 @@ Documentation is written in pure HTML under the `doc/` directory and updated to 
 
 | Page | Description |
 |---|---|---|
-| [index.html](doc/index.html) | Project overview, quick start, features at a glance, security model, dependencies |
+| [index.html](doc/index.html) | Project overview, quick start, deployment (NixOS → Linux), features at a glance, security model, dependencies |
 | [commands.html](doc/commands.html) | Complete slash command reference with parameters and behavior |
-| [building.html](doc/building.html) | Build instructions for NixOS and Linux, dependency installation, CMake presets |
-| [architecture.html](doc/architecture.html) | Directory structure, runtime pipeline, key files, anonymous namespace dependencies, security architecture, CI pipeline, gametype resolution |
-| [tools.html](doc/tools.html) | Reference for companion bash scripts (thumbnail grabber, intermission overlay generator) |
+| [building.html](doc/building.html) | Build instructions for NixOS and Linux, dependency installation, CMake presets, deployment with deploy.sh |
+| [architecture.html](doc/architecture.html) | Directory structure, runtime pipeline, key files, anonymous namespace dependencies, security architecture, deployment, CI pipeline, gametype resolution |
+| [tools.html](doc/tools.html) | Reference for companion bash scripts (deploy.sh, thumbnail grabber, intermission overlay generator, build.sh) |
 
 ## Updating Documentation
 

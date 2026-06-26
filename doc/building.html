@@ -165,6 +165,44 @@ cd build && ctest --output-on-failure
 <pre><code>cmake --preset ci-ubuntu
 cmake --build build -j$(nproc)</code></pre>
 
+<h2>Deployment (NixOS → Standard Linux)</h2>
+<p>
+    Binaries built on NixOS embed Nix store paths for the ELF interpreter and
+    shared libraries (<code>/nix/store/.../ld-linux-x86-64.so.2</code>).
+    These will not execute on standard Linux distributions (ENOENT on execve
+    because the dynamic linker path does not exist).
+</p>
+<p>
+    Use <code>deploy.sh</code> to produce a portable tarball:
+</p>
+<pre><code># Requires: patchelf
+./deploy.sh
+
+# Output
+#   deploy/srb2dbot-0.1.45-x86_64.tar.gz
+#   ├── srb2dbot        # patched binary (RPATH=$ORIGIN/lib)
+#   ├── lib/            # bundled shared libraries
+#   ├── secret.json.default
+#   └── modules.json
+
+# Deploy to server
+scp deploy/srb2dbot-0.1.45-x86_64.tar.gz user@server:~/.srb2dbot/
+ssh user@server
+cd ~/.srb2dbot && tar xzf srb2dbot-0.1.45-x86_64.tar.gz
+cp secret.json.default secret.json
+# Edit secret.json with your credentials
+./srb2dbot</code></pre>
+<p>
+    The script:
+</p>
+<ol>
+    <li>Builds the binary in Release mode</li>
+    <li>Uses <code>ldd</code> and <code>patchelf</code> to bundle all shared library dependencies</li>
+    <li>Sets <code>RPATH</code> to <code>$ORIGIN/lib</code> so the binary finds bundled libraries at runtime</li>
+    <li>Rewrites the ELF interpreter to a portable path (auto-detected from the host system)</li>
+    <li>Creates a compressed tarball for easy deployment</li>
+</ol>
+
 <h2>Configuration</h2>
 <p>After building, create a <code>secret.json</code> file:</p>
 <pre><code>cp secret.json.default secret.json</code></pre>
