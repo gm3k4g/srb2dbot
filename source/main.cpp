@@ -68,23 +68,25 @@ int main() {
     // Override SRB2 home directory from modules.json if configured
     {
         std::ifstream mod_file("modules.json");
-        if (mod_file.is_open()) {
-            try {
-                auto mod_cfg = json::parse(mod_file);
-                if (mod_cfg.contains("srb2_home")) {
-                    auto& sh = mod_cfg["srb2_home"];
-                    if (sh.is_object() && sh.value("enabled", false) && sh.contains("path") && sh["path"].is_string()) {
-                        std::string home = sh["path"].get<std::string>();
-                        // Expand leading ~ to $HOME
-                        if (!home.empty() && home[0] == '~') {
-                            const char* home_env = std::getenv("HOME");
-                            home = (home_env ? home_env : "/tmp") + home.substr(1);
-                        }
-                        setenv("SRB2DBOT_SRB2_HOME", home.c_str(), 1);
-                    }
-                }
-            } catch (...) {}
+        if (!mod_file.is_open()) {
+            std::cerr << "ERROR: modules.json not found\n";
+            return EXIT_FAILURE;
         }
+        try {
+            auto mod_cfg = json::parse(mod_file);
+            if (mod_cfg.contains("srb2_home")) {
+                auto& sh = mod_cfg["srb2_home"];
+                if (sh.is_object() && sh.value("enabled", false) && sh.contains("path") && sh["path"].is_string()) {
+                    std::string home = sh["path"].get<std::string>();
+                    // Expand leading ~ to $HOME
+                    if (!home.empty() && home[0] == '~') {
+                        const char* home_env = std::getenv("HOME");
+                        home = (home_env ? home_env : "/tmp") + home.substr(1);
+                    }
+                    setenv("SRB2DBOT_SRB2_HOME", home.c_str(), 1);
+                }
+            }
+        } catch (...) {}
     }
 
     std::string srb2_dir = dir_srb2_str();
@@ -179,9 +181,11 @@ int main() {
 
     // Initialize Module Registry with all context
     ModuleRegistry registry;
-    registry.load_from_config("modules.json", {
+    if (!registry.load_from_config("modules.json", {
         bot, fifo_available, bridge_channel_id, bot_id, srb2_dir, bot_dir
-    });
+    })) {
+        return EXIT_FAILURE;
+    }
 
     // ── Slash command handler ──
     bot.on_slashcommand([&registry](const dpp::slashcommand_t& event) {

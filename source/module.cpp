@@ -33,31 +33,8 @@ auto create_shutdown_card_module(const std::string& msg, const std::string& srb2
 auto ModuleRegistry::load_from_config(const std::string& config_path, const RegistryContext& ctx) -> bool {
     std::ifstream file(config_path);
     if (!file.is_open()) {
-        std::cerr << "[module] WARNING: Could not open " << config_path
-                  << "  -  all modules enabled by default" << std::endl;
-        config_ = json::object();
-        modules_.push_back(create_script_module());
-        modules_.push_back(create_wad_module(ctx.bot));
-        modules_.push_back(create_server_module(ctx.fifo_available));
-        modules_.push_back(create_player_module(ctx.fifo_available));
-        modules_.push_back(create_relay_module(ctx.bridge_channel_id, ctx.bot_id, ctx.fifo_available));
-        modules_.push_back(create_round_start_card_module("", false, ctx.srb2_dir, ctx.bot_dir));
-        modules_.push_back(create_round_end_card_module("", false, ctx.srb2_dir, ctx.bot_dir));
-        modules_.push_back(create_flag_capture_card_module());
-        modules_.push_back(create_flag_drop_card_module());
-        modules_.push_back(create_flag_pickup_card_module());
-        modules_.push_back(create_flag_return_card_module());
-        modules_.push_back(create_player_join_card_module(""));
-        modules_.push_back(create_player_quit_card_module(""));
-        modules_.push_back(create_kick_player_card_module(""));
-        modules_.push_back(create_ban_player_card_module(""));
-        dpp::snowflake ch = ctx.bridge_channel_id != "0" ? std::stoull(ctx.bridge_channel_id) : 0;
-        modules_.push_back(create_server_start_card_module(ch, ""));
-        modules_.push_back(create_chat_card_module(""));
-        modules_.push_back(create_server_chat_card_module(""));
-        modules_.push_back(create_csay_card_module(""));
-        modules_.push_back(create_shutdown_card_module("", ctx.srb2_dir));
-        return true;
+        std::cerr << "ERROR: " << config_path << " not found\n";
+        return false;
     }
 
     try {
