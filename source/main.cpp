@@ -297,7 +297,16 @@ int main() {
                             if (!raw_line.empty()) std::cout << "[bridge]   line: " << raw_line << std::endl;
                         }
                     }
-                    std::remove(tmp_path.c_str());
+                    // Archive the .tmp file instead of deleting so you can
+                    // inspect it manually
+                    {
+                        std::string archive_dir = (std::filesystem::path(messages_path).parent_path() / "archive").string();
+                        std::filesystem::create_directories(archive_dir);
+                        auto archive_now = std::time(nullptr);
+                        char archive_ts[32];
+                        std::strftime(archive_ts, sizeof(archive_ts), "%H%M%S", std::localtime(&archive_now));
+                        std::rename(tmp_path.c_str(), (archive_dir + "/" + archive_ts + ".tmp").c_str());
+                    }
 
                     if (content.size() > 1) {
                         content = bridge_replace_emojis(content, guild_emojis);
