@@ -85,9 +85,13 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         }
         if (enabled) {
             modules_.push_back(factory());
+#ifndef NDEBUG
             std::cout << "[module] " << name << " enabled" << std::endl;
+#endif
         } else {
+#ifndef NDEBUG
             std::cout << "[module] " << name << " disabled" << std::endl;
+#endif
         }
     };
 
@@ -100,6 +104,7 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
                 if (entry.is_object()) {
                     enabled = entry.value("enabled", true);
                     msg = entry.value("message", "");
+                    if (msg.empty()) msg = entry.value("format", "");
                 } else {
                     enabled = entry.template get<bool>();
                 }
@@ -108,9 +113,13 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         }
         if (enabled) {
             modules_.push_back(factory(msg));
+#ifndef NDEBUG
             std::cout << "[module] " << name << " enabled" << std::endl;
+#endif
         } else {
+#ifndef NDEBUG
             std::cout << "[module] " << name << " disabled" << std::endl;
+#endif
         }
     };
 
@@ -131,9 +140,13 @@ auto ModuleRegistry::load_from_config(const std::string& config_path, const Regi
         }
         if (enabled) {
             modules_.push_back(factory(fmt));
+#ifndef NDEBUG
             std::cout << "[module] " << name << " enabled" << std::endl;
+#endif
         } else {
+#ifndef NDEBUG
             std::cout << "[module] " << name << " disabled" << std::endl;
+#endif
         }
     };
 

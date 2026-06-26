@@ -3,7 +3,7 @@
 if rawget(_G, "DiscordBot") and DiscordBot.version then return end
 
 rawset(_G, "DiscordBot", {})
-DiscordBot.version = "0.1.35"
+DiscordBot.version = "0.1.40"
 DiscordBot.Data = {}
 DiscordBot.Data.msgsrb2 = ''
 DiscordBot.Data.pcmtsrb2 = ''
@@ -151,27 +151,35 @@ COM_AddCommand("server_log", function(player, arg, text)
 	if arg == "msg" then
 		if DiscordBot.Data.msgsrb2 and DiscordBot.Data.msgsrb2 ~= '' then
 			local logmsg = io.openlocal("client/DiscordBot/Messages.txt", "a")
-			logmsg:write(DiscordBot.Data.msgsrb2)
-			logmsg:close()
+			if logmsg then
+				logmsg:write(DiscordBot.Data.msgsrb2)
+				logmsg:close()
+			end
 			DiscordBot.Data.msgsrb2 = ''
 		end
 	elseif arg == "logcom" then
 		if DiscordBot.Data.log then
 			local logcom = io.openlocal("client/DiscordBot/logcom.txt", "a+")
-			logcom:write(DiscordBot.Data.log)
-			logcom:close()
+			if logcom then
+				logcom:write(DiscordBot.Data.log)
+				logcom:close()
+			end
 		end
 	elseif arg == "pause" then
 		if DiscordBot.Data.pcmtsrb2 then
 			local logmsg = io.openlocal("client/DiscordBot/Players.txt", "w")
-			logmsg:write("Game is paused, no players")
-			logmsg:close()
+			if logmsg then
+				logmsg:write("Game is paused, no players")
+				logmsg:close()
+			end
 		end
 	elseif arg == "players" then
 		if DiscordBot.Data.pcmtsrb2 then
 			local logmsg = io.openlocal("client/DiscordBot/Players.txt", "w")
-			logmsg:write(DiscordBot.Data.pcmtsrb2)
-			logmsg:close()
+			if logmsg then
+				logmsg:write(DiscordBot.Data.pcmtsrb2)
+				logmsg:close()
+			end
 		end
 		if DiscordBot.Data.stats then
 			-- Server name
@@ -192,8 +200,10 @@ COM_AddCommand("server_log", function(player, arg, text)
 				DiscordBot.Data.stats = "There's no one here."
 			end
 			local logmsg = io.openlocal("client/DiscordBot/Stats.txt", "w")
-			logmsg:write(cv_servername.string .. "\n" .. DiscordBot.Data.maptitle .. " (" .. gamemap .. ")\n" .. gamemap .. "\n" .. DiscordBot.Data.nextlevel .. "\n" .. DiscordBot.Data.iconemeralds .. "\n" .. playerskins .. "\n" .. ltime .. "\n" .. stime .. "\n" .. DiscordBot.Data.pcmp .. "\n" .. DiscordBot.Data.stats)
-			logmsg:close()
+			if logmsg then
+				logmsg:write(cv_servername.string .. "\n" .. DiscordBot.Data.maptitle .. " (" .. gamemap .. ")\n" .. gamemap .. "\n" .. DiscordBot.Data.nextlevel .. "\n" .. DiscordBot.Data.iconemeralds .. "\n" .. playerskins .. "\n" .. ltime .. "\n" .. stime .. "\n" .. DiscordBot.Data.pcmp .. "\n" .. DiscordBot.Data.stats)
+				logmsg:close()
+			end
 		end
 	elseif arg == "console" then
 		if DiscordBot.Data.console then
@@ -212,9 +222,11 @@ COM_AddCommand("server_log", function(player, arg, text)
 				end
 				d_console:close()
 				if clear == true then
-					local d_console = io.openlocal("client/DiscordBot/console.txt", "w")
-					d_console:write("")
-					d_console:close()
+					local c_clear = io.openlocal("client/DiscordBot/console.txt", "w")
+					if c_clear then
+						c_clear:write("")
+						c_clear:close()
+					end
 				end
 			end
 		end
@@ -404,7 +416,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 			return true
 		end
 		local jointime = (DiscordBot._join_times and DiscordBot._join_times[#player]) and tostring(DiscordBot._join_times[#player]) or "0"
-		if DiscordBot.Data.debug then print("[DBG] PlayerMsg jointime=" .. jointime .. " (tbl=" .. tostring(DiscordBot._join_times) .. " val=" .. tostring(DiscordBot._join_times and DiscordBot._join_times[#player]) .. ")" .. " node=" .. #player .. " player=" .. player.name) end
+		if DiscordBot.Data.debug then print("[DEBUG] PlayerMsg jointime=" .. jointime .. " (tbl=" .. tostring(DiscordBot._join_times) .. " val=" .. tostring(DiscordBot._join_times and DiscordBot._join_times[#player]) .. ")" .. " node=" .. #player .. " player=" .. player.name) end
 		local flag = player.gotflag and player.gotflag > 0 and "1" or "0"
 		local team = "none"
 		if not player.spectator then
@@ -448,7 +460,7 @@ addHook("ThinkFrame", function()
 				DiscordBot._join_emitted[#player] = true
 				DiscordBot._join_times = DiscordBot._join_times or {}
 				DiscordBot._join_times[#player] = os.time()
-				if DiscordBot.Data.debug then print("[DBG] _join_times[" .. #player .. "] = " .. tostring(DiscordBot._join_times[#player]) .. " (os.time=" .. tostring(os.time()) .. ")" .. " player=" .. player.name) end
+				if DiscordBot.Data.debug then print("[DEBUG] _join_times[" .. #player .. "] = " .. tostring(DiscordBot._join_times[#player]) .. " (os.time=" .. tostring(os.time()) .. ")" .. " player=" .. player.name) end
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:PLAYER_JOIN]|" .. player.name .. "|" .. #player .. "\n"
 				DiscordBot.Functions.flush_msgsrb2()
 			end

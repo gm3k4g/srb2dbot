@@ -82,7 +82,6 @@ public:
         std::vector<std::string> search_paths = {
             srb2_dir_ + "/generate_intermission.sh",
             srb2_dir_ + "/luafiles/client/DiscordBot/generate_intermission.sh",
-            "/run/media/einfoed/EXTERNAL1/games/free/srb2/SRB2_TOOLS/srb2dbot/generate_intermission.sh",
         };
         for (auto& p : search_paths) {
             if (access(p.c_str(), X_OK) == 0) { script_path = p; break; }

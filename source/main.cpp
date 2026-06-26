@@ -104,7 +104,7 @@ int main() {
         ? data["channel_id"].get<std::string>() : "0";
 
     // ── Session-based logging ──
-    std::string log_dir = std::string(getenv("HOME")) + "/Desktop/srb2dbot/logs";
+    std::string log_dir = srb2_dir + "/srb2dbot/logs";
     std::filesystem::create_directories(log_dir);
     std::time_t now = std::time(nullptr);
     char ts[64];
@@ -112,7 +112,7 @@ int main() {
     std::string log_name = log_dir + "/" + ts + ".txt";
     g_log_file.open(log_name, std::ios::app);
     if (g_log_file.is_open()) {
-        std::string symlink_name = std::string(getenv("HOME")) + "/Desktop/srb2dbot/latest-log.txt";
+        std::string symlink_name = srb2_dir + "/srb2dbot/latest-log.txt";
         std::filesystem::remove(symlink_name);
         std::filesystem::create_symlink(log_name, symlink_name);
         std::vector<std::filesystem::path> old_logs;
@@ -128,7 +128,7 @@ int main() {
     static TeeBuf teebuf(std::cout.rdbuf());
     std::cout.rdbuf(&teebuf);
     // ── Single-instance lock ──
-    std::string pid_path = std::string(getenv("HOME")) + "/Desktop/srb2dbot/srb2dbot.pid";
+    std::string pid_path = srb2_dir + "/srb2dbot/srb2dbot.pid";
     {
         std::ifstream pid_file(pid_path);
         if (pid_file.is_open()) {
@@ -150,7 +150,7 @@ int main() {
         pid_file.close();
     }
     std::atexit([]{
-        std::string path = std::string(getenv("HOME")) + "/Desktop/srb2dbot/srb2dbot.pid";
+        std::string path = dir_srb2_str() + "/srb2dbot/srb2dbot.pid";
         std::filesystem::remove(path);
     });
     signal(SIGINT,  [](int) { g_shutdown_requested = 1; });
@@ -262,8 +262,10 @@ int main() {
         }
     }
 
+#ifndef NDEBUG
     std::cout << "[bridge] FIFO pipe support: " << (fifo_available ? "yes" : "no (vanilla SRB2)")
               << std::endl;
+#endif
 
     if (bridge_channel_id != "0") {
         bool dbot_synced = false;
@@ -310,12 +312,14 @@ int main() {
                                          std::istreambuf_iterator<char>());
                     tmp_file.close();
                     if (!content.empty()) {
+#ifndef NDEBUG
                         std::cout << "[bridge] raw content from .tmp (" << content.size() << " bytes):" << std::endl;
                         std::istringstream raw_lines(content);
                         std::string raw_line;
                         while (std::getline(raw_lines, raw_line)) {
                             if (!raw_line.empty()) std::cout << "[bridge]   line: " << raw_line << std::endl;
                         }
+#endif
                     }
                     // Archive for inspection instead of deleting
                     {

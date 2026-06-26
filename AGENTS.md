@@ -100,17 +100,16 @@ The `PlayerJoin` hook in SRB2 fires **multiple times** during the connection han
 
 ### Fix applied in `scripts/SRB2DiscordBot-v0.1.40.lua`:
 - **Double-load guard**: `if rawget(_G, "DiscordBot") and DiscordBot.version then return end` at the top prevents re-initialization if the script somehow executes more than once.
-- **Dedup state in separate global (`_G.SRB2DBot_State`)**: `_player_msg_cache`, `_pending_joins`, `_join_emitted`, and `_join_times` are stored in a **separate** global table (`_G.SRB2DBot_State`) which has NO `CV_NETVAR` CVs and is therefore immune to NetVar deep-copy. All hooks read this table via `rawget(_G, "SRB2DBot_State")`.
-- **Clear `_pending_joins` after processing**: `_pending_joins[#player]` is set to `nil` immediately after the ThinkFrame processes it. This ensures each `PlayerJoin` fire is processed exactly once.
-- **PlayerMsg 5-tic dedup window**: Tracks `(player_node, type, target, msg)` combined with `leveltime` at the top of the hook. On a repeat fire within 5 tics (`leveltime - cache[key] <= 5`), returns `true` to suppress the duplicate without writing to `Messages.txt`. At 35 tics/second, 5 tics ≈ 143ms. The engine multi-fire spans 1-3 tics, well within the window. Human typing (even rapid "a" four times in a second) is ≈250ms apart (≈8.75 tics), safely outside the 5-tic window.
+- **Join dedup via `_join_emitted`**: The ThinkFrame hook tracks which player nodes have already emitted a PLAYER_JOIN event via `DiscordBot._join_emitted[#player]`, preventing duplicate join messages from SRB2's multi-fire `PlayerJoin` hook.
 - **`server_log msg` handler**: Added `~= ''` guard to match `flush_msgsrb2()`, preventing spurious file open/write/close cycles when `msgsrb2` is empty.
+- **Server uptime via `os.time()`**: `DiscordBot.Data.server_started = os.time()` captures wall-clock startup; ROUND_END and Stats.txt compute real uptime instead of using the pausable `leveltime`/`servertime` tick counters.
 
 ### Fix applied in `source/main.cpp`:
 - **Removed phantom newline**: No longer writes `\n` to `Messages.txt` on startup. The code already handles empty files correctly (`seek_start == seek_end == 0` → skip).
-- **Removed content-based CHAT/SERVER_CHAT dedup**: The `seen_lines` map and `LINE_DEDUP_WINDOW` constant were removed. The previous content-based dedup (`"CHAT|player_name|message"`) with a 1-second window suppressed legitimate repeated messages from the same player within that window. With the Lua 5-tic dedup handling the engine multi-fire, the C++ content-based dedup is no longer needed.
-- **Removed PLAYER_JOIN `seen_joins` dedup**: The `seen_joins` map, `JOIN_DEDUP_WINDOW` constant, and associated cleanup loop were removed. This C++ dedup was silently dropping duplicate PLAYER_JOIN events (5-second window), masking the real root cause. With the Lua `_join_emitted` guard + `_pending_joins` clearing, the Lua guard properly prevents duplicate PLAYER_JOIN events at the source.
+- **Removed content-based CHAT/SERVER_CHAT dedup**: The `seen_lines` map and `LINE_DEDUP_WINDOW` constant were removed. The previous content-based dedup suppressed legitimate repeated messages within a 1-second window.
+- **Removed PLAYER_JOIN `seen_joins` dedup**: The `seen_joins` map, `JOIN_DEDUP_WINDOW` constant, and associated cleanup loop were removed. The Lua `_join_emitted` guard prevents duplicate PLAYER_JOIN events at the source.
 - **Seek-based Messages.txt reading**: Replaced the rename-delete pattern with `bridge_get_lines()` / `bridge_read_range()` so Messages.txt stays on disk for inspection. The bot tracks `lines_seen` and only reads new lines each 2-second poll cycle.
-- **`SRB2DBOT_SRB2_HOME` env var**: `dir_srb2_str()` checks this env var before falling back to the password database. Set to `~/.srb2_server/.srb2` so the bot reads from the server's isolated data directory.
+- **`SRB2DBOT_SRB2_HOME` env var**: `dir_srb2_str()` checks this env var before falling back to the password database. Can also be configured via `srb2_home` in `modules.json`.
 
 ### Fix applied in `srb2_dbot.sh`:
 - **Server home isolation**: The dedicated server runs with `HOME=~/.srb2_server` while the game client uses the default `~/.srb2/`. This prevents both the server-side and client-side Lua from writing to the same `Messages.txt`, which was the root cause of duplicate events when running client and server on the same machine.
