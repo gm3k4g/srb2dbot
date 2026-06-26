@@ -252,9 +252,11 @@ int main() {
         constexpr int DBOT_SYNC_MAX_RETRIES = 15;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
 
+        size_t lines_seen = 0;
+
         bot.start_timer([&bot, &registry, messages_path, &dbot_synced,
                          &dbot_sync_retries, bridge_channel_sf, &guild_emojis,
-
+                         &lines_seen,
                          fifo_available](dpp::timer) {
             if (g_shutdown_requested) {
                 static bool shutdown_sent = false;
@@ -278,88 +280,79 @@ int main() {
 #endif
             }
 
-            // Atomically rename Messages.txt to .tmp so Lua never sees
-            // a truncated file.  rename(2) is POSIX-atomic: Lua's open fd
-            // continues writing to the old inode (now .tmp), and the next
-            // io.openlocal("...", "a+") creates a fresh Messages.txt.
-            std::string tmp_path = messages_path + ".tmp";
-            if (std::rename(messages_path.c_str(), tmp_path.c_str()) == 0) {
-                std::ifstream tmp_file(tmp_path);
-                if (tmp_file.is_open()) {
-                    std::string content((std::istreambuf_iterator<char>(tmp_file)),
-                                         std::istreambuf_iterator<char>());
-                    tmp_file.close();
-                    if (!content.empty()) {
-                        std::cout << "[bridge] raw content from .tmp (" << content.size() << " bytes):" << std::endl;
-                        std::istringstream raw_lines(content);
-                        std::string raw_line;
-                        while (std::getline(raw_lines, raw_line)) {
-                            if (!raw_line.empty()) std::cout << "[bridge]   line: " << raw_line << std::endl;
-                        }
+            // Read only new lines from Messages.txt since last poll.
+            // Lua appends-only so line count never decreases.
+            // Messages.txt stays intact — no rename, no delete.
+            size_t total_lines = bridge_get_lines(messages_path);
+            if (total_lines > lines_seen) {
+                std::string content = bridge_read_range(messages_path, lines_seen, total_lines);
+                if (!content.empty()) {
+                    std::cout << "[bridge] new content (" << content.size() << " bytes, lines " << lines_seen << "-" << total_lines << "):" << std::endl;
+                    std::istringstream raw_lines(content);
+                    std::string raw_line;
+                    while (std::getline(raw_lines, raw_line)) {
+                        if (!raw_line.empty()) std::cout << "[bridge]   line: " << raw_line << std::endl;
                     }
-                    std::remove(tmp_path.c_str());
+                }
+                if (content.size() > 1) {
+                    content = bridge_replace_emojis(content, guild_emojis);
+                    std::istringstream lines(content);
+                    std::string line;
+                    std::string last_chat_line;
+                    std::vector<dpp::embed> pending_embeds;
 
-                    if (content.size() > 1) {
-                        content = bridge_replace_emojis(content, guild_emojis);
-                        std::istringstream lines(content);
-                        std::string line;
-                        std::string last_chat_line;
-                        std::vector<dpp::embed> pending_embeds;
-
-                        while (std::getline(lines, line)) {
-                            if (line.empty()) continue;
-                            if (line.rfind("[EVENT:CHAT]|", 0) == 0 || line.rfind("[EVENT:SERVER_CHAT]|", 0) == 0) {
-                                if (line == last_chat_line) continue;
-                                last_chat_line = line;
-                            }
-                            if (auto event = bridge_parse_event(line)) {
-                                auto embed_opt = registry.handle_bridge_event(*event);
-                                if (embed_opt.has_value()) {
+                    while (std::getline(lines, line)) {
+                        if (line.empty()) continue;
+                        if (line.rfind("[EVENT:CHAT]|", 0) == 0 || line.rfind("[EVENT:SERVER_CHAT]|", 0) == 0) {
+                            if (line == last_chat_line) continue;
+                            last_chat_line = line;
+                        }
+                        if (auto event = bridge_parse_event(line)) {
+                            auto embed_opt = registry.handle_bridge_event(*event);
+                            if (embed_opt.has_value()) {
 #ifndef NDEBUG
-                                    std::cout << "[bridge] SRB2→Discord: " << event->type << " raw=" << line << std::endl;
+                                std::cout << "[bridge] SRB2→Discord: " << event->type << " raw=" << line << std::endl;
 #endif
-                                    auto attach = registry.get_bridge_attachment(*event);
-                                    if (attach.has_value()) {
-                                        if (!pending_embeds.empty()) {
-                                            dpp::message evt_batch(bridge_channel_sf, "");
-                                            for (auto& e : pending_embeds) evt_batch.add_embed(e);
-                                            bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
-                                                if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
-                                            });
-                                            pending_embeds.clear();
-                                        }
-                                        embed_opt->set_image("attachment://" + attach->first);
-                                        dpp::message thumb_msg(bridge_channel_sf, "");
-                                        thumb_msg.add_embed(*embed_opt);
-                                        thumb_msg.add_file(attach->first, attach->second);
-                                        bot.message_create(thumb_msg, [](const dpp::confirmation_callback_t& cb) {
+                                auto attach = registry.get_bridge_attachment(*event);
+                                if (attach.has_value()) {
+                                    if (!pending_embeds.empty()) {
+                                        dpp::message evt_batch(bridge_channel_sf, "");
+                                        for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                                        bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
                                             if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
                                         });
-                                    } else {
-                                        pending_embeds.push_back(*embed_opt);
+                                        pending_embeds.clear();
                                     }
-                                }
-                                if (pending_embeds.size() >= 10) {
-                                    dpp::message evt_batch(bridge_channel_sf, "");
-                                    for (auto& e : pending_embeds) evt_batch.add_embed(e);
-                                    bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
+                                    embed_opt->set_image("attachment://" + attach->first);
+                                    dpp::message thumb_msg(bridge_channel_sf, "");
+                                    thumb_msg.add_embed(*embed_opt);
+                                    thumb_msg.add_file(attach->first, attach->second);
+                                    bot.message_create(thumb_msg, [](const dpp::confirmation_callback_t& cb) {
                                         if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
                                     });
-                                    pending_embeds.clear();
+                                } else {
+                                    pending_embeds.push_back(*embed_opt);
                                 }
                             }
-                        }
-                        if (!pending_embeds.empty()) {
-                            dpp::message evt_batch(bridge_channel_sf, "");
-                            for (auto& e : pending_embeds) evt_batch.add_embed(e);
-                            bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
-                                if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
-                            });
+                            if (pending_embeds.size() >= 10) {
+                                dpp::message evt_batch(bridge_channel_sf, "");
+                                for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                                bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
+                                    if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
+                                });
+                                pending_embeds.clear();
+                            }
                         }
                     }
-                } else {
-                    std::remove(tmp_path.c_str());
+                    if (!pending_embeds.empty()) {
+                        dpp::message evt_batch(bridge_channel_sf, "");
+                        for (auto& e : pending_embeds) evt_batch.add_embed(e);
+                        bot.message_create(evt_batch, [](const dpp::confirmation_callback_t& cb) {
+                            if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
+                        });
+                    }
                 }
+                lines_seen = total_lines;
             }
         }, 2);
     }
