@@ -18,6 +18,7 @@ DiscordBot.Data.iconemeralds = ''
 DiscordBot.Data.gametype = nil
 DiscordBot.Data.countemeralds = 0
 DiscordBot.Data.servertime = 0
+DiscordBot.Data.server_started = os.time()
 DiscordBot.Data.current_map = nil
 DiscordBot.Data.debug = false
 DiscordBot.Data._discord_seek_pos = 0
@@ -182,9 +183,11 @@ COM_AddCommand("server_log", function(player, arg, text)
 			local lseconds = G_TicsToSeconds(leveltime)
 			if string.len(lseconds) == 1 then lseconds = "0" .. tostring(lseconds) end
 			local ltime = G_TicsToMinutes(leveltime, true) .. ":" .. lseconds
-			local sseconds = G_TicsToSeconds(DiscordBot.Data.servertime)
-			if string.len(sseconds) == 1 then sseconds = "0" .. tostring(sseconds) end
-			local stime = G_TicsToMinutes(DiscordBot.Data.servertime, true) .. ":" .. sseconds
+			local server_up = os.time() - DiscordBot.Data.server_started
+			local smins = (server_up - server_up % 60) / 60
+			local ssecs = server_up % 60
+			if ssecs < 10 then ssecs = "0" .. ssecs end
+			local stime = smins .. ":" .. ssecs
 			if DiscordBot.Data.paused == true then
 				DiscordBot.Data.stats = "There's no one here."
 			end
@@ -571,8 +574,10 @@ local function emit_round_end(prev_map, prev_maptitle)
 	local round_secs = round_seconds % 60
 	local round_time_str = round_mins .. ":" .. string.format("%02d", round_secs)
 
+	local server_up_tics = (os.time() - DiscordBot.Data.server_started) * 35
+
 	local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime
-		.. "|" .. DiscordBot.Data.servertime .. "|" .. players_total .. "|" .. players_red
+		.. "|" .. server_up_tics .. "|" .. players_total .. "|" .. players_red
 		.. "|" .. players_blue .. "|" .. players_spec .. "|" .. mode
 		.. "|" .. (redscore or 0) .. "|" .. (bluescore or 0)
 		.. "|" .. round_time_str .. "|" .. json_escape(prev_maptitle)
