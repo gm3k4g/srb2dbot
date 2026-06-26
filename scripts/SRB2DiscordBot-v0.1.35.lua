@@ -401,6 +401,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 			return true
 		end
 		local jointime = (DiscordBot._join_times and DiscordBot._join_times[#player]) and tostring(DiscordBot._join_times[#player]) or "0"
+		if DiscordBot.Data.debug then print("[DBG] PlayerMsg jointime=" .. jointime .. " (tbl=" .. tostring(DiscordBot._join_times) .. " val=" .. tostring(DiscordBot._join_times and DiscordBot._join_times[#player]) .. ")" .. " node=" .. #player .. " player=" .. player.name) end
 		local flag = player.gotflag and player.gotflag > 0 and "1" or "0"
 		local team = "none"
 		if not player.spectator then
@@ -444,6 +445,7 @@ addHook("ThinkFrame", function()
 				DiscordBot._join_emitted[#player] = true
 				DiscordBot._join_times = DiscordBot._join_times or {}
 				DiscordBot._join_times[#player] = os.time()
+				if DiscordBot.Data.debug then print("[DBG] _join_times[" .. #player .. "] = " .. tostring(DiscordBot._join_times[#player]) .. " (os.time=" .. tostring(os.time()) .. ")" .. " player=" .. player.name) end
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:PLAYER_JOIN]|" .. player.name .. "|" .. #player .. "\n"
 				DiscordBot.Functions.flush_msgsrb2()
 			end
