@@ -27,7 +27,7 @@ public:
         std::string gt        = event.fields[0];
         std::string map_num   = event.fields[1];
         std::string map_time  = event.fields[2];
-        std::string game_time = event.fields.size() >= 4 ? event.fields[3] : "0";
+        std::string server_time = event.fields.size() >= 4 ? event.fields[3] : "0";
         std::string total_pl  = event.fields.size() >= 5 ? event.fields[4] : "0";
         std::string red_pl    = event.fields.size() >= 6 ? event.fields[5] : "0";
         std::string blue_pl   = event.fields.size() >= 7 ? event.fields[6] : "0";
@@ -39,8 +39,8 @@ public:
         embed.set_timestamp(std::time(nullptr));
 
         embed.add_field("Map", map_num, true);
-        embed.add_field("Map time", format_game_time(map_time), true);
-        embed.add_field("Game time", format_game_time(game_time), true);
+        embed.add_field("Map time", format_server_time(map_time), true);
+        embed.add_field("Server time", format_server_time(server_time), true);
 
         std::string player_info = total_pl + " total";
         if (std::stoi(red_pl) > 0 || std::stoi(blue_pl) > 0) {
@@ -164,7 +164,7 @@ private:
         return r;
     }
 
-    static auto format_game_time(const std::string& tics_str) -> std::string {
+    static auto format_server_time(const std::string& tics_str) -> std::string {
         std::int64_t tics = 0;
         try { tics = std::stoll(tics_str); } catch (...) { return "0s"; }
         if (tics < 0) return "0s";
