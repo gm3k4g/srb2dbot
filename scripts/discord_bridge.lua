@@ -13,10 +13,8 @@
 if rawget(_G, "DiscordBotMini") then return end
 rawset(_G, "DiscordBotMini", true)
 
--- ── Locals ─────────────────────────────────────────────────────────────
-local current_map
+local current_map = nil
 
--- ── write_event: append a line to Messages.txt ─────────────────────────
 local function write_event(line)
 	local f = io.openlocal("client/DiscordBot/Messages.txt", "a+")
 	if f then
@@ -25,25 +23,23 @@ local function write_event(line)
 	end
 end
 
--- ── Helpers ────────────────────────────────────────────────────────────
 local function map_num_to_mapstr(n)
-	local val, first, r, second
 	if n < 100 then return string.format("MAP%02d", n) end
-	val = n - 100
-	first = string.char(((val - val % 36) / 36) + string.byte('A'))
-	r = val % 36
+	local val = n - 100
+	local first = string.char(((val - val % 36) / 36) + string.byte('A'))
+	local r = val % 36
+	local second
 	if r < 10 then second = string.char(r + string.byte('0'))
 	else second = string.char(r - 10 + string.byte('A')) end
 	return "MAP" .. first .. second
 end
 
 local function get_gametype_name(gt)
-	local name, names
 	if G_GetGametypeName then
-		name = G_GetGametypeName(gt)
+		local name = G_GetGametypeName(gt)
 		if name and name ~= "" then return name end
 	end
-	names = {
+	local names = {
 		[GT_COOP] = "Co-op",
 		[GT_COMPETITION] = "Competition",
 		[GT_RACE] = "Race",
@@ -69,28 +65,23 @@ local function reason_to_string(r)
 	return "Unknown"
 end
 
--- ── Hooks ──────────────────────────────────────────────────────────────
-
-current_map = nil
-
 addHook("MapChange", function(map)
-	local prev_mapstr, gtname, mapname, maptitle, mapstr
 	if current_map ~= nil then
-		prev_mapstr = map_num_to_mapstr(current_map)
-		gtname = get_gametype_name(gametype)
+		local prev_mapstr = map_num_to_mapstr(current_map)
+		local gtname = get_gametype_name(gametype)
 		write_event("[EVENT:ROUND_END]|" .. gtname .. "|" .. prev_mapstr .. "|0|0|0|0|0|ffa|0|0|0:00|Unknown|[]|[]\n")
 	end
 	current_map = map
-	mapname = mapheaderinfo[map]
-	maptitle = "Unknown Map"
+	local mapname = mapheaderinfo[map]
+	local maptitle = "Unknown Map"
 	if mapname and mapname.lvlttl then
 		maptitle = mapname.lvlttl
 		if mapname.actnum and mapname.actnum > 0 then
 			maptitle = maptitle .. " Act " .. mapname.actnum
 		end
 	end
-	gtname = get_gametype_name(gametype)
-	mapstr = map_num_to_mapstr(map)
+	local gtname = get_gametype_name(gametype)
+	local mapstr = map_num_to_mapstr(map)
 	write_event("[EVENT:ROUND_START]|" .. gtname .. "|" .. mapstr .. "|" .. maptitle .. "\n")
 end)
 
@@ -100,22 +91,18 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	if server ~= player and target and target ~= 0 then return end
 	if server == player then return end
 
-	local node, name, skinname, flag, team, prefix
-
-	node = #player
-	name = player.name
-	skinname = (skins[player.skin] and skins[player.skin].name) or ""
-	flag = (player.gotflag and player.gotflag > 0) and "1" or "0"
-	team = "none"
+	local skinname = (skins[player.skin] and skins[player.skin].name) or ""
+	local flag = (player.gotflag and player.gotflag > 0) and "1" or "0"
+	local team = "none"
 	if not player.spectator then
 		if gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE then
 			team = tostring(player.ctfteam or 0)
 		end
 	end
-	prefix = ""
+	local prefix = ""
 	if IsPlayerAdmin(player) then prefix = "@" end
 
-	write_event("[EVENT:CHAT]|[" .. node .. "]|" .. prefix .. name .. "|" .. msg .. "|" .. skinname .. "|0|" .. flag .. "|" .. team .. "\n")
+	write_event("[EVENT:CHAT]|[" .. #player .. "]|" .. prefix .. player.name .. "|" .. msg .. "|" .. skinname .. "|0|" .. flag .. "|" .. team .. "\n")
 	return false
 end)
 
@@ -129,8 +116,7 @@ addHook("PlayerJoin", function(playernum)
 end)
 
 addHook("PlayerQuit", function(player, reason)
-	local reason_str
-	reason_str = reason_to_string(reason)
+	local reason_str = reason_to_string(reason)
 	write_event("[EVENT:PLAYER_QUIT]|" .. player.name .. "|" .. #player .. "|" .. reason_str .. "\n")
 	if reason == KR_KICK then
 		write_event("[EVENT:KICK_PLAYER]|" .. player.name .. "|" .. #player .. "|" .. reason_str .. "\n")
@@ -140,11 +126,10 @@ addHook("PlayerQuit", function(player, reason)
 end)
 
 COM_AddCommand("dbot_sync", function(player)
-	local mapstr, gtname, maptitle
 	if player ~= server then return end
-	mapstr = current_map and map_num_to_mapstr(current_map) or ""
-	gtname = get_gametype_name(gametype)
-	maptitle = "Unknown"
+	local mapstr = current_map and map_num_to_mapstr(current_map) or ""
+	local gtname = get_gametype_name(gametype)
+	local maptitle = "Unknown"
 	if current_map and mapheaderinfo[current_map] then
 		maptitle = mapheaderinfo[current_map].lvlttl or "Unknown"
 	end
