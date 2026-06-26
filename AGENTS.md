@@ -70,6 +70,7 @@ doc/             -  HTML documentation
 
 | Script | Description |
 |---|---|
+| `srb2dbot@.service` | **systemd user template service**. Install to `~/.config/systemd/user/`. Enable: `systemctl --user enable --now srb2dbot@srb2b`. Requires `secret.json` + `modules.json` in `~/.srb2dbot/`. Binds to `srb2@%i.service`. |
 | `generate_thumbnails.sh` | Extracts MAPxxP.lmp level select pictures from PK3 files and converts to PNG via ImageMagick |
 | `generate_intermission.sh` | Generates SRB2-style intermission overlay PNG (transparent) with player rankings sorted by score. Supports FFA (single column) and Team (blue/red columns) modes with team scores. Compositable over map thumbnails. Configurable layout parameters (margin, row-height, column-gap, font sizes). Includes built-in hitbox validation that errors on rectangle overlaps |
 | `test_intermission.sh` | Test harness that generates sample outputs for 2/4/8/12/16/18/24 players in both FFA and Team modes. Validates all outputs are transparent PNGs |

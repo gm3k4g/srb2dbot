@@ -1,0 +1,20 @@
+[Unit]
+Description=srb2dbot Discord bot for SRB2 server %i
+Documentation=https://github.com/user/srb2dbot
+After=network.target srb2@%i.service
+BindsTo=srb2@%i.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.srb2dbot
+ExecStart=%h/.srb2dbot/srb2dbot
+StandardOutput=append:%h/.srb2dbot/logs/latest-logs-srb2dbot.txt
+StandardError=append:%h/.srb2dbot/logs/latest-logs-srb2dbot.txt
+Restart=on-failure
+RestartSec=5s
+
+# Prevent restart loops if modules.json is missing or misconfigured
+RestartPreventExitStatus=1
+
+[Install]
+WantedBy=default.target
