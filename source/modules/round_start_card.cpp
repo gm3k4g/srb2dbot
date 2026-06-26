@@ -12,8 +12,8 @@ public:
     auto name() const -> std::string_view override { return "round_start_card"; }
     auto description() const -> std::string_view override { return "Discord embed when a round starts on a new map"; }
 
-    explicit RoundStartCardModule(std::string msg, bool thumbs, std::string srb2_dir)
-        : msg_(std::move(msg)), thumbs_enabled_(thumbs), srb2_dir_(std::move(srb2_dir)) {}
+    explicit RoundStartCardModule(std::string msg, bool thumbs, std::string srb2_dir, std::string bot_dir)
+        : msg_(std::move(msg)), thumbs_enabled_(thumbs), srb2_dir_(std::move(srb2_dir)), bot_dir_(std::move(bot_dir)) {}
 
     auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override { return {}; }
 
@@ -55,9 +55,10 @@ private:
     std::string msg_;
     bool thumbs_enabled_;
     std::string srb2_dir_;
+    std::string bot_dir_;
 
     auto ensure_thumbnail(const std::string& map_name) -> std::string {
-        std::string thumb_dir = srb2_dir_ + "/luafiles/client/DiscordBot/thumbnails";
+        std::string thumb_dir = bot_dir_ + "/thumbnails";
         std::filesystem::create_directories(thumb_dir);
         std::string thumb_path = thumb_dir + "/" + map_name + ".png";
 
@@ -70,6 +71,6 @@ private:
     }
 };
 
-auto create_round_start_card_module(const std::string& msg, bool thumbs, const std::string& srb2_dir) -> std::unique_ptr<Module> {
-    return std::make_unique<RoundStartCardModule>(msg, thumbs, srb2_dir);
+auto create_round_start_card_module(const std::string& msg, bool thumbs, const std::string& srb2_dir, const std::string& bot_dir) -> std::unique_ptr<Module> {
+    return std::make_unique<RoundStartCardModule>(msg, thumbs, srb2_dir, bot_dir);
 }

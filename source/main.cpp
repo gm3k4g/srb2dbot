@@ -91,6 +91,11 @@ int main() {
     std::filesystem::create_directories(srb2_dir + "/srb2_servers.d/srb2b.d");
     std::filesystem::create_directories(srb2_dir + "/addons");
 
+    // Detect bot's own directory via /proc/self/exe (Linux)
+    std::string bot_dir = std::filesystem::canonical("/proc/self/exe").parent_path().string();
+    std::filesystem::create_directories(bot_dir + "/logs");
+    std::filesystem::create_directories(bot_dir + "/thumbnails");
+
     std::string guild_id_str = data["guild_id"].get<std::string>();
     dpp::snowflake guild_id = 0;
     try {
@@ -107,7 +112,7 @@ int main() {
         ? data["channel_id"].get<std::string>() : "0";
 
     // ── Session-based logging ──
-    std::string log_dir = srb2_dir + "/srb2_servers.d/srb2b.d/srb2dbot/logs";
+    std::string log_dir = bot_dir + "/logs";
     std::filesystem::create_directories(log_dir);
     std::time_t now = std::time(nullptr);
     char ts[64];
@@ -115,7 +120,7 @@ int main() {
     std::string log_name = log_dir + "/" + ts + ".txt";
     g_log_file.open(log_name, std::ios::app);
     if (g_log_file.is_open()) {
-        std::string symlink_name = srb2_dir + "/srb2_servers.d/srb2b.d/latest-logs-srb2dbot.txt";
+        std::string symlink_name = bot_dir + "/latest-logs-srb2dbot.txt";
         std::filesystem::remove(symlink_name);
         std::filesystem::create_symlink(log_name, symlink_name);
         std::vector<std::filesystem::path> old_logs;
@@ -131,7 +136,7 @@ int main() {
     static TeeBuf teebuf(std::cout.rdbuf());
     std::cout.rdbuf(&teebuf);
     // ── Single-instance lock ──
-    std::string pid_path = srb2_dir + "/srb2_servers.d/srb2b.d/srb2dbot/srb2dbot.pid";
+    std::string pid_path = bot_dir + "/srb2dbot.pid";
     {
         std::ifstream pid_file(pid_path);
         if (pid_file.is_open()) {
@@ -153,7 +158,7 @@ int main() {
         pid_file.close();
     }
     std::atexit([]{
-        std::string path = dir_srb2_str() + "/srb2_servers.d/srb2b.d/srb2dbot/srb2dbot.pid";
+        std::string path = std::filesystem::canonical("/proc/self/exe").parent_path().string() + "/srb2dbot.pid";
         std::filesystem::remove(path);
     });
     signal(SIGINT,  [](int) { g_shutdown_requested = 1; });
@@ -175,7 +180,7 @@ int main() {
     // Initialize Module Registry with all context
     ModuleRegistry registry;
     registry.load_from_config("modules.json", {
-        bot, fifo_available, bridge_channel_id, bot_id, srb2_dir
+        bot, fifo_available, bridge_channel_id, bot_id, srb2_dir, bot_dir
     });
 
     // ── Slash command handler ──

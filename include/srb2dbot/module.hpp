@@ -33,6 +33,7 @@ struct RegistryContext {
     std::string bridge_channel_id;
     std::string bot_id;
     std::string srb2_dir;
+    std::string bot_dir;
 };
 
 class ModuleRegistry {

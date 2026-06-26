@@ -13,8 +13,8 @@ public:
     auto name() const -> std::string_view override { return "round_end_card"; }
     auto description() const -> std::string_view override { return "Discord embed when a round ends"; }
 
-    explicit RoundEndCardModule(std::string msg, bool thumbs, std::string srb2_dir)
-        : msg_(std::move(msg)), thumbs_enabled_(thumbs), srb2_dir_(std::move(srb2_dir)) {}
+    explicit RoundEndCardModule(std::string msg, bool thumbs, std::string srb2_dir, std::string bot_dir)
+        : msg_(std::move(msg)), thumbs_enabled_(thumbs), srb2_dir_(std::move(srb2_dir)), bot_dir_(std::move(bot_dir)) {}
 
     auto commands(dpp::snowflake, dpp::permission) -> std::vector<dpp::slashcommand> override {
         return {};
@@ -71,7 +71,7 @@ public:
 
         if (map_name.empty()) return std::nullopt;
 
-        std::string thumb_dir = srb2_dir_ + "/luafiles/client/DiscordBot/thumbnails";
+        std::string thumb_dir = bot_dir_ + "/thumbnails";
         std::filesystem::create_directories(thumb_dir);
         std::string thumb_path = thumb_dir + "/" + map_name + ".png";
         bridge_extract_thumbnail(map_name, thumb_dir);
@@ -80,7 +80,7 @@ public:
         // Find the intermission script
         std::string script_path;
         std::vector<std::string> search_paths = {
-            srb2_dir_ + "/generate_intermission.sh",
+            bot_dir_ + "/generate_intermission.sh",
             srb2_dir_ + "/luafiles/client/DiscordBot/generate_intermission.sh",
         };
         for (auto& p : search_paths) {
@@ -155,6 +155,7 @@ private:
     std::string msg_;
     bool thumbs_enabled_;
     std::string srb2_dir_;
+    std::string bot_dir_;
 
     static auto unescape_pipe(const std::string& s) -> std::string {
         std::string r = s;
@@ -180,6 +181,6 @@ private:
     }
 };
 
-auto create_round_end_card_module(const std::string& msg, bool thumbs, const std::string& srb2_dir) -> std::unique_ptr<Module> {
-    return std::make_unique<RoundEndCardModule>(msg, thumbs, srb2_dir);
+auto create_round_end_card_module(const std::string& msg, bool thumbs, const std::string& srb2_dir, const std::string& bot_dir) -> std::unique_ptr<Module> {
+    return std::make_unique<RoundEndCardModule>(msg, thumbs, srb2_dir, bot_dir);
 }
