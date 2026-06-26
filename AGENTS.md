@@ -92,13 +92,13 @@ When modifying the codebase, maintain these invariants:
 
 The `PlayerMsg` hook in SRB2 can fire **multiple times** for a single chat message (engine-level behavior, not a script bug). The fires do **not** always occur at the same `leveltime` — they can span 1-3 different game ticks. This caused duplicate `[EVENT:CHAT]` or `[EVENT:SERVER_CHAT]` lines in `Messages.txt` and thus duplicate Discord posts.
 
-**Root cause (verified via extensive debugging)**: When running a dedicated server on `localhost` with a separate SRB2 client connecting to it, **both** the server-side Lua and the client-side Lua load `SRB2DiscordBot-v0.1.40.lua` and write to the **same** `~/.srb2/luafiles/client/DiscordBot/Messages.txt`. The server emits events via its hooks, and the client also emits the same events via its hooks (since the client receives the same in-game events). This produces duplicate lines in `Messages.txt`. The fix isolates the server to a separate home directory (`~/.srb2_server/`) via the `HOME` environment variable, so the server's Lua writes go to `~/.srb2_server/.srb2/luafiles/` while the client's Lua writes go to `~/.srb2/luafiles/`. The C++ bot reads from the server's directory via the `SRB2DBOT_SRB2_HOME` env var.
+**Root cause (verified via extensive debugging)**: When running a dedicated server on `localhost` with a separate SRB2 client connecting to it, **both** the server-side Lua and the client-side Lua load `SRB2DiscordBot-v0.1.45.lua` and write to the **same** `~/.srb2/luafiles/client/DiscordBot/Messages.txt`. The server emits events via its hooks, and the client also emits the same events via its hooks (since the client receives the same in-game events). This produces duplicate lines in `Messages.txt`. The fix isolates the server to a separate home directory (`~/.srb2_server/`) via the `HOME` environment variable, so the server's Lua writes go to `~/.srb2_server/.srb2/luafiles/` while the client's Lua writes go to `~/.srb2/luafiles/`. The C++ bot reads from the server's directory via the `SRB2DBOT_SRB2_HOME` env var.
 
 **Verified via SRB2's dedicated interpreter with trace output**: SRB2's NetVar deep-copy replaces the **entire `DiscordBot`** global table (not just `DiscordBot.Data`) when a player joins. Trace confirmed two different table addresses alternating — each with its own empty `_join_emitted`, `_pending_joins`, and `_player_msg_cache`. Neither copy suppressed the other's events. `DiscordBot.Commands` holds CVars with `CV_NETVAR` flag; SRB2's NetVar sync deep-copies the CVar owner table — the entire `DiscordBot`.
 
 The `PlayerJoin` hook in SRB2 fires **multiple times** during the connection handshake (once when the slot is reserved, again when the player fully syncs). On the second fire, the new `DiscordBot` copy had empty state, so the ThinkFrame re-emitted `PLAYER_JOIN` with a new `os.time()`.
 
-### Fix applied in `scripts/SRB2DiscordBot-v0.1.40.lua`:
+### Fix applied in `scripts/SRB2DiscordBot-v0.1.45.lua`:
 - **Double-load guard**: `if rawget(_G, "DiscordBot") and DiscordBot.version then return end` at the top prevents re-initialization if the script somehow executes more than once.
 - **Join dedup via `_join_emitted`**: The ThinkFrame hook tracks which player nodes have already emitted a PLAYER_JOIN event via `DiscordBot._join_emitted[#player]`, preventing duplicate join messages from SRB2's multi-fire `PlayerJoin` hook.
 - **`server_log msg` handler**: Added `~= ''` guard to match `flush_msgsrb2()`, preventing spurious file open/write/close cycles when `msgsrb2` is empty.
@@ -128,7 +128,7 @@ From `source/main.cpp` comments:
 
 ## Gametype System
 
-Gametype names in bridge events are resolved through SRB2's internal `G_GetGametypeName()` Lua API in `scripts/SRB2DiscordBot-v0.1.40.lua:451`. This ensures:
+Gametype names in bridge events are resolved through SRB2's internal `G_GetGametypeName()` Lua API in `scripts/SRB2DiscordBot-v0.1.45.lua:451`. This ensures:
 
 1. **1-to-1 accuracy** with SRB2's in-game names:
    - `GT_COOP` → `"Co-op"` (not "Cooperative")
@@ -152,7 +152,7 @@ Discord embed ← main.cpp event handler ← bridge_parse_event() ← bot poll t
 | Path | Location | Trigger | Behavior |
 |---|---|---|---|
 | **Immediate (primary)** | `DiscordBot.Functions.flush_msgsrb2()` | Called after every event emission (SERVER_START, ROUND_START/END, PLAYER_JOIN/QUIT) | Opens file, writes buffer, closes, clears buffer |
-| **Periodic (fallback)** | `bot_function()` in `SRB2DiscordBot-v0.1.40.lua:298` | Every 70 tics (~2s) inside `leveltime%70==35` gate | Same as immediate, acts as redundancy |
+| **Periodic (fallback)** | `bot_function()` in `SRB2DiscordBot-v0.1.45.lua:298` | Every 70 tics (~2s) inside `leveltime%70==35` gate | Same as immediate, acts as redundancy |
 | **Message-triggered** | `server_log msg` on line 105 | `spamchatbug()` when `cv_messagedelay.value == 0` | Writes buffer but does NOT clear it (buffer cleared by flush_msgsrb2 instead) |
 
 ### Bot Startup Sync
@@ -171,7 +171,7 @@ Debug prints (`[DEBUG]`) in the C++ code are guarded by `#ifndef NDEBUG` and onl
 
 ### `cv_messagedelay` Bug (Fixed)
 
-Line 44 of `SRB2DiscordBot-v0.1.40.lua` previously compared `cv_messagedelay == 0`  -  comparing the CVar *table* to 0, which is always false. Fixed to `cv_messagedelay.value == 0`. This restores the immediate message-triggered flush path for users who disable messagedelay.
+Line 44 of `SRB2DiscordBot-v0.1.45.lua` previously compared `cv_messagedelay == 0`  -  comparing the CVar *table* to 0, which is always false. Fixed to `cv_messagedelay.value == 0`. This restores the immediate message-triggered flush path for users who disable messagedelay.
 
 ## Known Issues
 

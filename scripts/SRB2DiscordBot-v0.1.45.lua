@@ -3,7 +3,7 @@
 if rawget(_G, "DiscordBot") and DiscordBot.version then return end
 
 rawset(_G, "DiscordBot", {})
-DiscordBot.version = "0.1.40"
+DiscordBot.version = "0.1.45"
 DiscordBot.Data = {}
 DiscordBot.Data.msgsrb2 = ''
 DiscordBot.Data.pcmtsrb2 = ''
