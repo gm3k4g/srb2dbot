@@ -174,32 +174,19 @@ find /path/to/addons -name '*.pk3' -exec unzip -o {} -d {}_FILES \
     --spectators-file spectators.json</code></pre>
 <p>Spectator JSON format: <code>["name1", "name2", ...]</code></p>
 
-<h2>Deploy Script</h2>
-<p><code>./deploy.sh</code>  -  produces a portable tarball of the srb2dbot binary with bundled shared libraries for deployment to standard Linux distributions.</p>
-
-<h3>Usage</h3>
-<pre><code># Build and package
-./deploy.sh
-
-# Custom output and build directories
-./deploy.sh --output /tmp/deploy --build build --jobs 8</code></pre>
-
-<h3>What It Does</h3>
-<ol>
-    <li>Builds the binary in Release mode</li>
-    <li>Uses <code>ldd</code> to discover all shared library dependencies</li>
-    <li>Copies libraries into <code>lib/</code> alongside the binary</li>
-    <li>Uses <code>patchelf</code> to set <code>RPATH=$ORIGIN/lib</code> and rewrite the ELF interpreter to a portable path</li>
-    <li>Copies <code>secret.json.default</code> and <code>modules.json</code> into the package</li>
-    <li>Creates <code>deploy/srb2dbot-&lt;version&gt;-&lt;arch&gt;.tar.gz</code></li>
-</ol>
-
-<h3>Why This Exists</h3>
+<h2>Deployment</h2>
 <p>
-    On NixOS, compiled binaries reference the Nix store for the dynamic linker
-    and all shared libraries (<code>/nix/store/.../ld-linux-x86-64.so.2</code>).
-    These paths don't exist on standard Linux systems, causing <code>execve</code>
-    to fail with <code>ENOENT</code>. This script bridges that gap.
+    No special deploy script needed. Release builds on NixOS need one
+    <code>patchelf</code> command to fix the ELF interpreter:
+</p>
+<pre><code>./build.sh --release
+nix-shell -p patchelf --run "patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 build/srb2dbot"
+scp build/srb2dbot user@server:~/.srb2dbot/</code></pre>
+<p>
+    The <code>-static-libstdc++ -static-libgcc</code> flags in Release builds
+    eliminate the need for matching GCC runtime libraries on the target.
+    The target still needs <code>libdpp</code>, <code>libssl</code>,
+    <code>libopus</code>, and <code>libz</code> from its package manager.
 </p>
 
 <h2>Intermission Test Harness</h2>

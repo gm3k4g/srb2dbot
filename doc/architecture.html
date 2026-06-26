@@ -158,16 +158,18 @@
 
 <h2>Deployment</h2>
 <p>
-    Binaries built on NixOS embed Nix store paths in the ELF header
-    (interpreter and RPATH). The <code>deploy.sh</code> script uses
-    <code>patchelf</code> to rewrite these for portability:
+    Binaries built on NixOS embed Nix store paths in the ELF interpreter
+    (<code>/nix/store/.../ld-linux-x86-64.so.2</code>). To deploy to standard
+    Linux, rewrite the interpreter with <code>patchelf</code>:
 </p>
-<ul>
-    <li>Sets <code>RPATH</code> to <code>$ORIGIN/lib</code></li>
-    <li>Bundles all shared libraries (libdpp, libstdc++, libssl, etc.) into <code>lib/</code></li>
-    <li>Rewrites the ELF interpreter to a standard path</li>
-    <li>Produces <code>deploy/srb2dbot-&lt;version&gt;-&lt;arch&gt;.tar.gz</code></li>
-</ul>
+<pre><code># After build, fix the ELF interpreter
+nix-shell -p patchelf --run "patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 build/srb2dbot"</code></pre>
+<p>
+    Release builds also use <code>-static-libstdc++ -static-libgcc</code>,
+    eliminating the need for matching GCC runtime libraries on the target.
+    The target must have <code>libdpp</code>, <code>libssl3</code>,
+    <code>libopus0</code>, and <code>libz1</code> installed via apt/dnf/pacman.
+</p>
 
 <h2>CI Pipeline</h2>
 <p>CMake presets provide automated builds for Ubuntu (GCC/clang with clang-tidy, cppcheck), macOS (AppleClang), and Windows (MSVC). Dev mode enables CTest, clang-format linting, codespell, and code coverage with gcov/lcov.</p>

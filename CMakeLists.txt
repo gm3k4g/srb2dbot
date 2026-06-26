@@ -71,6 +71,13 @@ add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} dpp)
 
+# Statically link C++ runtime in Release builds so the binary doesn't
+# require libstdc++/libgcc_s from the target system (avoids version
+# mismatch when deploying from NixOS to standard Linux).
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(${PROJECT_NAME} PRIVATE -static-libstdc++ -static-libgcc)
+endif()
+
 # ---- Install rules ----
 if(NOT CMAKE_SKIP_INSTALL_RULES)
     include(cmake/install-rules.cmake)

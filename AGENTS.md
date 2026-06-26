@@ -76,7 +76,6 @@ doc/             -  HTML documentation
 | `test_intermission.sh` | Test harness that generates sample outputs for 2/4/8/12/16/18/24 players in both FFA and Team modes. Validates all outputs are transparent PNGs |
 | `srb2_dbot.sh` | Launches a local SRB2 test server alongside the bot for development/testing |
 | `build.sh` | CMake build wrapper with auto-detection (NixOS vs Linux) |
-| `deploy.sh` | Produces a portable tarball with bundled shared libraries for deployment to standard Linux (uses patchelf to rewrite NixOS ELF interpreter & RPATH) |
 | `test_pipeline.sh` | CI pipeline test runner |
 
 ## Security Constraints

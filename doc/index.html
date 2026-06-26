@@ -124,26 +124,18 @@ cp secret.json.default secret.json
 
 <h2>Deployment (NixOS → Standard Linux)</h2>
 <p>
-    On <strong>NixOS</strong>, the binary links against Nix store libraries
-    (<code>/nix/store/.../ld-linux-x86-64.so.2</code>). To deploy to a
-    standard Linux server, use the deployment script:
+    On <strong>NixOS</strong>, the binary's ELF interpreter points to
+    <code>/nix/store/.../ld-linux-x86-64.so.2</code>. Standard Linux puts
+    it at <code>/lib64/</code>. Fix with:
 </p>
-<pre><code># Build a portable tarball with bundled libraries
-./deploy.sh
+<pre><code># Build release (statically links C++ runtime)
+./build.sh --release
 
-# Output: deploy/srb2dbot-0.1.45-x86_64.tar.gz
+# Fix ELF interpreter for portability
+nix-shell -p patchelf --run "patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 build/srb2dbot"
 
-# Copy to server
-scp deploy/srb2dbot-0.1.45-x86_64.tar.gz user@server:~/.srb2dbot/
-ssh user@server
-cd ~/.srb2dbot && tar xzf srb2dbot-0.1.45-x86_64.tar.gz
-# Configure secret.json and modules.json, then run:
-./srb2dbot</code></pre>
-<p>
-    The script uses <code>patchelf</code> to rewrite the ELF interpreter and
-    RPATH, bundles all shared libraries into a <code>lib/</code> directory
-    alongside the binary, and produces a portable tarball.
-</p>
+# SCP to server (target needs libdpp-dev, libssl3, libopus0)
+scp build/srb2dbot user@server:~/.srb2dbot/</code></pre>
 
 <h2>Configuration</h2>
 <p>Create <code>secret.json</code> from the template:</p>
