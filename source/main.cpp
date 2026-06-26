@@ -311,15 +311,10 @@ int main() {
                     content = bridge_replace_emojis(content, guild_emojis);
                     std::istringstream lines(content);
                     std::string line;
-                    std::string last_chat_line;
                     std::vector<dpp::embed> pending_embeds;
 
                     while (std::getline(lines, line)) {
                         if (line.empty()) continue;
-                        if (line.rfind("[EVENT:CHAT]|", 0) == 0 || line.rfind("[EVENT:SERVER_CHAT]|", 0) == 0) {
-                            if (line == last_chat_line) continue;
-                            last_chat_line = line;
-                        }
                         if (auto event = bridge_parse_event(line)) {
                             auto embed_opt = registry.handle_bridge_event(*event);
                             if (embed_opt.has_value()) {

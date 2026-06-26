@@ -2,19 +2,6 @@
 -- executes more than once (e.g. loaded via multiple -file args).
 if rawget(_G, "DiscordBot") and DiscordBot.version then return end
 
--- Dedup state lives in a SEPARATE global (_G.SRB2DBot_State), NOT on
--- DiscordBot.  SRB2's NetVar sync replaces the entire DiscordBot table
--- (not just DiscordBot.Data) when a player joins/leaves, because CVs
--- with CV_NETVAR are members of DiscordBot.Commands.  A separate global
--- with no CV_NETVAR CVs is immune to the deep-copy and survives across
--- join/leave transitions.
-rawset(_G, "SRB2DBot_State", {})
-local STATE = rawget(_G, "SRB2DBot_State")
-STATE._player_msg_cache = {}
-STATE._pending_joins = {}
-STATE._join_emitted = {}
-STATE._join_times = {}
-
 rawset(_G, "DiscordBot", {})
 DiscordBot.version = "0.1.35"
 DiscordBot.Data = {}
@@ -401,13 +388,6 @@ addHook("ThinkFrame", bot_function)
 
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
-	local cache_key = tostring(#player) .. "|" .. tostring(type) .. "|" .. tostring(target) .. "|" .. msg
-	local PLAYERMSG_DEDUP_TICS = 5
-	local ST = rawget(_G, "SRB2DBot_State")
-	if ST._player_msg_cache[cache_key] and leveltime - ST._player_msg_cache[cache_key] <= PLAYERMSG_DEDUP_TICS then
-		return true
-	end
-	ST._player_msg_cache[cache_key] = leveltime
 	if type == 0 then
 		if server ~= player and target and target ~= 0 then return end
 		local text = nil
@@ -420,8 +400,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 			chatprint("<\x82~\x80Server>" .. " " .. message)
 			return true
 		end
-		local ST2 = rawget(_G, "SRB2DBot_State")
-		local jointime = ST2._join_times[#player] and tostring(ST2._join_times[#player]) or "0"
+		local jointime = (DiscordBot._join_times and DiscordBot._join_times[#player]) and tostring(DiscordBot._join_times[#player]) or "0"
 		local flag = player.gotflag and player.gotflag > 0 and "1" or "0"
 		local team = "none"
 		if not player.spectator then
@@ -452,21 +431,22 @@ addHook("PlayerMsg", function(player, type, target, msg)
 end)
 
 addHook("PlayerJoin", function(playernum)
-	local ST = rawget(_G, "SRB2DBot_State")
-	ST._pending_joins[playernum] = true
+	if not DiscordBot._pending_joins then DiscordBot._pending_joins = {} end
+	DiscordBot._pending_joins[playernum] = true
 end)
 
 addHook("ThinkFrame", function()
-	local ST = rawget(_G, "SRB2DBot_State")
+	if not DiscordBot._pending_joins then return end
 	for player in players.iterate do
-		if ST._pending_joins[#player] then
-			if not ST._join_emitted[#player] then
-				ST._join_emitted[#player] = true
-				ST._join_times[#player] = os.time()
+		if DiscordBot._pending_joins[#player] then
+			if not DiscordBot._join_emitted then DiscordBot._join_emitted = {} end
+			if not DiscordBot._join_emitted[#player] then
+				DiscordBot._join_emitted[#player] = true
+				DiscordBot._join_times = DiscordBot._join_times or {}
+				DiscordBot._join_times[#player] = os.time()
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:PLAYER_JOIN]|" .. player.name .. "|" .. #player .. "\n"
 				DiscordBot.Functions.flush_msgsrb2()
 			end
-			ST._pending_joins[#player] = nil
 			if DiscordBot.Config.auto_pause and paused == true then
 				DiscordBot.Data.paused = false
 				COM_BufInsertText(server, "pause")
@@ -488,10 +468,9 @@ end
 
 addHook("PlayerQuit", function(player, reason)
 	if DiscordBot.Commands.cv_joinquit.value ~= 1 then return end
-	local ST = rawget(_G, "SRB2DBot_State")
-	ST._pending_joins[#player] = nil
-	ST._join_emitted[#player] = nil
-	ST._join_times[#player] = nil
+	if DiscordBot._pending_joins then DiscordBot._pending_joins[#player] = nil end
+	if DiscordBot._join_emitted then DiscordBot._join_emitted[#player] = nil end
+	if DiscordBot._join_times then DiscordBot._join_times[#player] = nil end
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:PLAYER_QUIT]|" .. player.name .. "|" .. #player .. "|" .. reason_to_string(reason) .. "\n"
 	if reason == KR_KICK then
 		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:KICK_PLAYER]|" .. player.name .. "|" .. #player .. "|" .. reason_to_string(reason) .. "\n"
