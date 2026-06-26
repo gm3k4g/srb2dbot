@@ -16,6 +16,7 @@ local current_map = nil
 local join_emitted = {}
 
 local function write_event(line)
+	print(line)
 	local f = io.openlocal("client/DiscordBot/Messages.txt", "a+")
 	if f then
 		f:write(line)
@@ -88,7 +89,8 @@ end)
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
 	if type ~= 0 then return end
-	if server ~= player and target and target ~= 0 then return end
+	if server == player then return end
+	if target and target ~= 0 then return end
 	local skinname = (skins[player.skin] and skins[player.skin].name) or ""
 	local flag = (player.gotflag and player.gotflag > 0) and "1" or "0"
 	local team = "none"
@@ -101,8 +103,6 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	if IsPlayerAdmin(player) then prefix = "@" end
 
 	write_event("[EVENT:CHAT]|[" .. #player .. "]|" .. prefix .. player.name .. "|" .. msg .. "|" .. skinname .. "|0|" .. flag .. "|" .. team .. "\n")
-	chatprintf(player, "\x82" .. prefix .. player.name .. "\x80: " .. msg)
-	return true
 end)
 
 addHook("PlayerJoin", function(playernum)
