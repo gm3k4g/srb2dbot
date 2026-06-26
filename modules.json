@@ -1,5 +1,5 @@
 {
-    "srb2_home": "~/.srb2_server",
+    "srb2_home": { "enabled": true, "path": "~/.srb2_server" },
     "_note": "Modules grouped by category: slash_commands, chat, auto.",
     "modules": {
         "slash_commands": {

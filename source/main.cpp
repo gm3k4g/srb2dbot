@@ -71,14 +71,17 @@ int main() {
         if (mod_file.is_open()) {
             try {
                 auto mod_cfg = json::parse(mod_file);
-                if (mod_cfg.contains("srb2_home") && mod_cfg["srb2_home"].is_string()) {
-                    std::string home = mod_cfg["srb2_home"].get<std::string>();
-                    // Expand leading ~ to $HOME
-                    if (!home.empty() && home[0] == '~') {
-                        const char* home_env = std::getenv("HOME");
-                        home = (home_env ? home_env : "/tmp") + home.substr(1);
+                if (mod_cfg.contains("srb2_home")) {
+                    auto& sh = mod_cfg["srb2_home"];
+                    if (sh.is_object() && sh.value("enabled", false) && sh.contains("path") && sh["path"].is_string()) {
+                        std::string home = sh["path"].get<std::string>();
+                        // Expand leading ~ to $HOME
+                        if (!home.empty() && home[0] == '~') {
+                            const char* home_env = std::getenv("HOME");
+                            home = (home_env ? home_env : "/tmp") + home.substr(1);
+                        }
+                        setenv("SRB2DBOT_SRB2_HOME", home.c_str(), 1);
                     }
-                    setenv("SRB2DBOT_SRB2_HOME", home.c_str(), 1);
                 }
             } catch (...) {}
         }
