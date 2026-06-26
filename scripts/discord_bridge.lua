@@ -5,10 +5,9 @@
 -- every 2 seconds, reads all lines, parses them, and sends Discord
 -- embeds.
 --
--- NOTE: PlayerMsg fires twice in SRB2's engine for player chat (return
--- false continues normal processing which triggers a second fire).
--- The C++ bot dedups consecutive identical CHAT lines so Discord only
--- receives one message per chat.
+-- NOTE: return true suppresses SRB2's normal chat processing, preventing
+-- the engine double-fire of PlayerMsg. chatprintf() emulates the in-game
+-- chat display so the player still sees their own message.
 
 if rawget(_G, "DiscordBotMini") then return end
 rawset(_G, "DiscordBotMini", true)
@@ -89,8 +88,6 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
 	if type ~= 0 then return end
 	if server ~= player and target and target ~= 0 then return end
-	if server == player then return end
-
 	local skinname = (skins[player.skin] and skins[player.skin].name) or ""
 	local flag = (player.gotflag and player.gotflag > 0) and "1" or "0"
 	local team = "none"
@@ -103,7 +100,8 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	if IsPlayerAdmin(player) then prefix = "@" end
 
 	write_event("[EVENT:CHAT]|[" .. #player .. "]|" .. prefix .. player.name .. "|" .. msg .. "|" .. skinname .. "|0|" .. flag .. "|" .. team .. "\n")
-	return false
+	chatprintf(player, "\x82" .. prefix .. player.name .. "\x80: " .. msg)
+	return true
 end)
 
 addHook("PlayerJoin", function(playernum)
