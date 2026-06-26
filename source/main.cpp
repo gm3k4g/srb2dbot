@@ -104,7 +104,7 @@ int main() {
         ? data["channel_id"].get<std::string>() : "0";
 
     // ── Session-based logging ──
-    std::string log_dir = srb2_dir + "/srb2dbot/logs";
+    std::string log_dir = srb2_dir + "/srb2_servers.d/srb2b.d/srb2dbot/logs";
     std::filesystem::create_directories(log_dir);
     std::time_t now = std::time(nullptr);
     char ts[64];
@@ -112,7 +112,7 @@ int main() {
     std::string log_name = log_dir + "/" + ts + ".txt";
     g_log_file.open(log_name, std::ios::app);
     if (g_log_file.is_open()) {
-        std::string symlink_name = srb2_dir + "/srb2dbot/latest-log.txt";
+        std::string symlink_name = srb2_dir + "/srb2_servers.d/srb2b.d/latest-logs-srb2dbot.txt";
         std::filesystem::remove(symlink_name);
         std::filesystem::create_symlink(log_name, symlink_name);
         std::vector<std::filesystem::path> old_logs;
@@ -128,7 +128,7 @@ int main() {
     static TeeBuf teebuf(std::cout.rdbuf());
     std::cout.rdbuf(&teebuf);
     // ── Single-instance lock ──
-    std::string pid_path = srb2_dir + "/srb2dbot/srb2dbot.pid";
+    std::string pid_path = srb2_dir + "/srb2_servers.d/srb2b.d/srb2dbot/srb2dbot.pid";
     {
         std::ifstream pid_file(pid_path);
         if (pid_file.is_open()) {
@@ -150,7 +150,7 @@ int main() {
         pid_file.close();
     }
     std::atexit([]{
-        std::string path = dir_srb2_str() + "/srb2dbot/srb2dbot.pid";
+        std::string path = dir_srb2_str() + "/srb2_servers.d/srb2b.d/srb2dbot/srb2dbot.pid";
         std::filesystem::remove(path);
     });
     signal(SIGINT,  [](int) { g_shutdown_requested = 1; });
