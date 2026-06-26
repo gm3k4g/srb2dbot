@@ -11,6 +11,8 @@
 #include <sys/wait.h>
 
 auto dir_srb2_str() -> std::string {
+    const char* env = std::getenv("SRB2DBOT_SRB2_HOME");
+    if (env && env[0] != '\0') return std::string(env);
     struct passwd *pw = getpwuid(getuid());
     std::string homedir = pw ? pw->pw_dir : "/tmp";
     std::string script_path = homedir;
