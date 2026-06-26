@@ -354,7 +354,7 @@ int main() {
                                 name = sanitize_for_discord(name);
                                 msg  = sanitize_for_discord(msg);
                                 if (!chat_text.empty()) chat_text += "\n";
-                                chat_text += node + " :" + skin + ": **" + name + "** " + msg;
+                                chat_text += node + " :" + skin + ": <" + name + "> " + msg;
                             }
                             if (pending_embeds.size() >= 10) {
                                 dpp::message evt_batch(bridge_channel_sf, "");
