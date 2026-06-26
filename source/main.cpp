@@ -252,11 +252,9 @@ int main() {
         constexpr int DBOT_SYNC_MAX_RETRIES = 15;
         dpp::snowflake bridge_channel_sf = std::stoull(bridge_channel_id);
 
-        size_t lines_seen = 0;
-
         bot.start_timer([&bot, &registry, messages_path, &dbot_synced,
                          &dbot_sync_retries, bridge_channel_sf, &guild_emojis,
-                         &lines_seen,
+
                          fifo_available](dpp::timer) {
             if (g_shutdown_requested) {
                 static bool shutdown_sent = false;
@@ -280,20 +278,35 @@ int main() {
 #endif
             }
 
-            // Read only new lines from Messages.txt since last poll.
-            // Lua appends-only so line count never decreases.
-            // Messages.txt stays intact — no rename, no delete.
-            size_t total_lines = bridge_get_lines(messages_path);
-            if (total_lines > lines_seen) {
-                std::string content = bridge_read_range(messages_path, lines_seen, total_lines);
-                if (!content.empty()) {
-                    std::cout << "[bridge] new content (" << content.size() << " bytes, lines " << lines_seen << "-" << total_lines << "):" << std::endl;
-                    std::istringstream raw_lines(content);
-                    std::string raw_line;
-                    while (std::getline(raw_lines, raw_line)) {
-                        if (!raw_line.empty()) std::cout << "[bridge]   line: " << raw_line << std::endl;
+            // Atomically rename Messages.txt to .tmp so Lua's write/close
+            // completes before we read.  rename(2) is POSIX-atomic on the
+            // same filesystem; Lua's io.openlocal("a+") creates a fresh
+            // Messages.txt for the next write.
+            // After reading, move .tmp to an archive dir for inspection.
+            std::string tmp_path = messages_path + ".tmp";
+            if (std::rename(messages_path.c_str(), tmp_path.c_str()) == 0) {
+                std::ifstream tmp_file(tmp_path);
+                if (tmp_file.is_open()) {
+                    std::string content((std::istreambuf_iterator<char>(tmp_file)),
+                                         std::istreambuf_iterator<char>());
+                    tmp_file.close();
+                    if (!content.empty()) {
+                        std::cout << "[bridge] raw content from .tmp (" << content.size() << " bytes):" << std::endl;
+                        std::istringstream raw_lines(content);
+                        std::string raw_line;
+                        while (std::getline(raw_lines, raw_line)) {
+                            if (!raw_line.empty()) std::cout << "[bridge]   line: " << raw_line << std::endl;
+                        }
                     }
-                }
+                    // Archive for inspection instead of deleting
+                    {
+                        std::string archive_dir = (std::filesystem::path(messages_path).parent_path() / "archive").string();
+                        std::filesystem::create_directories(archive_dir);
+                        auto now = std::time(nullptr);
+                        char ts[32];
+                        std::strftime(ts, sizeof(ts), "%H%M%S", std::localtime(&now));
+                        std::rename(tmp_path.c_str(), (archive_dir + "/" + ts + ".tmp").c_str());
+                    }
                 if (content.size() > 1) {
                     content = bridge_replace_emojis(content, guild_emojis);
                     std::istringstream lines(content);
@@ -352,7 +365,9 @@ int main() {
                         });
                     }
                 }
-                lines_seen = total_lines;
+                } else {
+                    std::remove(tmp_path.c_str());
+                }
             }
         }, 2);
     }
