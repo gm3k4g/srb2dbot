@@ -73,11 +73,25 @@ auto pipe_srb2_server_do(const std::string& data) -> bool {
 
 auto pipe_srb2_server_say(const std::string& msg) -> bool {
     for (unsigned char c : msg) {
-        if (c == '\n' || c == '\r' || c == ';' || c == '\'' || (c < 0x20 && c != '\t') || c > 0x7E) {
+        if (c == '\n' || c == '\r' || (c < 0x20 && c != '\t') || c > 0x7E) {
             return false;
         }
     }
-    return pipe_write("say '" + msg + "'");
+    // Backslash-escape injection chars: \ → \\, ; → \;, ' → \'
+    std::string escaped = msg;
+    for (size_t i = 0; i < escaped.size(); ++i) {
+        if (escaped[i] == '\\') {
+            escaped.replace(i, 1, "\\\\");
+            ++i;
+        } else if (escaped[i] == ';') {
+            escaped.replace(i, 1, "\\;");
+            ++i;
+        } else if (escaped[i] == '\'') {
+            escaped.replace(i, 1, "\\'");
+            ++i;
+        }
+    }
+    return pipe_write("say '" + escaped + "'");
 }
 
 auto pipe_srb2_kick_player(const std::string& player) -> bool {

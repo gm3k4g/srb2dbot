@@ -246,14 +246,12 @@ COM_AddCommand("server_log", function(player, arg, text)
 					local line = d_msg:read("*l")
 					if not line then break end
 					if #line > 0 then
-						if #line > 220 then
-							COM_BufInsertText(server, "discord_message " .. string.sub(line, 1, 220))
-							local remainder = string.sub(line, 221)
-							if #remainder > 0 then
-								COM_BufInsertText(server, "discord_message " .. remainder)
-							end
-						else
-							COM_BufInsertText(server, "discord_message " .. line)
+						-- Format: display_name|message
+						local sep = string.find(line, "|", 1, true)
+						local dn = sep and string.sub(line, 1, sep - 1) or line
+						local msg = sep and string.sub(line, sep + 1) or ""
+						if #dn > 0 and #msg > 0 then
+							chatprint("\x89" .. "[Discord]" .. "\x80" .. "<" .. dn .. "> " .. msg, true)
 						end
 					end
 				end
@@ -263,15 +261,6 @@ COM_AddCommand("server_log", function(player, arg, text)
 		end
 	end
 end, COM_LOCAL)
-
-COM_AddCommand("discord_message", function(player, ...)
-	if player ~= server then return end
-	if not ... then return end
-	local args = { ... }
-	local msg = table.concat(args, " ", 1, #args)
-	if DiscordBot.Data.debug then COM_BufInsertText(server, "echo [DBOT] discord_message called: " .. msg) end
-	chatprint("\x89" .. "[Discord]" .. "\x80" .. msg, true)
-end)
 
 COM_AddCommand("dbot_sync", function(player)
 	if player ~= server then return end
