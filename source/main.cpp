@@ -312,6 +312,7 @@ int main() {
                     std::istringstream lines(content);
                     std::string line;
                     std::vector<dpp::embed> pending_embeds;
+                    std::string chat_text;
 
                     while (std::getline(lines, line)) {
                         if (line.empty()) continue;
@@ -341,6 +342,19 @@ int main() {
                                 } else {
                                     pending_embeds.push_back(*embed_opt);
                                 }
+                            } else if (event->type == "CHAT" && event->fields.size() >= 4) {
+                                // chat_card disabled — format as plain text
+                                auto& f = event->fields;
+                                std::string node = f[0];
+                                std::string name = f[1];
+                                std::string msg  = f[2];
+                                for (size_t i = 3; i + 4 < f.size(); i++) msg += "|" + f[i];
+                                std::string skin = f.size() >= 6 ? f[f.size() - 4] : "";
+                                skin = sanitize_for_discord(skin);
+                                name = sanitize_for_discord(name);
+                                msg  = sanitize_for_discord(msg);
+                                if (!chat_text.empty()) chat_text += "\n";
+                                chat_text += node + " :" + skin + ": **" + name + "** " + msg;
                             }
                             if (pending_embeds.size() >= 10) {
                                 dpp::message evt_batch(bridge_channel_sf, "");
@@ -350,7 +364,13 @@ int main() {
                                 });
                                 pending_embeds.clear();
                             }
-                        }
+}
+                    }
+                    if (!chat_text.empty()) {
+                        dpp::message txt(bridge_channel_sf, chat_text);
+                        bot.message_create(txt, [](const dpp::confirmation_callback_t& cb) {
+                            if (cb.is_error()) std::cout << "[bridge] message_create error: " << cb.get_error().human_readable << std::endl;
+                        });
                     }
                     if (!pending_embeds.empty()) {
                         dpp::message evt_batch(bridge_channel_sf, "");
