@@ -21,6 +21,7 @@ add_test(NAME srb2dbot_test COMMAND srb2dbot_test)
 add_executable(srb2dbot_bridge_e2e
     source/srb2dbot_bridge_e2e.cpp
     ${CMAKE_SOURCE_DIR}/source/bridge.cpp
+    ${CMAKE_SOURCE_DIR}/source/server.cpp
 )
 target_include_directories(srb2dbot_bridge_e2e PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_compile_features(srb2dbot_bridge_e2e PRIVATE cxx_std_26)

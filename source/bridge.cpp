@@ -15,6 +15,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "srb2dbot/server.hpp"
+
 auto sanitize_for_discord(const std::string& input) -> std::string {
     std::string result;
     result.reserve(input.size() * 2);
@@ -327,9 +329,7 @@ auto bridge_get_map_source(const std::string& map) -> std::string {
 
 static auto get_loaded_pk3s_impl() -> std::vector<std::string> {
     std::vector<std::string> pk3s;
-    const char* home = getenv("HOME");
-    if (!home) return pk3s;
-    std::string log_path = std::string(home) + "/.srb2/latest-log.txt";
+    std::string log_path = dir_srb2_str() + "/latest-log.txt";
     std::ifstream log(log_path);
     if (!log.is_open()) return pk3s;
 
@@ -351,10 +351,8 @@ static auto get_loaded_pk3s_impl() -> std::vector<std::string> {
 auto bridge_get_loaded_pk3s() -> const std::vector<std::string>& {
     static std::vector<std::string> cached;
     static time_t last_mtime = 0;
-    const char* home = getenv("HOME");
-    if (!home) return cached;
 
-    std::string log_path = std::string(home) + "/.srb2/latest-log.txt";
+    std::string log_path = dir_srb2_str() + "/latest-log.txt";
     struct stat st;
     if (stat(log_path.c_str(), &st) != 0) return cached;
 
