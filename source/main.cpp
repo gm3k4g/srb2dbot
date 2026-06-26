@@ -98,6 +98,9 @@ int main() {
     std::filesystem::create_directories(bot_dir + "/logs");
     std::filesystem::create_directories(bot_dir + "/thumbnails");
 
+    std::cout << "[init] SRB2 data dir: " << srb2_dir << std::endl;
+    std::cout << "[init] Bot data dir:  " << bot_dir << std::endl;
+
     std::string guild_id_str = data["guild_id"].get<std::string>();
     dpp::snowflake guild_id = 0;
     try {
@@ -172,7 +175,7 @@ int main() {
 #ifndef NDEBUG
         if (event.message.find("\"op\":1") != std::string::npos) return;
 #else
-        if (event.severity < dpp::ll_warning) return;
+        if (event.severity < dpp::ll_info) return;
 #endif
         std::cout << event.message << std::endl;
     });
@@ -235,6 +238,7 @@ int main() {
         if (dpp::run_once<struct notify_modules_ready>()) {
             dpp::snowflake ch = bridge_channel_id != "0" ? std::stoull(bridge_channel_id) : 0;
             if (ch != 0) registry.on_ready(bot, ch);
+            std::cout << "[ready] Bot online" << std::endl;
         }
     });
 
@@ -280,6 +284,7 @@ int main() {
 #endif
 
     if (bridge_channel_id != "0") {
+        std::cout << "[bridge] channel " << bridge_channel_id << " — polling every 2s" << std::endl;
         bool dbot_synced = false;
         int dbot_sync_retries = 0;
         constexpr int DBOT_SYNC_MAX_RETRIES = 15;
@@ -420,6 +425,8 @@ int main() {
                 }
             }
         }, 2);
+    } else {
+        std::cout << "[bridge] disabled (no channel_id in secret.json)" << std::endl;
     }
 
     bot.start(dpp::st_wait);
