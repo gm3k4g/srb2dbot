@@ -42,13 +42,13 @@ public:
             display_name = event.msg.author.username;
         }
         for (auto& c : display_name) {
-            if (c == '<' || c == '>' || c == '|' || c == '\\' || c == '"' || c == '^' || static_cast<unsigned char>(c) > 0x7E) c = '_';
+            if (c == '<' || c == '>' || c == '|' || c == '\\' || c == '"' || c == '\'' || c == ';' || c == '^' || static_cast<unsigned char>(c) > 0x7E) c = '_';
         }
 
-        // Quote the message to protect ; from SRB2's console command separator
-        // Escape any internal double-quotes to avoid breaking the quoting
+        // Sanitize message: strip semicolons (SRB2 console command separator)
+        // and double-quotes (could break quoting). Single-quotes are kept.
         for (auto& c : sanitized) {
-            if (c == '"') c = '\'';
+            if (c == '"' || c == ';') c = '_';
         }
 
         std::string home = dir_srb2_str();
@@ -56,7 +56,7 @@ public:
         std::filesystem::create_directories(bridge_path);
         std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
         if (disc_file.is_open()) {
-            disc_file << "<" << display_name << "> \"" << sanitized << "\"\n";
+            disc_file << "<" << display_name << "> '" << sanitized << "'\n";
         }
 #ifndef NDEBUG
         std::cout << "[bridge] Discord→SRB2: <" << display_name << "> " << sanitized << std::endl;
