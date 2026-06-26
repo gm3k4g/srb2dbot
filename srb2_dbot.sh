@@ -49,20 +49,22 @@ if [[ ! -f "$LUA_WAD" ]]; then
 fi
 
 SRB2_SERVER_HOME="$HOME/.srb2_server"
-echo "[srb2_dbot] Setting up server home: $SRB2_SERVER_HOME"
-mkdir -p "$SRB2_SERVER_HOME"
-mkdir -p "$SRB2_SERVER_HOME/luafiles/client/DiscordBot"
-mkdir -p "$SRB2_SERVER_HOME/DOWNLOAD"
+# SRB2 appends .srb2 to HOME, so the actual data directory is:
+SRB2_DATA_DIR="$SRB2_SERVER_HOME/.srb2"
+echo "[srb2_dbot] Setting up server home: $SRB2_SERVER_HOME (data: $SRB2_DATA_DIR)"
+mkdir -p "$SRB2_DATA_DIR"
+mkdir -p "$SRB2_DATA_DIR/luafiles/client/DiscordBot"
+mkdir -p "$SRB2_DATA_DIR/DOWNLOAD"
 
 # Symlink IWAD files so SRB2 can find its assets
 for asset in srb2.pk3 zones.pk3 player.dta patch.pk3 music.dta; do
     if [[ -f "$HOME/.srb2/$asset" ]]; then
-        [[ -e "$SRB2_SERVER_HOME/$asset" ]] || ln -s "$HOME/.srb2/$asset" "$SRB2_SERVER_HOME/$asset"
+        [[ -e "$SRB2_DATA_DIR/$asset" ]] || ln -s "$HOME/.srb2/$asset" "$SRB2_DATA_DIR/$asset"
     fi
 done
 
 # Deploy script to server's DOWNLOAD/
-cp "$LUA_WAD" "$SRB2_SERVER_HOME/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua"
+cp "$LUA_WAD" "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua"
 
 echo "=== srb2_dbot ==="
 [[ -n "$BUILD_ARGS" ]] && echo "Mode:   Release"
@@ -77,7 +79,7 @@ if [[ ! -f "$SCRIPT_DIR/build/srb2dbot" ]]; then
     echo "[srb2_dbot] Binary not found, building..."
     "$SCRIPT_DIR/build.sh" $BUILD_ARGS || { echo "ERROR: Build failed" >&2; exit 1; }
 fi
-SRB2DBOT_SRB2_HOME="$SRB2_SERVER_HOME" "$SCRIPT_DIR/build/srb2dbot" &
+SRB2DBOT_SRB2_HOME="$SRB2_DATA_DIR" "$SCRIPT_DIR/build/srb2dbot" &
 BOT_PID=$!
 echo "$BOT_PID" > "$BOT_PID_FILE"
 echo "[srb2_dbot] Bot started (PID $BOT_PID)"
@@ -95,6 +97,6 @@ HOME="$SRB2_SERVER_HOME" exec srb2 \
     -servername "$SERVERNAME" \
     -warp MAPF0 \
     -gametype 7 \
-    -file "$SRB2_SERVER_HOME/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua" \
+    -file "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua" \
     +rejointimeout 0
     #</dev/null
