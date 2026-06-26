@@ -65,6 +65,25 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    // Override SRB2 home directory from modules.json if configured
+    {
+        std::ifstream mod_file("modules.json");
+        if (mod_file.is_open()) {
+            try {
+                auto mod_cfg = json::parse(mod_file);
+                if (mod_cfg.contains("srb2_home") && mod_cfg["srb2_home"].is_string()) {
+                    std::string home = mod_cfg["srb2_home"].get<std::string>();
+                    // Expand leading ~ to $HOME
+                    if (!home.empty() && home[0] == '~') {
+                        const char* home_env = std::getenv("HOME");
+                        home = (home_env ? home_env : "/tmp") + home.substr(1);
+                    }
+                    setenv("SRB2DBOT_SRB2_HOME", home.c_str(), 1);
+                }
+            } catch (...) {}
+        }
+    }
+
     std::string srb2_dir = dir_srb2_str();
     std::filesystem::create_directories(srb2_dir + "/srb2_servers.d/srb2b.d");
     std::filesystem::create_directories(srb2_dir + "/addons");
