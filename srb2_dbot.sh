@@ -42,9 +42,9 @@ kill_pid_file() {
 kill_pid_file "$BOT_PID_FILE" "srb2dbot"
 kill_pid_file "$SRB2_PID_FILE" "SRB2"
 
-LUA_WAD="$SCRIPT_DIR/scripts/SRB2DiscordBot-v0.1.35.lua"
+LUA_WAD="$SCRIPT_DIR/scripts/SRB2DiscordBot-v0.1.40.lua"
 if [[ ! -f "$LUA_WAD" ]]; then
-    echo "ERROR: SRB2DiscordBot-v0.1.35.lua not found at $LUA_WAD" >&2
+    echo "ERROR: SRB2DiscordBot-v0.1.40.lua not found at $LUA_WAD" >&2
     exit 1
 fi
 
@@ -64,7 +64,7 @@ for asset in srb2.pk3 zones.pk3 player.dta patch.pk3 music.dta; do
 done
 
 # Deploy script to server's DOWNLOAD/
-cp "$LUA_WAD" "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua"
+cp "$LUA_WAD" "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.40.lua"
 
 echo "=== srb2_dbot ==="
 [[ -n "$BUILD_ARGS" ]] && echo "Mode:   Release"
@@ -97,6 +97,6 @@ HOME="$SRB2_SERVER_HOME" exec srb2 \
     -servername "$SERVERNAME" \
     -warp MAPF0 \
     -gametype 7 \
-    -file "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.35.lua" \
+    -file "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.40.lua" \
     +rejointimeout 0
     #</dev/null
