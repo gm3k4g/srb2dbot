@@ -410,6 +410,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	ST._player_msg_cache[cache_key] = leveltime
 	if type == 0 then
 		if server ~= player and target and target ~= 0 then return end
+		if server ~= player then return false end
 		local text = nil
 		local message = msg
 		local sendit = false

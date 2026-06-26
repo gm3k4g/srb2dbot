@@ -89,7 +89,7 @@ end)
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
 	if type ~= 0 then return end
-	if server == player then return end
+	--if server == player then return end
 	if target and target ~= 0 then return end
 	local skinname = (skins[player.skin] and skins[player.skin].name) or ""
 	local flag = (player.gotflag and player.gotflag > 0) and "1" or "0"
@@ -102,7 +102,9 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	local prefix = ""
 	if IsPlayerAdmin(player) then prefix = "@" end
 
-	write_event("[EVENT:CHAT]|[" .. #player .. "]|" .. prefix .. player.name .. "|" .. msg .. "|" .. skinname .. "|0|" .. flag .. "|" .. team .. "\n")
+	if player == server then
+		write_event("[EVENT:CHAT]|[" .. #player .. "]|" .. prefix .. player.name .. "|" .. msg .. "|" .. skinname .. "|0|" .. flag .. "|" .. team .. "\n")
+	end
 end)
 
 addHook("PlayerJoin", function(playernum)
