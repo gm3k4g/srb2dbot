@@ -448,18 +448,11 @@ end
 
 addHook("ThinkFrame", bot_function)
 
--- Client diagnostic: check if NetVar syncs _discord_msg
+-- Client-side: display NetVar-synced Discord messages in local chat HUD
 addHook("ThinkFrame", function()
 	if isdedicatedserver then return end
+	if (leveltime % 70) ~= 35 then return end
 	local msg = DiscordBot.Data._discord_msg
-	-- Write diagnostic every 35 tics (~1s)
-	if (leveltime % 35) == 0 then
-		local diag = io.openlocal("client/DiscordBot/_diag_cli.txt", "a+")
-		if diag then
-			diag:write(os.date() .. " _discord_msg=" .. tostring(msg) .. "\n")
-			diag:close()
-		end
-	end
 	if msg and msg ~= '' then
 		chatprint("\x89[Discord]\x80 " .. msg, false)
 		DiscordBot.Data._discord_msg = ''
