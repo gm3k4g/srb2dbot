@@ -398,6 +398,29 @@ auto bridge_find_pk3_for_lump(const std::string& lump_name) -> std::string {
     return "";
 }
 
+auto bridge_get_gametypes_from_log() -> std::unordered_map<int, std::string> {
+    std::unordered_map<int, std::string> gametypes;
+    std::string log_path = dir_srb2_str() + "/latest-log.txt";
+    std::ifstream log(log_path);
+    if (!log.is_open()) return gametypes;
+
+    std::string line;
+    std::string prefix = "Registered gametype ";
+    while (std::getline(log, line)) {
+        auto pos = line.find(prefix);
+        if (pos == std::string::npos) continue;
+        pos += prefix.size();
+        auto colon = line.find(':', pos);
+        if (colon == std::string::npos) continue;
+        try {
+            int gt = std::stoi(line.substr(pos, colon - pos));
+            std::string name = line.substr(colon + 2);
+            if (!name.empty()) gametypes[gt] = name;
+        } catch (...) {}
+    }
+    return gametypes;
+}
+
 auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir) -> void {
     auto is_safe_map_name = [](const std::string& name) -> bool {
         if (name.empty()) return false;
