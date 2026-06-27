@@ -26,6 +26,7 @@ public:
         }
         message = sanitize_for_discord(message);
         std::string skin          = f.size() >= 6 ? sanitize_for_discord(f[f.size() - 4]) : "";
+        std::string skin_emoji    = skin.empty() ? "" : ":" + skin + ":";
         std::string jointime_str  = f.size() >= 5 ? f[f.size() - 3] : "";
         std::string flag          = f.size() >= 6 ? f[f.size() - 2] : "0";
         std::string team          = f.size() >= 7 ? f[f.size() - 1] : "none";
@@ -34,7 +35,7 @@ public:
         // Build metadata line: [:placard:] PlayerName | :red_square: | 1 | 10m | 2024-01-01 HH:MM:SS
         std::string meta;
         if (flag != "0") meta += ":placard: ";
-        meta += fmt_.empty() ? name : substitute_placeholders(fmt_, {{"name", name}, {"node", node}, {"skin", skin}});
+        meta += fmt_.empty() ? name : substitute_placeholders(fmt_, {{"name", name}, {"node", node}, {"skin", skin}, {"skin_emoji", skin_emoji}});
         if (team == "1")       meta += " :red_square:";
         else if (team == "2")  meta += " :blue_square:";
         if (!jointime_str.empty() && jointime_str != "0") {

@@ -359,6 +359,7 @@ int main() {
                         if (auto event = bridge_parse_event(line)) {
                             auto embed_opt = registry.handle_bridge_event(*event);
                             if (embed_opt.has_value()) {
+                                embed_opt->title = bridge_replace_emojis(embed_opt->title, guild_emojis);
 #ifndef NDEBUG
                                 std::cout << "[bridge] SRB2→Discord: " << event->type << " raw=" << line << std::endl;
 #endif
