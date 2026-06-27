@@ -294,9 +294,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 						local dn = sep and string.sub(line, 1, sep - 1) or line
 						local msg = sep and string.sub(line, sep + 1) or ""
 						if #dn > 0 and #msg > 0 then
-							for p in players.iterate do
-								pcall(function() chatprintf(p, "[Discord] <%s> %s", dn, msg) end)
-							end
+							chatprint("\x89" .. "[Discord]" .. "\x80" .. "<" .. dn .. "> " .. msg, true)
 						end
 					end
 				end
@@ -414,32 +412,6 @@ local function bot_function()
 		COM_BufInsertText(server, "server_log discord")
 		COM_BufInsertText(server, "server_log console")
 		DiscordBot.Functions.flush_msgsrb2()
-		-- Directly poll discordmessage.txt (bypass server_log command which may be shadowed)
-		pcall(function()
-			local d_msg = io.openlocal("client/DiscordBot/discordmessage.txt", "r")
-			if d_msg then
-				local dsize = d_msg:seek("end")
-				if dsize > 0 then
-					d_msg:seek("set", DiscordBot.Data._discord_seek_pos or 0)
-					while true do
-						local line = d_msg:read("*l")
-						if not line then break end
-						if #line > 0 then
-							local sep = string.find(line, "|", 1, true)
-							local dn = sep and string.sub(line, 1, sep - 1) or line
-							local msg = sep and string.sub(line, sep + 1) or ""
-							if #dn > 0 and #msg > 0 then
-								for p in players.iterate do
-									pcall(function() chatprintf(p, "[Discord] <%s> %s", dn, msg) end)
-								end
-							end
-						end
-					end
-					DiscordBot.Data._discord_seek_pos = d_msg:seek()
-				end
-				d_msg:close()
-			end
-		end)
 		if DiscordBot.Data.log ~= '' then
 			COM_BufInsertText(server, "server_log logcom")
 			DiscordBot.Data.log = ''

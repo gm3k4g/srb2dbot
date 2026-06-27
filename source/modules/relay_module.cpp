@@ -49,11 +49,9 @@ public:
         // Lua reads this file and calls chatprint() directly, bypassing the
         // SRB2 console command parser entirely, so no command injection is possible.
         std::string home = dir_srb2_str();
-        std::string bridge_path = home + "/client/DiscordBot";
+        std::string bridge_path = home + "/luafiles/client/DiscordBot";
         std::filesystem::create_directories(bridge_path);
-        std::string disc_path = bridge_path + "/discordmessage.txt";
-        std::cout << "[relay] Writing to " << disc_path << std::endl;
-        std::ofstream disc_file(disc_path, std::ios::app);
+        std::ofstream disc_file(bridge_path + "/discordmessage.txt", std::ios::app);
         if (disc_file.is_open()) {
             disc_file << display_name << "|" << sanitized << "\n";
         }
