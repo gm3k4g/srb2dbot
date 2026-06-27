@@ -39,6 +39,11 @@ local function get_gametype_name(gt)
 		local name = G_GetGametypeName(gt)
 		if name and name ~= "" then return name end
 	end
+	-- Check user-configured name overrides
+	if DiscordBot and DiscordBot.Data and DiscordBot.Data.gametype_names then
+		local name = DiscordBot.Data.gametype_names[gt]
+		if name then return name end
+	end
 	-- Auto-discover custom gametypes from WAD Lua globals
 	if type(gt) == "number" then
 		for k, v in pairs(_G) do
