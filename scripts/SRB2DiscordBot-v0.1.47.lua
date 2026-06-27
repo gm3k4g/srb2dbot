@@ -294,7 +294,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 						local dn = sep and string.sub(line, 1, sep - 1) or line
 						local msg = sep and string.sub(line, sep + 1) or ""
 						if #dn > 0 and #msg > 0 then
-							COM_BufInsertText(server, "say \x89[Discord]\x80 <" .. dn .. "> " .. msg)
+							COM_BufInsertText(server, "discord_message " .. dn .. " " .. msg)
 						end
 					end
 				end
@@ -313,6 +313,15 @@ COM_AddCommand("dbot_sync", function(player)
 		if DiscordBot.Data.debug then print("[DEBUG] dbot_sync: re-emitting initial map state") end
 	end
 	DiscordBot.Functions.flush_msgsrb2()
+ end, COM_LOCAL)
+
+COM_AddCommand("discord_message", function(player, ...)
+	if player ~= server then return end
+	if not ... then return end
+	local args = {...}
+	for _, i in ipairs(args) do
+		chatprint("\x89" .. "[Discord]" .. "\x80" .. " " .. i, false)
+	end
 end, COM_LOCAL)
 
 COM_AddCommand("dbot_debug", function(player, arg)
