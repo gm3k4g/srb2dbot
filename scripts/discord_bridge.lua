@@ -61,11 +61,6 @@ local function get_gametype_name(gt)
 		local name = DiscordBot.Data.custom_gametype_names[gt]
 		if name then return name end
 	end
-	-- Check user-configured name overrides
-	if DiscordBot and DiscordBot.Data and DiscordBot.Data.gametype_names then
-		local name = DiscordBot.Data.gametype_names[gt]
-		if name then return name end
-	end
 	local names = {
 		[GT_COOP] = "Co-op",
 		[GT_COMPETITION] = "Competition",

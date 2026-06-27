@@ -6,12 +6,6 @@ rawset(_G, "DiscordBot", {})
 DiscordBot.version = "0.1.46"
 DiscordBot.Data = {}
 DiscordBot.Data.msgsrb2 = ''
-
--- User-configured gametype name overrides.
--- Add WAD-defined gametypes here if G_GetGametypeName doesn't return them.
--- Format: [gametype_constant] = "Display Name"
--- Example (Battlemod): DiscordBot.Data.gametype_names = { [32] = "Survival", [33] = "Last Man Standing" }
-DiscordBot.Data.gametype_names = {}
 DiscordBot.Data.pcmtsrb2 = ''
 DiscordBot.Data.stats = ''
 DiscordBot.Data.pcmp = ''
@@ -518,11 +512,6 @@ local function get_gametype_name(gt)
 	-- Check auto-captured names from G_AddGametype wrapper
 	if DiscordBot.Data.custom_gametype_names then
 		local name = DiscordBot.Data.custom_gametype_names[gt]
-		if name then return name end
-	end
-	-- Check user-configured name overrides
-	if DiscordBot.Data.gametype_names then
-		local name = DiscordBot.Data.gametype_names[gt]
 		if name then return name end
 	end
 	local names = {
