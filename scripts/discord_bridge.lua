@@ -72,6 +72,8 @@ local function get_gametype_name(gt)
 	}
 	if GT_BATTLE then names[GT_BATTLE] = "Arena" end
 	if GT_TEAMBATTLE then names[GT_TEAMBATTLE] = "Team Arena" end
+	local known = names[gt]
+	if known then return known end
 	-- Last resort: derive name from GT_ global constant
 	if type(gt) == "number" then
 		for k, v in pairs(_G) do
@@ -82,7 +84,7 @@ local function get_gametype_name(gt)
 			end
 		end
 	end
-	return names[gt] or "Unknown"
+	return "Unknown"
 end
 
 local function reason_to_string(r)
