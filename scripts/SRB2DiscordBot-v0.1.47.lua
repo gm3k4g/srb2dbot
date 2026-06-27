@@ -12,7 +12,6 @@ DiscordBot.Data.pcmp = ''
 DiscordBot.Data.log = ''
 DiscordBot.Data.console = ''
 DiscordBot.Data.paused = false
-DiscordBot.Data._discord_msg = ''
 DiscordBot.Data.maptitle = ''
 DiscordBot.Data.nextlevel = ''
 DiscordBot.Data.iconemeralds = ''
@@ -73,7 +72,6 @@ DiscordBot.Commands.cv_joinquit = CV_RegisterVar({name = "dbot_joinquit", defaul
 DiscordBot.Commands.cv_autopause = CV_RegisterVar({name = "dbot_autopause", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_nospamchat = CV_RegisterVar({name = "dbot_nospamchat", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_messagedelay = CV_RegisterVar({name = "dbot_messagedelay", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
-DiscordBot.Commands.cv_discord = CV_RegisterVar({name = "dbot_discord", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 
 -- Read auto_pause from console.txt (written by C++ bot from modules.json)
 DiscordBot.Config = { auto_pause = true }
@@ -296,12 +294,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 				if d_clear then d_clear:write("") d_clear:close() end
 			end
 			if d_msgread ~= "" then
-				DiscordBot.Data._discord_msg = d_msgread
-				-- Toggle cv_discord to force NetVar sync (includes DiscordBot.Data)
-				local cv = CV_FindVar("dbot_discord")
-				if cv then cv.value = 1 - cv.value end
-			else
-				DiscordBot.Data._discord_msg = ''
+				COM_BufInsertText(server, "say \x89[Discord]\x80 " .. d_msgread)
 			end
 		end
 	end
@@ -442,16 +435,6 @@ local function bot_function()
 end
 
 addHook("ThinkFrame", bot_function)
-
--- Client-side: display NetVar-synced Discord messages in local chat HUD
-addHook("ThinkFrame", function()
-	if isdedicatedserver then return end
-	local msg = DiscordBot.Data._discord_msg
-	if msg and msg ~= '' then
-		chatprint("\x89[Discord]\x80 " .. msg, false)
-		DiscordBot.Data._discord_msg = ''
-	end
-end)
 
 -- Cache player teams each tick (player.ctfteam may not be set at PlayerMsg time
 -- for custom gametypes like Battlemod, where team assignment happens in hooks).
