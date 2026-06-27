@@ -686,10 +686,8 @@ addHook("ThinkFrame", function()
 end)
 
 addHook("MapChange", function(map)
-	-- Fallback: emit ROUND_END here if IntermissionThinker didn't fire
-	-- Only when gamestate is GS_NULL (skipstats path, not `map` command).
-	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted
-	   and gamestate == GS_NULL then
+	-- Emit ROUND_END if IntermissionThinker didn't fire (skipstats, or older SRB2).
+	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
 		emit_round_end(DiscordBot.Data.current_map, title)
