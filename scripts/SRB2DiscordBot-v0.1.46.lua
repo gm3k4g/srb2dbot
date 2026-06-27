@@ -663,7 +663,7 @@ local function emit_round_end(prev_map, prev_maptitle)
 		.. "|" .. players_blue .. "|" .. players_spec .. "|" .. mode
 		.. "|" .. (redscore or 0) .. "|" .. (bluescore or 0)
 		.. "|" .. round_time_str .. "|" .. json_escape(prev_maptitle)
-		.. "|" .. players_safe .. "|" .. spec_safe .. "\n"
+		.. "|" .. players_safe .. "|" .. spec_safe .. "|" .. gametype .. "\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
 	DiscordBot.Functions.flush_msgsrb2()
 	DiscordBot.Data.round_end_emitted = true
@@ -702,7 +702,7 @@ addHook("MapChange", function(map)
 	local gtname = get_gametype_name(gametype)
 	local mapstr = map_num_to_mapstr(map)
 	DiscordBot.Data.current_map = map
-	local event_line = "[EVENT:ROUND_START]|" .. gtname .. "|" .. mapstr .. "|" .. maptitle .. "\n"
+	local event_line = "[EVENT:ROUND_START]|" .. gtname .. "|" .. mapstr .. "|" .. maptitle .. "|" .. gametype .. "\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. event_line
 	DiscordBot.Functions.flush_msgsrb2()
 end)

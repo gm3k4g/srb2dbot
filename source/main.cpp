@@ -279,31 +279,41 @@ int main() {
         std::ofstream con_file(bridge_dir + "/console.txt", std::ios::trunc);
     }
 
-    // Scan latest-log.txt for gametype names and cache in JSON
+    // Load gametypes from cache for C++-side name resolution
+    std::unordered_map<int, std::string> gametypes;
     {
         std::string gt_cache_path = bot_dir + "/gametypes.json";
-        std::string gt_dir = bot_dir;
-        std::filesystem::create_directories(gt_dir);
-        auto gt_data = bridge_get_gametypes_from_log();
-        size_t count = 0;
-        if (!gt_data.empty()) {
-            nlohmann::json j;
-            for (const auto& [gt, name] : gt_data) j[std::to_string(gt)] = name;
-            std::ofstream gt_json(gt_cache_path, std::ios::trunc);
-            gt_json << j.dump(2);
-            count = gt_data.size();
-            std::cout << "[init] Gametypes: " << count << " loaded from log" << std::endl;
-        } else if (std::filesystem::exists(gt_cache_path)) {
+        std::filesystem::create_directories(bot_dir);
+        if (std::filesystem::exists(gt_cache_path)) {
             std::ifstream gt_json(gt_cache_path);
             auto j = nlohmann::json::parse(gt_json);
-            count = j.size();
-            std::cout << "[init] Gametypes: " << count << " loaded from cache" << std::endl;
+            for (auto& [key, val] : j.items()) {
+                try { gametypes[std::stoi(key)] = val.get<std::string>(); } catch (...) {}
+            }
+            std::cout << "[init] Gametypes: " << gametypes.size() << " loaded from cache" << std::endl;
+        } else {
+            // Scan latest-log.txt for gametype names
+            auto gt_data = bridge_get_gametypes_from_log();
+            if (!gt_data.empty()) {
+                nlohmann::json j;
+                for (const auto& [gt, name] : gt_data) {
+                    j[std::to_string(gt)] = name;
+                    gametypes[gt] = name;
+                }
+                std::ofstream gt_json(gt_cache_path, std::ios::trunc);
+                gt_json << j.dump(2);
+                std::cout << "[init] Gametypes: " << gametypes.size() << " loaded from log" << std::endl;
+            }
         }
-        if (count > 0) {
-            std::ifstream gt_json(gt_cache_path);
-            auto j = nlohmann::json::parse(gt_json);
-            for (auto& [key, val] : j.items())
-                std::cout << "[init]   GT_" << key << " = \"" << val.get<std::string>() << "\"" << std::endl;
+        if (!gametypes.empty()) {
+            std::cout << "[init]   Gametype mappings: ";
+            bool first = true;
+            for (const auto& [gt, name] : gametypes) {
+                if (!first) std::cout << ", ";
+                std::cout << gt << "=" << name;
+                first = false;
+            }
+            std::cout << std::endl;
         }
     }
 
@@ -343,8 +353,7 @@ int main() {
 
         bot.start_timer([&bot, &registry, messages_path, &dbot_synced,
                          &dbot_sync_retries, bridge_channel_sf, &guild_emojis,
-
-                         fifo_available](dpp::timer) {
+                         &gametypes, fifo_available](dpp::timer) {
             if (g_shutdown_requested) {
                 static bool shutdown_sent = false;
                 if (!shutdown_sent) {
@@ -408,6 +417,17 @@ int main() {
                     while (std::getline(lines, line)) {
                         if (line.empty()) continue;
                         if (auto event = bridge_parse_event(line)) {
+                            // Override gametype name from C++ cache if GT value is present
+                            if (!event->fields.empty() && !gametypes.empty() &&
+                                (event->type == "ROUND_START" || event->type == "ROUND_END")) {
+                                try {
+                                    int gt_val = std::stoi(event->fields.back());
+                                    auto it = gametypes.find(gt_val);
+                                    if (it != gametypes.end())
+                                        event->fields[0] = it->second;
+                                } catch (...) {}
+                                event->fields.pop_back();
+                            }
                             auto embed_opt = registry.handle_bridge_event(*event);
                             if (embed_opt.has_value()) {
                                 {
