@@ -15,18 +15,18 @@ rawset(_G, "DiscordBotMini", true)
 local current_map = nil
 local join_emitted = {}
 
--- Auto-capture custom gametypes from G_AddGametype calls
-if not rawget(_G, "DiscordBot") then rawset(_G, "DiscordBot", { Data = { custom_gametype_names = {}, custom_gametype_rules = {} } }) end
-if not DiscordBot.Data then DiscordBot.Data = {} end
-if not DiscordBot.Data.custom_gametype_names then DiscordBot.Data.custom_gametype_names = {} end
-if not DiscordBot.Data.custom_gametype_rules then DiscordBot.Data.custom_gametype_rules = {} end
+-- Local tables for captured gametype data (immune to NetVar deep-copy)
+local _gametype_names = {}
+local _gametype_rules = {}
+
+-- Wrap G_AddGametype to capture custom gametype names and rules at registration time.
 if G_AddGametype then
 	local orig_G_AddGametype = G_AddGametype
 	_G["G_AddGametype"] = function(tabl)
 		local gt = orig_G_AddGametype(tabl)
 		if tabl and type(gt) == "number" then
-			if tabl.name then DiscordBot.Data.custom_gametype_names[gt] = tabl.name end
-			if tabl.rules then DiscordBot.Data.custom_gametype_rules[gt] = tabl.rules end
+			if tabl.name then _gametype_names[gt] = tabl.name end
+			if tabl.rules then _gametype_rules[gt] = tabl.rules end
 		end
 		return gt
 	end
@@ -57,8 +57,8 @@ local function get_gametype_name(gt)
 		if name and name ~= "" then return name end
 	end
 	-- Check auto-captured names from G_AddGametype wrapper
-	if DiscordBot and DiscordBot.Data and DiscordBot.Data.custom_gametype_names then
-		local name = DiscordBot.Data.custom_gametype_names[gt]
+	if _gametype_names then
+		local name = _gametype_names[gt]
 		if name then return name end
 	end
 	local names = {
@@ -116,7 +116,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	local team = "none"
 	if not player.spectator then
 		local is_team = false
-		local rules = DiscordBot.Data.custom_gametype_rules[gametype]
+		local rules = _gametype_rules[gametype]
 		if rules then
 			is_team = (math.floor(rules / 1024) % 2) == 1
 		else

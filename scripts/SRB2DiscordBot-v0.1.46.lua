@@ -23,8 +23,11 @@ DiscordBot.Data.current_map = nil
 DiscordBot.Data.debug = false
 DiscordBot.Data._discord_seek_pos = 0
 DiscordBot.Data._discord_gametypes = nil
-DiscordBot.Data.custom_gametype_names = {}
-DiscordBot.Data.custom_gametype_rules = {}
+
+-- Local variable tables immune to SRB2's NetVar deep-copy (which replaces
+-- DiscordBot.Data when a player joins). Captured gametype data lives here.
+local _gametype_names = {}
+local _gametype_rules = {}
 
 -- Wrap G_AddGametype to capture custom gametype names and rules at registration time.
 -- This handles any WAD that registers gametypes via Lua (e.g. Battlemod).
@@ -33,8 +36,8 @@ if G_AddGametype then
 	_G["G_AddGametype"] = function(tabl)
 		local gt = orig_G_AddGametype(tabl)
 		if tabl and type(gt) == "number" then
-			if tabl.name then DiscordBot.Data.custom_gametype_names[gt] = tabl.name end
-			if tabl.rules then DiscordBot.Data.custom_gametype_rules[gt] = tabl.rules end
+			if tabl.name then _gametype_names[gt] = tabl.name end
+			if tabl.rules then _gametype_rules[gt] = tabl.rules end
 		end
 		return gt
 	end
@@ -47,10 +50,10 @@ addHook("ThinkFrame", function()
 	DiscordBot._gametypes_scanned = true
 	for k, v in pairs(_G) do
 		if type(k) == "string" and k:sub(1, 3) == "GT_" and type(v) == "number" then
-			if not DiscordBot.Data.custom_gametype_names[v] and G_GetGametypeName then
+			if not _gametype_names[v] and G_GetGametypeName then
 				local name = G_GetGametypeName(v)
 				if name and name ~= "" then
-					DiscordBot.Data.custom_gametype_names[v] = name
+					_gametype_names[v] = name
 				end
 			end
 		end
@@ -527,8 +530,8 @@ local function get_gametype_name(gt)
 		if name and name ~= "" then return name end
 	end
 	-- Check auto-captured names from G_AddGametype wrapper
-	if DiscordBot.Data.custom_gametype_names then
-		local name = DiscordBot.Data.custom_gametype_names[gt]
+	if _gametype_names then
+		local name = _gametype_names[gt]
 		if name then return name end
 	end
 	local names = {
@@ -585,7 +588,7 @@ local function emit_round_end(prev_map, prev_maptitle)
 	local players_spec = 0
 	local has_teams = false
 	-- Check gametype rules for GTR_TEAMS flag (bit 10 = 1024)
-	local rules = DiscordBot.Data.custom_gametype_rules[gametype]
+	local rules = _gametype_rules[gametype]
 	if rules then
 		has_teams = (math.floor(rules / 1024) % 2) == 1
 	else
