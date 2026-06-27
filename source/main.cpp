@@ -170,7 +170,7 @@ int main() {
     signal(SIGTERM, [](int) { g_shutdown_requested = 1; });
     signal(SIGQUIT, [](int) { g_shutdown_requested = 1; });
 
-    dpp::cluster bot(bot_token, dpp::i_default_intents | dpp::i_message_content);
+    dpp::cluster bot(bot_token, dpp::i_default_intents | dpp::i_message_content | dpp::i_guild_emojis);
     bot.on_log([](const dpp::log_t& event) {
 #ifndef NDEBUG
         if (event.message.find("\"op\":1") != std::string::npos) return;
@@ -228,23 +228,31 @@ int main() {
     bot.on_ready([&bot, guild_id, &guild_emojis, &registry, bridge_channel_id](const dpp::ready_t&) {
         auto guild = dpp::find_guild(guild_id);
         if (guild) {
+            std::cout << "[ready] Guild found: " << guild->name << " (" << guild->id << "), "
+                      << guild->emojis.size() << " emoji IDs in guild data" << std::endl;
             for (const auto& emoji_id : guild->emojis) {
                 auto emoji = dpp::find_emoji(emoji_id);
                 if (emoji) {
                     guild_emojis[emoji->name] = std::to_string(emoji_id);
+                } else {
+                    std::cout << "[ready]   emoji " << emoji_id << " not in cache (missing intent?)" << std::endl;
                 }
             }
+        } else {
+            std::cout << "[ready] WARNING: Guild " << guild_id << " not found in cache" << std::endl;
         }
-        std::cout << "[ready] Guild emojis loaded: " << guild_emojis.size() << " (";
+        std::cout << "[ready] Guild emojis loaded: " << guild_emojis.size();
         if (!guild_emojis.empty()) {
+            std::cout << " (";
             bool first = true;
             for (const auto& [name, id] : guild_emojis) {
                 if (!first) std::cout << ", ";
                 std::cout << name << "=" << id;
                 first = false;
             }
+            std::cout << ")";
         }
-        std::cout << ")" << std::endl;
+        std::cout << std::endl;
         if (dpp::run_once<struct notify_modules_ready>()) {
             dpp::snowflake ch = bridge_channel_id != "0" ? std::stoull(bridge_channel_id) : 0;
             if (ch != 0) registry.on_ready(bot, ch);
