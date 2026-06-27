@@ -630,16 +630,12 @@ end)
 
 addHook("MapChange", function(map)
 	-- Fallback: emit ROUND_END here if IntermissionThinker didn't fire
-	-- (e.g. skipstats path or older SRB2 without IntermissionThinker hook).
-	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted then
+	-- Only when gamestate is GS_NULL (skipstats path, not `map` command).
+	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted
+	   and gamestate == GS_NULL then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		-- Emit without player data so C++ skips generate_intermission.sh
-		local mapstr = map_num_to_mapstr(DiscordBot.Data.current_map)
-		local gtname = get_gametype_name(gametype)
-		local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|0|0|0|0|0|0|ffa|0|0|0:00|" .. json_escape(title) .. "|[]|[]\n"
-		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
-		DiscordBot.Functions.flush_msgsrb2()
+		emit_round_end(DiscordBot.Data.current_map, title)
 	end
 	DiscordBot.Data.round_end_emitted = false
 	DiscordBot.Data.current_map = nil
