@@ -29,11 +29,10 @@ DiscordBot.Data._discord_gametypes = nil
 if not rawget(_G, "_DBOT_GT") then rawset(_G, "_DBOT_GT", { names = {}, rules = {} }) end
 
 -- Wrap G_AddGametype to capture custom gametype names and rules at registration time.
--- This handles any WAD that registers gametypes via Lua (e.g. Battlemod).
 if G_AddGametype then
-	local orig_G_AddGametype = G_AddGametype
-	_G["G_AddGametype"] = function(tabl)
-		local gt = orig_G_AddGametype(tabl)
+	local orig = G_AddGametype
+	_G["G_AddGametype"] = function(tabl, ...)
+		local gt = orig(tabl, ...)
 		if tabl and type(gt) == "number" then
 			if tabl.name then _DBOT_GT.names[gt] = tabl.name end
 			if tabl.rules then _DBOT_GT.rules[gt] = tabl.rules end
