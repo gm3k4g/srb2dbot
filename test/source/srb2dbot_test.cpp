@@ -399,7 +399,7 @@ void test_sanitize_srb2_control_characters() {
         std::string expected;
         for (int i = 0x20; i <= 0x7E; ++i) {
             input += static_cast<char>(i);
-            if (i != 0x5E) expected += static_cast<char>(i);  // skip ^
+            if (i != 0x5E && i != 0x3B) expected += static_cast<char>(i);  // skip ^ and ;
         }
         CHECK(sanitize_message_for_srb2(input) == expected);
     }
@@ -438,10 +438,10 @@ void test_sanitize_srb2_control_characters() {
 
     // Verify semicolons now pass through sanitize_message_for_srb2
     // (protected by quoting at the pipe and relay level instead)
-    TEST("SRB2 control: semicolons pass through (quoted at pipe/relay level)");
+    TEST("SRB2 control: semicolons stripped (command injection prevention)");
     {
-        CHECK(sanitize_message_for_srb2("hel;quit;o") == "hel;quit;o");
-        CHECK(sanitize_message_for_srb2("say hello;quit") == "say hello;quit");
+        CHECK(sanitize_message_for_srb2("hel;quit;o") == "helquito");
+        CHECK(sanitize_message_for_srb2("say hello;quit") == "say helloquit");
     }
     PASS();
 }

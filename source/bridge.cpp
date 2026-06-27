@@ -146,7 +146,7 @@ auto sanitize_message_for_srb2(const std::string& content) -> std::string {
     std::string filtered;
     filtered.reserve(result.size());
     for (char c : result) {
-        if (c >= 0x20 && c <= 0x7E && c != '^') {
+        if (c >= 0x20 && c <= 0x7E && c != '^' && c != ';') {
             filtered.push_back(c);
         }
     }

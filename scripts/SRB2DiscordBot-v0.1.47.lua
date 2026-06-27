@@ -294,7 +294,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 						local dn = sep and string.sub(line, 1, sep - 1) or line
 						local msg = sep and string.sub(line, sep + 1) or ""
 						if #dn > 0 and #msg > 0 then
-							chatprint("\x89" .. "[Discord]" .. "\x80" .. "<" .. dn .. "> " .. msg, false)
+							COM_BufInsertText(server, "say \x89[Discord]\x80 <" .. dn .. "> " .. msg)
 						end
 					end
 				end
