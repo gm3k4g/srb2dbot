@@ -1,5 +1,5 @@
 {
-    "srb2_home": { "enabled": true, "path": "~/.srb2_server" },
+    "srb2_home": { "enabled": false, "path": "~/.srb2_server" },
     "_note": "Modules grouped by category: slash_commands, chat, auto.",
     "modules": {
         "slash_commands": {
@@ -14,22 +14,22 @@
             "chat_relay": true,
             "chat_card": {
                 "_note": "Available fields: {name}, {node}, {skin}. Custom emoji :name: shortcodes work directly in format string.",
-                "enabled": true,
+                "enabled": false,
                 "format": ":{skin}: {name}"
             },
             "server_chat_card": {
                 "_note": "Available fields: none (format only). Custom emoji :name: shortcodes work directly.",
-                "enabled": true,
+                "enabled": false,
                 "format": ":speaking_head: Server"
             },
             "csay_card": {
                 "_note": "Available fields: none (format only). Custom emoji :name: shortcodes work directly.",
-                "enabled": true,
+                "enabled": false,
                 "format": "Message"
             },
             "shutdown_card": {
                 "_note": "Available fields: {server_name}, {map}, {uptime}, {players}",
-                "enabled": true,
+                "enabled": false,
                 "message": ":red_circle: :robot: srb2dbot is down"
             }
         },
@@ -40,18 +40,18 @@
                 "enabled": false
             },
             "server_start_card": {
-                "enabled": true,
+                "enabled": false,
                 "message": ":green_circle: :robot: srb2dbot is up"
             },
             "round_start_card": {
                 "_note": "Available fields: {gametype}, {map_num}, {map_title}",
-                "enabled": true,
+                "enabled": false,
                 "message": ":map: Map is now {map_title}",
                 "thumbnails": true
             },
             "round_end_card": {
                 "_note": "Available fields: none (uses fixed format)",
-                "enabled": true,
+                "enabled": false,
                 "thumbnails": true
             },
             "flag_capture_card": false,
@@ -60,12 +60,12 @@
             "flag_return_card": false,
             "player_join_card": {
                 "_note": "Available fields: {player}, {node}",
-                "enabled": true,
+                "enabled": false,
                 "message":":bust_in_silhouette: {player} has joined the game (player {node})"
             },
             "player_quit_card": {
                 "_note": "Available fields: {player}, {node}, {reason}",
-                "enabled": true,
+                "enabled": false,
                 "message": ":door: {player} has left the game (player {node}) {reason}"
             },
             "kick_player_card": {
