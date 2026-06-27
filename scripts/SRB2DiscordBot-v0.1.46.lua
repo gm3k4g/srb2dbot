@@ -665,10 +665,20 @@ local function emit_round_end(prev_map, prev_maptitle)
 	DiscordBot.Data.round_end_emitted = true
 end
 
--- Emit ROUND_END on the first frame of intermission (fires every tick during
--- GS_INTERMISSION via Y_Ticker; P_Ticker / ThinkFrame is NOT called then).
-addHook("IntermissionThinker", function()
+-- Emit ROUND_END on the first frame of intermission.
+-- Uses IntermissionThinker (SRB2 2.2.12+) or falls back to ThinkFrame.
+pcall(function() addHook("IntermissionThinker", function()
 	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted then
+		local title = DiscordBot.Data.maptitle
+		if title == nil or title == "" then title = "Unknown" end
+		emit_round_end(DiscordBot.Data.current_map, title)
+	end
+end) end)
+
+-- Fallback: detect intermission via ThinkFrame (for older SRB2 without IntermissionThinker).
+addHook("ThinkFrame", function()
+	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted
+	   and (gamestate == GS_INTERMISSION or gamestate == GS_NULL) then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
 		emit_round_end(DiscordBot.Data.current_map, title)
