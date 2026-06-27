@@ -238,8 +238,8 @@ int main() {
                 if (emojis.is_array()) {
                     for (const auto& em : emojis) {
                         std::string name = em["name"].get<std::string>();
-                        auto id = em["id"].get<uint64_t>();
-                        guild_emojis[name] = std::to_string(id);
+                        std::string id = em["id"].get<std::string>();
+                        guild_emojis[name] = id;
                     }
                 }
                 std::cout << "[ready] Guild emojis loaded: " << guild_emojis.size();
