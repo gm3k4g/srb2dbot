@@ -41,6 +41,29 @@ if G_AddGametype then
 	end
 end
 
+-- Load gametype names from gametypes.lua (written by C++ bot from PK3 scanning).
+-- This runs after the C++ bot has written the file (bot connects after init).
+do
+	local f = io.openlocal("client/DiscordBot/gametypes.lua", "r")
+	if f then
+		local data = f:read("*a")
+		f:close()
+		local chunk, err = load(data, "gametypes.lua")
+		if chunk then
+			local ok, names = pcall(chunk)
+			if ok and type(names) == "table" then
+				for identifier, display_name in pairs(names) do
+					local gt = _G["GT_" .. identifier:upper()]
+					if gt and not _DBOT_GT.names[gt] then
+						_DBOT_GT.names[gt] = display_name
+						_DBOT_GT.rules[gt] = nil
+					end
+				end
+			end
+		end
+	end
+end
+
 -- On first ThinkFrame (after all WAD scripts loaded), scan GT_ globals to
 -- capture gametype names that the wrapper may have missed due to load order.
 addHook("ThinkFrame", function()
