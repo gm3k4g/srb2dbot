@@ -296,19 +296,19 @@ COM_AddCommand("server_log", function(player, arg, text)
 				if d_clear then d_clear:write("") d_clear:close() end
 			end
 			if d_msgread ~= "" then
-				DiscordBot.Data._discord_msg = d_msgread
+				DiscordBot.Commands._discord_msg = d_msgread
 				-- Server diag: write message to file (once per message, safe rate)
 				local diag = io.openlocal("client/DiscordBot/_serv.txt", "w")
 				if diag then diag:write(d_msgread) diag:close() end
 				-- Toggle CVar via COM_BufInsertText to force NetVar sync
-				DiscordBot.Data._discord_toggle = (DiscordBot.Data._discord_toggle or 0) + 1
-				if (DiscordBot.Data._discord_toggle % 2) == 1 then
+				DiscordBot.Commands._discord_toggle = (DiscordBot.Commands._discord_toggle or 0) + 1
+				if (DiscordBot.Commands._discord_toggle % 2) == 1 then
 					COM_BufInsertText(server, "dbot_discord On")
 				else
 					COM_BufInsertText(server, "dbot_discord Off")
 				end
 			else
-				DiscordBot.Data._discord_msg = ''
+				DiscordBot.Commands._discord_msg = ''
 			end
 		end
 	end
@@ -454,13 +454,13 @@ addHook("ThinkFrame", bot_function)
 addHook("ThinkFrame", function()
 	if isdedicatedserver then return end
 	if (leveltime % 70) ~= 35 then return end
-	local msg = DiscordBot.Data._discord_msg
+	local msg = DiscordBot.Commands._discord_msg
 	if msg and msg ~= '' then
 		-- Client diag: write to file when message received (once per message)
 		local diag = io.openlocal("client/DiscordBot/_cli.txt", "w")
 		if diag then diag:write(msg) diag:close() end
 		chatprint("\x89[Discord]\x80 " .. msg, false)
-		DiscordBot.Data._discord_msg = ''
+		DiscordBot.Commands._discord_msg = ''
 	end
 end)
 
