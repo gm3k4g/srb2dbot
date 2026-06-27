@@ -53,36 +53,16 @@ end
 addHook("ThinkFrame", function()
 	if DiscordBot._gametypes_scanned then return end
 	DiscordBot._gametypes_scanned = true
-	-- Diagnostic: report captured gametypes
-	local captured, uncaptured, gt_list, cap_list = 0, 0, "", ""
+	-- Scan GT_ globals to capture gametype names that the wrapper may have missed
 	for k, v in pairs(_G) do
 		if type(k) == "string" and k:sub(1, 3) == "GT_" and type(v) == "number" then
-			if _DBOT_GT.names[v] then
-				captured = captured + 1
-				cap_list = cap_list .. k .. "=" .. _DBOT_GT.names[v] .. " "
-			else
-				uncaptured = uncaptured + 1
-				gt_list = gt_list .. k .. "=" .. v .. " "
+			if not _DBOT_GT.names[v] and G_GetGametypeName then
+				local name = G_GetGametypeName(v)
+				if name and name ~= "" then
+					_DBOT_GT.names[v] = name
+				end
 			end
 		end
-	end
-	print("[DISCORDBOT] GT scan: " .. captured .. " captured, " .. uncaptured .. " uncaptured")
-	if captured > 0 then
-		print("[DISCORDBOT] Captured: " .. cap_list)
-		-- Also show rules for each captured gametype
-		local rules_list = ""
-		for k, v in pairs(_DBOT_GT.rules) do
-			if _DBOT_GT.names[k] then
-				local has_teams = GTR_TEAMS and (v & GTR_TEAMS) ~= 0
-				rules_list = rules_list .. _DBOT_GT.names[k] .. "=" .. v .. "(team=" .. tostring(has_teams) .. ") "
-			end
-		end
-		if rules_list ~= "" then
-			print("[DISCORDBOT] Rules: " .. rules_list)
-		end
-	end
-	if uncaptured > 0 then
-		print("[DISCORDBOT] Uncaptured: " .. gt_list)
 	end
 end)
 

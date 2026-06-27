@@ -56,10 +56,7 @@ public:
 
     auto get_bridge_attachment(const BridgeEvent& event) -> std::optional<std::pair<std::string, std::string>> override {
         if (event.type != "ROUND_END") return std::nullopt;
-        if (event.fields.size() < 15) {
-            std::cout << "[round_end_card] fields < 15: " << event.fields.size() << std::endl;
-            return std::nullopt;
-        }
+        if (event.fields.size() < 15) return std::nullopt;
 
         auto& f = event.fields;
         std::string gametype_name = f[0];
@@ -72,10 +69,7 @@ public:
         std::string players_json = unescape_pipe(f[13]);
         std::string spec_json    = f.size() >= 15 ? unescape_pipe(f[14]) : "[]";
 
-        if (map_name.empty()) {
-            std::cout << "[round_end_card] map_name empty" << std::endl;
-            return std::nullopt;
-        }
+        if (map_name.empty()) return std::nullopt;
 
         std::string thumb_dir = bot_dir_ + "/thumbnails";
         std::filesystem::create_directories(thumb_dir);

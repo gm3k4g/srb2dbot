@@ -305,16 +305,6 @@ int main() {
                 std::cout << "[init] Gametypes: " << gametypes.size() << " loaded from log" << std::endl;
             }
         }
-        if (!gametypes.empty()) {
-            std::cout << "[init]   Gametype mappings: ";
-            bool first = true;
-            for (const auto& [gt, name] : gametypes) {
-                if (!first) std::cout << ", ";
-                std::cout << gt << "=" << name;
-                first = false;
-            }
-            std::cout << std::endl;
-        }
     }
 
     // Read auto_pause from modules.json and write to console.txt for the Lua script
