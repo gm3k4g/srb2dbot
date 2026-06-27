@@ -298,7 +298,8 @@ COM_AddCommand("server_log", function(player, arg, text)
 			if d_msgread ~= "" then
 				DiscordBot.Data._discord_msg = d_msgread
 				-- Toggle cv_discord to force NetVar sync (includes DiscordBot.Data)
-				DiscordBot.Commands.cv_discord.value = 1 - DiscordBot.Commands.cv_discord.value
+				local cv = CV_FindVar("dbot_discord")
+				if cv then cv.value = 1 - cv.value end
 			else
 				DiscordBot.Data._discord_msg = ''
 			end
