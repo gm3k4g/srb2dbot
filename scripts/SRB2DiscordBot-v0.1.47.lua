@@ -314,9 +314,8 @@ COM_AddCommand("discord_message", function(player, ...)
 	if player ~= server then return end
 	if not ... then return end
 	local args = {...}
-	for _, i in ipairs(args) do
-		chatprint("\x89" .. "[Discord]" .. "\x80" .. " " .. i, false)
-	end
+	local msg = table.concat(args, " ")
+	chatprint("\x89" .. "[Discord]" .. "\x80" .. " " .. msg, false)
 end, COM_LOCAL)
 
 COM_AddCommand("dbot_debug", function(player, arg)
