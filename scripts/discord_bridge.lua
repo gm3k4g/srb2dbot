@@ -125,14 +125,9 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	local skinname = (skins[player.skin] and skins[player.skin].name) or ""
 	local flag = (player.gotflag and player.gotflag > 0) and "1" or "0"
 	local team = "none"
-	if not player.spectator then
-		local is_team = false
-		local rules = _DBOT_GT.rules[gametype]
-		if rules then
-			is_team = (rules % 2048) >= 1024
-		else
-			is_team = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
-		end
+	if not player.spectator and (player.ctfteam == 1 or player.ctfteam == 2) then
+		team = tostring(player.ctfteam)
+	end
 		if is_team then
 			team = tostring(player.ctfteam or 0)
 		end
