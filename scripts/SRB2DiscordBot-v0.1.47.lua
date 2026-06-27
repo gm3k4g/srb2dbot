@@ -438,7 +438,8 @@ addHook("ThinkFrame", bot_function)
 local _player_team = {}
 addHook("ThinkFrame", function()
 	for p in players.iterate do
-		_player_team[#p] = (p.ctfteam == 1 or p.ctfteam == 2) and p.ctfteam or 0
+		local t = tonumber(p.ctfteam)
+		_player_team[#p] = (t == 1 or t == 2) and t or 0
 	end
 end)
 
