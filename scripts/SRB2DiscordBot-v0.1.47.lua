@@ -73,6 +73,7 @@ DiscordBot.Commands.cv_joinquit = CV_RegisterVar({name = "dbot_joinquit", defaul
 DiscordBot.Commands.cv_autopause = CV_RegisterVar({name = "dbot_autopause", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_nospamchat = CV_RegisterVar({name = "dbot_nospamchat", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_messagedelay = CV_RegisterVar({name = "dbot_messagedelay", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
+DiscordBot.Commands.cv_discord = CV_RegisterVar({name = "dbot_discord", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 
 -- Read auto_pause from console.txt (written by C++ bot from modules.json)
 DiscordBot.Config = { auto_pause = true }
@@ -296,6 +297,8 @@ COM_AddCommand("server_log", function(player, arg, text)
 			end
 			if d_msgread ~= "" then
 				DiscordBot.Data._discord_msg = d_msgread
+				-- Toggle cv_discord to force NetVar sync (includes DiscordBot.Data)
+				DiscordBot.Commands.cv_discord.value = 1 - DiscordBot.Commands.cv_discord.value
 			else
 				DiscordBot.Data._discord_msg = ''
 			end
