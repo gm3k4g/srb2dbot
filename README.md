@@ -45,19 +45,26 @@ Events are written to `Messages.txt` immediately when they occur (SERVER_START, 
 
 ## Deployment (NixOS → Debian 12)
 
-NixOS ships glibc 2.40+; Debian 12 has glibc 2.36. Binaries built on NixOS won't run on Debian 12. Use Docker to build a compatible binary:
+NixOS ships glibc 2.40+; Debian 12 has glibc 2.36. Build directly on the Debian 12 server:
 
 ```bash
-# Build in Debian 12 container, outputs to ./build-portable/
-./docker-build.sh
+# On the Debian 12 server:
+sudo apt install build-essential cmake nlohmann-json3-dev libssl-dev libopus-dev git
 
-# SCP to server
-scp build-portable/srb2dbot build-portable/libdpp.so.10.1.5 user@server:~/.srb2dbot/
+# Build D++ from source
+git clone --depth 1 --branch v10.1.5 https://github.com/brainboxdotcc/dpp.git
+cmake -S dpp -B dpp/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+sudo cmake --build dpp/build -j$(nproc)
+sudo cmake --install dpp/build
 
-# On server: sudo apt install libssl3 libopus0 ca-certificates
+# Build srb2dbot
+git clone https://github.com/gm3k4g/srb2dbot.git
+cd srb2dbot
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
 ```
 
-The first build (~10 min) compiles D++ from source. Subsequent builds are cached and take ~1 min.
+Or for NixOS → native Linux deployment without Docker, use `nix-shell -p patchelf` to fix the ELF interpreter after building (see docs).
 
 ## Configuration
 

@@ -124,21 +124,23 @@ cp secret.json.default secret.json
 
 <h2>Deployment (NixOS → Debian 12)</h2>
 <p>
-    NixOS ships glibc 2.40+; Debian 12 has glibc 2.36. Binaries built on
-    NixOS require <code>GLIBC_2.38</code> symbols unavailable on Debian 12.
-    Use Docker to build inside a Debian 12 container:
+    NixOS ships glibc 2.40+; Debian 12 has glibc 2.36. Build directly on
+    the Debian 12 server to avoid glibc mismatch:
 </p>
-<pre><code># Build portable binary (output: build-portable/)
-./docker-build.sh
+<pre><code># On the Debian 12 server:
+sudo apt install build-essential cmake nlohmann-json3-dev libssl-dev libopus-dev git
 
-# SCP to server
-scp build-portable/srb2dbot build-portable/libdpp.so.10.1.5 user@server:~/.srb2dbot/
+# Build D++ from source
+git clone --depth 1 --branch v10.1.5 https://github.com/brainboxdotcc/dpp.git
+cmake -S dpp -B dpp/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build dpp/build -j$(nproc)
+sudo cmake --install dpp/build
 
-# On server: sudo apt install libssl3 libopus0 ca-certificates</code></pre>
-<p>
-    First build takes ~10 minutes (compiles D++ from source). Subsequent
-    builds are cached and take ~1 minute. Requires Docker.
-</p>
+# Build srb2dbot
+git clone https://github.com/gm3k4g/srb2dbot.git
+cd srb2dbot
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)</code></pre>
 
 <h2>Configuration</h2>
 <p>Create <code>secret.json</code> from the template:</p>

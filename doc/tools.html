@@ -174,34 +174,32 @@ find /path/to/addons -name '*.pk3' -exec unzip -o {} -d {}_FILES \
     --spectators-file spectators.json</code></pre>
 <p>Spectator JSON format: <code>["name1", "name2", ...]</code></p>
 
-<h2>Docker Portable Build</h2>
+<h2>Build Script</h2>
 <p>
-    <code>./docker-build.sh</code>  -  builds srb2dbot inside a Debian 12
-    Docker container so the binary links against glibc 2.36 (Debian 12).
-</p>
-
-<h3>Why</h3>
-<p>
-    NixOS ships glibc 2.40+. Debian 12 has glibc 2.36. Binaries built on
-    NixOS need <code>GLIBC_2.38</code> symbols unavailable on Debian 12.
-    Docker provides an isolated Debian 12 build environment.
+    <code>./build.sh</code>  -  CMake build wrapper with auto-detection of
+    NixOS vs standard Linux. Handles dependency checking, build configuration,
+    testing, and bot launching.
 </p>
 
 <h3>Usage</h3>
-<pre><code>./docker-build.sh</code></pre>
-<p>Output: <code>build-portable/srb2dbot</code> + <code>build-portable/libdpp.so.10.1.5</code></p>
+<pre><code>./build.sh                    # Debug build (default)
+./build.sh --release          # Release build (+ static C++ runtime)
+./build.sh --test             # Debug build + run tests
+./build.sh --clean --release  # Clean rebuild
+./build.sh --release --run    # Build + start bot</code></pre>
 
-<h3>Deploy</h3>
-<pre><code>scp build-portable/srb2dbot build-portable/libdpp.so.10.1.5 user@server:~/.srb2dbot/
-# On server: sudo apt install libssl3 libopus0 ca-certificates</code></pre>
-
-<h3>Implementation</h3>
-<p><code>Dockerfile</code> multi-stage build:</p>
-<ol>
-    <li><strong>Builder</strong>  -  debian:bookworm, compiles D++ 10.1.5 from source, builds srb2dbot</li>
-    <li><strong>Runtime</strong>  -  debian:bookworm-slim + libssl3 + libopus0 + libdpp.so + srb2dbot</li>
-</ol>
-<p><code>docker-build.sh</code> uses <code>docker cp</code> to extract the binary and libdpp to the host.</p>
+<h3>Deploying from NixOS to Debian 12</h3>
+<p>
+    Build directly on the server to avoid glibc version mismatch:
+</p>
+<pre><code># On Debian 12 server:
+sudo apt install build-essential cmake nlohmann-json3-dev libssl-dev libopus-dev git
+git clone --depth 1 --branch v10.1.5 https://github.com/brainboxdotcc/dpp.git
+cmake -S dpp -B dpp/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build dpp/build -j$(nproc) && sudo cmake --install dpp/build
+git clone https://github.com/gm3k4g/srb2dbot.git
+cmake -S srb2dbot -B srb2dbot/build -DCMAKE_BUILD_TYPE=Release
+cmake --build srb2dbot/build -j$(nproc)</code></pre>
 
 <h2>Intermission Test Harness</h2>
 <p><code>./test_intermission.sh</code>  -  generates sample outputs for 2, 4, 8, 12, 16, 18, and 24 players in both FFA and Team modes, verifying that all hitboxes pass validation and outputs are valid transparent PNGs.</p>

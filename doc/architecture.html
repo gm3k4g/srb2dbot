@@ -158,13 +158,16 @@
 
 <h2>Deployment (NixOS → Debian 12)</h2>
 <p>
-    NixOS ships glibc 2.40+; Debian 12 ships glibc 2.36. A binary compiled
-    on NixOS requires <code>GLIBC_2.38</code> symbols unavailable on Debian
-    12. The <code>Dockerfile</code> builds inside a <code>debian:bookworm</code>
-    container, producing a binary that links against glibc 2.36.
-    <code>docker-build.sh</code> extracts the binary and libdpp to
-    <code>build-portable/</code>.
+    NixOS ships glibc 2.40+; Debian 12 ships glibc 2.36. Build directly on
+    the Debian 12 server to avoid glibc mismatch:
 </p>
+<pre><code>sudo apt install build-essential cmake nlohmann-json3-dev libssl-dev libopus-dev git
+git clone --depth 1 --branch v10.1.5 https://github.com/brainboxdotcc/dpp.git
+cmake -S dpp -B dpp/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build dpp/build -j$(nproc) && sudo cmake --install dpp/build
+git clone https://github.com/gm3k4g/srb2dbot.git
+cmake -S srb2dbot -B srb2dbot/build -DCMAKE_BUILD_TYPE=Release
+cmake --build srb2dbot/build -j$(nproc)</code></pre>
 
 <h2>CI Pipeline</h2>
 <p>CMake presets provide automated builds for Ubuntu (GCC/clang with clang-tidy, cppcheck), macOS (AppleClang), and Windows (MSVC). Dev mode enables CTest, clang-format linting, codespell, and code coverage with gcov/lcov.</p>

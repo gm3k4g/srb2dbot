@@ -165,7 +165,7 @@ cd build && ctest --output-on-failure
 <pre><code>cmake --preset ci-ubuntu
 cmake --build build -j$(nproc)</code></pre>
 
-<h2>Docker Portable Build (NixOS → Debian 12)</h2>
+<h2>Native Build on Debian 12</h2>
 
 <h3>The Problem</h3>
 <p>
@@ -176,29 +176,32 @@ cmake --build build -j$(nproc)</code></pre>
 
 <h3>Solution</h3>
 <p>
-    Build inside a Debian 12 Docker container. The <code>Dockerfile</code>
-    compiles D++ 10.1.5 from source and produces a runtime image.
-    <code>docker-build.sh</code> extracts the binary and libdpp to
-    <code>build-portable/</code>.
+    Build directly on the Debian 12 server. All dependencies are available
+    in the Debian 12 repos except D++, which must be compiled from source:
 </p>
 
-<pre><code># Requires: Docker
-./docker-build.sh
+<pre><code># Install build dependencies
+sudo apt install build-essential cmake nlohmann-json3-dev \
+    libssl-dev libopus-dev git
 
-# Output in build-portable/:
-#   srb2dbot             - the portable binary (glibc 2.36, /lib64/ld-linux)
-#   libdpp.so.10.1.5     - D++ runtime library (RPATH=$ORIGIN)
+# Build D++ 10.1.5 from source
+git clone --depth 1 --branch v10.1.5 https://github.com/brainboxdotcc/dpp.git
+cmake -S dpp -B dpp/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build dpp/build -j$(nproc)
+sudo cmake --install dpp/build
 
-# Deploy to server:
-scp build-portable/srb2dbot build-portable/libdpp.so.10.1.5 user@server:~/.srb2dbot/
-# On server: sudo apt install libssl3 libopus0 ca-certificates</code></pre>
+# Build srb2dbot
+git clone https://github.com/gm3k4g/srb2dbot.git
+cd srb2dbot
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)</code></pre>
 
 <h3>Notes</h3>
 <ul>
-    <li>First build: ~10 minutes (compiles D++ from source)</li>
-    <li>Subsequent builds: ~1 minute (Docker cache)</li>
-    <li>libdpp.so must be in the same directory as the binary</li>
+    <li>First D++ build: ~5 minutes (compiles from source)</li>
+    <li>Subsequent srb2dbot builds: ~1 minute</li>
     <li>Release builds pass <code>-static-libstdc++ -static-libgcc</code></li>
+    <li>Resulting binary links against glibc 2.36  -  no patchelf needed</li>
 </ul>
 
 <h2>Configuration</h2>
