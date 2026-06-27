@@ -433,6 +433,15 @@ end
 
 addHook("ThinkFrame", bot_function)
 
+-- Cache player teams each tick (player.ctfteam may not be set at PlayerMsg time
+-- for custom gametypes like Battlemod, where team assignment happens in hooks).
+local _player_team = {}
+addHook("ThinkFrame", function()
+	for p in players.iterate do
+		_player_team[#p] = (p.ctfteam == 1 or p.ctfteam == 2) and p.ctfteam or 0
+	end
+end)
+
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
 	if type == 0 then
@@ -450,10 +459,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		local jointime = (DiscordBot._join_times and DiscordBot._join_times[#player]) and tostring(DiscordBot._join_times[#player]) or "0"
 		if DiscordBot.Data.debug then print("[DEBUG] PlayerMsg jointime=" .. jointime .. " (tbl=" .. tostring(DiscordBot._join_times) .. " val=" .. tostring(DiscordBot._join_times and DiscordBot._join_times[#player]) .. ")" .. " node=" .. #player .. " player=" .. player.name) end
 		local flag = player.gotflag and player.gotflag > 0 and "1" or "0"
-		local team = "none"
-		if not player.spectator and (player.ctfteam == 1 or player.ctfteam == 2) then
-			team = tostring(player.ctfteam)
-		end
+		local team = tostring(_player_team[#player] or 0)
 		text = "[EVENT:CHAT]|[" .. #player .. "]|" .. player.name .. "|" .. message .. "|" .. (skins[player.skin] and skins[player.skin].name or "") .. "|" .. jointime .. "|" .. flag .. "|" .. team .. "\n"
 		if IsPlayerAdmin(player) then
 			text = "[EVENT:CHAT]|[" .. #player .. "]|@" .. player.name .. "|" .. message .. "|" .. (skins[player.skin] and skins[player.skin].name or "") .. "|" .. jointime .. "|" .. flag .. "|" .. team .. "\n"
