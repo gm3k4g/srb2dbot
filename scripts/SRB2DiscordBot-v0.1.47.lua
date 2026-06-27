@@ -294,9 +294,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 						local dn = sep and string.sub(line, 1, sep - 1) or line
 						local msg = sep and string.sub(line, sep + 1) or ""
 						if #dn > 0 and #msg > 0 then
-							for p in players.iterate do
-								chatprintf(p, "\x89[Discord]\x80 <%s> %s", dn, msg)
-							end
+							chatprint("\x89" .. "[Discord]" .. "\x80" .. "<" .. dn .. "> " .. msg, false)
 						end
 					end
 				end
