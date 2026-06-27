@@ -277,29 +277,24 @@ COM_AddCommand("server_log", function(player, arg, text)
 		if DiscordBot.Data.debug then COM_BufInsertText(server, "echo [DBOT] server_log discord running") end
 		local d_msg = io.openlocal("client/DiscordBot/discordmessage.txt", "r")
 		if d_msg then
-			local fsize = d_msg:seek("end")
-			if fsize > 65536 then
-				d_msg:close()
+			local d_msgread = d_msg:read("*a") or ""
+			d_msg:close()
+			if #d_msgread > 220 then
+				-- Chunk: process first 220 bytes, write remainder back
+				local remainder = string.sub(d_msgread, 221)
+				d_msgread = string.sub(d_msgread, 1, 220)
+				-- Write remainder back so next poll picks it up
 				local d_clear = io.openlocal("client/DiscordBot/discordmessage.txt", "w")
-				if d_clear then d_clear:close() end
-				DiscordBot.Data._discord_seek_pos = 0
-			else
-				d_msg:seek("set", DiscordBot.Data._discord_seek_pos)
-				while true do
-					local line = d_msg:read("*l")
-					if not line then break end
-					if #line > 0 then
-						-- Format: display_name|message
-						local sep = string.find(line, "|", 1, true)
-						local dn = sep and string.sub(line, 1, sep - 1) or line
-						local msg = sep and string.sub(line, sep + 1) or ""
-						if #dn > 0 and #msg > 0 then
-							COM_BufInsertText(server, "discord_message " .. dn .. " " .. msg)
-						end
-					end
+				if d_clear then
+					d_clear:write(remainder)
+					d_clear:close()
 				end
-				DiscordBot.Data._discord_seek_pos = d_msg:seek()
-				d_msg:close()
+			else
+				local d_clear = io.openlocal("client/DiscordBot/discordmessage.txt", "w")
+				if d_clear then d_clear:write("") d_clear:close() end
+			end
+			if d_msgread ~= "" then
+				COM_BufInsertText(server, "discord_message " .. d_msgread)
 			end
 		end
 	end
