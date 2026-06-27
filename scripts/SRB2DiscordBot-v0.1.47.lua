@@ -649,12 +649,21 @@ local function emit_round_end(prev_map, prev_maptitle)
 
 	local server_up_tics = (os.time() - DiscordBot.Data.server_started) * 35
 
+	local pointlimit = 0
+	if type(gametype) == "number" then
+		local id = B and B.GametypeIDtoIdentifier and B.GametypeIDtoIdentifier[gametype]
+		if id then
+			local cv = _G[id .. "_pointlimit"]
+			if cv and cv.value then pointlimit = tonumber(cv.value) or 0 end
+		end
+	end
+
 	local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime
 		.. "|" .. server_up_tics .. "|" .. players_total .. "|" .. players_red
 		.. "|" .. players_blue .. "|" .. players_spec .. "|" .. mode
 		.. "|" .. (redscore or 0) .. "|" .. (bluescore or 0)
 		.. "|" .. round_time_str .. "|" .. json_escape(prev_maptitle)
-		.. "|" .. players_safe .. "|" .. spec_safe .. "|" .. gametype .. "\n"
+		.. "|" .. players_safe .. "|" .. spec_safe .. "|" .. pointlimit .. "|" .. gametype .. "\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
 	DiscordBot.Functions.flush_msgsrb2()
 	DiscordBot.Data.round_end_emitted = true

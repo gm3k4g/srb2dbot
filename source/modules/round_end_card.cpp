@@ -68,6 +68,7 @@ public:
         std::string map_title    = unescape_pipe(f[12]);
         std::string players_json = unescape_pipe(f[13]);
         std::string spec_json    = f.size() >= 15 ? unescape_pipe(f[14]) : "[]";
+        std::string point_limit  = f.size() >= 16 ? f[15] : "0";
 
         if (map_name.empty()) return std::nullopt;
 
@@ -110,6 +111,9 @@ public:
         };
         if (!round_time.empty()) {
             args.push_back("--round-time"); args.push_back(round_time);
+        }
+        if (point_limit != "0") {
+            args.push_back("--point-limit"); args.push_back(point_limit);
         }
         if (mode == "team") {
             args.push_back("--blue-score"); args.push_back(blue_score);
