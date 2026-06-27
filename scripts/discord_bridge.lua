@@ -72,6 +72,16 @@ local function get_gametype_name(gt)
 	}
 	if GT_BATTLE then names[GT_BATTLE] = "Arena" end
 	if GT_TEAMBATTLE then names[GT_TEAMBATTLE] = "Team Arena" end
+	-- Last resort: derive name from GT_ global constant
+	if type(gt) == "number" then
+		for k, v in pairs(_G) do
+			if type(k) == "string" and k:sub(1, 3) == "GT_" and v == gt then
+				local name = k:sub(4):gsub("_", " "):lower()
+				name = name:gsub("(%a)([%a]*)", function(f, r) return f:upper()..r end)
+				return name
+			end
+		end
+	end
 	return names[gt] or "Unknown"
 end
 
