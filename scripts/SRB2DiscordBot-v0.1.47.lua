@@ -650,13 +650,16 @@ local function emit_round_end(prev_map, prev_maptitle)
 	local server_up_tics = (os.time() - DiscordBot.Data.server_started) * 35
 
 	local pointlimit = 0
-	if type(gametype) == "number" then
-		local id = B and B.GametypeIDtoIdentifier and B.GametypeIDtoIdentifier[gametype]
-		if id then
-			local cv = _G[id .. "_pointlimit"]
-			if cv and cv.value then pointlimit = tonumber(cv.value) or 0 end
+	pcall(function()
+		local battletbl = _G["CBW_Battle"]
+		if battletbl and battletbl.GametypeIDtoIdentifier then
+			local id = battletbl.GametypeIDtoIdentifier[gametype]
+			if id then
+				local cv = _G[id .. "_pointlimit"]
+				if cv and cv.value then pointlimit = tonumber(cv.value) or 0 end
+			end
 		end
-	end
+	end)
 
 	local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime
 		.. "|" .. server_up_tics .. "|" .. players_total .. "|" .. players_red
