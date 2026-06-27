@@ -625,13 +625,12 @@ local function emit_round_end(prev_map, prev_maptitle)
 	local players_blue = 0
 	local players_spec = 0
 	local has_teams = false
-	-- Check gametype rules for GTR_TEAMS flag (bit 10 = 1024)
-	local rules = _DBOT_GT.rules[gametype]
-	if rules then
-		has_teams = (rules % 2048) >= 1024
-	else
-		-- Fallback: known team gametypes
-		has_teams = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
+	-- Detect team mode from player data (more reliable than gametype rules bitfield)
+	for p in players.iterate do
+		if not p.spectator and (p.ctfteam == 1 or p.ctfteam == 2) then
+			has_teams = true
+			break
+		end
 	end
 	for p in players.iterate do
 		players_total = $ + 1
