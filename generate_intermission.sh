@@ -24,6 +24,7 @@ GAMETYPE="ffa"
 MAP=""
 TITLE=""
 ROUND_TIME=""
+POINT_LIMIT=""
 BLUE_SCORE=0
 RED_SCORE=0
 PLAYERS_JSON=""
@@ -190,6 +191,7 @@ while [[ $# -gt 0 ]]; do
         --map)           MAP="$2"; shift 2 ;;
         --title)        TITLE="$2"; shift 2 ;;
         --round-time)   ROUND_TIME="$2"; shift 2 ;;
+        --point-limit)  POINT_LIMIT="$2"; shift 2 ;;
         --blue-score)   BLUE_SCORE="$2"; shift 2 ;;
         --red-score)    RED_SCORE="$2"; shift 2 ;;
         --players)      PLAYERS_JSON="$2"; shift 2 ;;
@@ -331,12 +333,21 @@ gen_mvg() {
     echo "  text $((WIDTH/2)),22 '$gt_display'" >> "$f"
     if [[ -n "$ROUND_TIME" ]]; then
         echo "  text-anchor end" >> "$f"
-        echo "  text $((WIDTH-14)),22 '$ROUND_TIME'" >> "$f"
+        echo "  font-size 14" >> "$f"
+        echo "  fill '$C_SCORE'" >> "$f"
+        echo "  text $((WIDTH-14)),22 'Time: $ROUND_TIME'" >> "$f"
     fi
     # Line 2: map name + number (bottom, smaller font)
     echo "  font-size 16" >> "$f"
+    echo "  fill '$C_PLAYER'" >> "$f"
     echo "  text-anchor middle" >> "$f"
     echo "  text $((WIDTH/2)),44 '$map_line'" >> "$f"
+    if [[ -n "$POINT_LIMIT" ]]; then
+        echo "  text-anchor end" >> "$f"
+        echo "  font-size 13" >> "$f"
+        echo "  fill '$C_TITLE'" >> "$f"
+        echo "  text $((WIDTH-14)),44 'Point limit: $POINT_LIMIT'" >> "$f"
+    fi
     echo "  text-anchor start" >> "$f"
 
     if [[ "$GAMETYPE" == "team" ]]; then
