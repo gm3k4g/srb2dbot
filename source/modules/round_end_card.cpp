@@ -34,7 +34,7 @@ public:
         std::string spec_pl   = event.fields.size() >= 8 ? event.fields[7] : "0";
 
         dpp::embed embed;
-        embed.set_title("The round has ended.");
+        embed.set_title("Exiting...");
         embed.set_color(0xE74C3C);
         embed.set_timestamp(std::time(nullptr));
 
@@ -69,7 +69,7 @@ public:
         std::string players_json = unescape_pipe(f[13]);
         std::string spec_json    = f.size() >= 15 ? unescape_pipe(f[14]) : "[]";
 
-        if (map_name.empty()) return std::nullopt;
+        if (map_name.empty() || players_json == "[]") return std::nullopt;
 
         std::string thumb_dir = bot_dir_ + "/thumbnails";
         std::filesystem::create_directories(thumb_dir);

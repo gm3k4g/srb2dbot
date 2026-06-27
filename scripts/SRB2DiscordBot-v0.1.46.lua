@@ -634,7 +634,12 @@ addHook("MapChange", function(map)
 	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title)
+		-- Emit without player data so C++ skips generate_intermission.sh
+		local mapstr = map_num_to_mapstr(DiscordBot.Data.current_map)
+		local gtname = get_gametype_name(gametype)
+		local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|0|0|0|0|0|0|ffa|0|0|0:00|" .. json_escape(title) .. "|[]|[]\n"
+		DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
+		DiscordBot.Functions.flush_msgsrb2()
 	end
 	DiscordBot.Data.round_end_emitted = false
 	DiscordBot.Data.current_map = nil
