@@ -235,6 +235,16 @@ int main() {
                 }
             }
         }
+        std::cout << "[ready] Guild emojis loaded: " << guild_emojis.size() << " (";
+        if (!guild_emojis.empty()) {
+            bool first = true;
+            for (const auto& [name, id] : guild_emojis) {
+                if (!first) std::cout << ", ";
+                std::cout << name << "=" << id;
+                first = false;
+            }
+        }
+        std::cout << ")" << std::endl;
         if (dpp::run_once<struct notify_modules_ready>()) {
             dpp::snowflake ch = bridge_channel_id != "0" ? std::stoull(bridge_channel_id) : 0;
             if (ch != 0) registry.on_ready(bot, ch);
@@ -359,7 +369,10 @@ int main() {
                         if (auto event = bridge_parse_event(line)) {
                             auto embed_opt = registry.handle_bridge_event(*event);
                             if (embed_opt.has_value()) {
-                                embed_opt->title = bridge_replace_emojis(embed_opt->title, guild_emojis);
+                                {
+                                    std::string title = bridge_replace_emojis(embed_opt->title, guild_emojis);
+                                    embed_opt->set_title(title);
+                                }
 #ifndef NDEBUG
                                 std::cout << "[bridge] SRB2→Discord: " << event->type << " raw=" << line << std::endl;
 #endif

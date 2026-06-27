@@ -39,3 +39,4 @@ source/version.h
 # Deploy output
 deploy/
 build-portable/
+build-test/
