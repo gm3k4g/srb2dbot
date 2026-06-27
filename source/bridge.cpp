@@ -550,61 +550,29 @@ auto bridge_extract_thumbnail(const std::string& map, const std::string& outdir)
     remove(ppm_path.c_str());
 }
 
-auto bridge_scan_pk3_gametypes() -> std::unordered_map<std::string, std::string> {
-    std::unordered_map<std::string, std::string> result;
-    auto pk3s = bridge_get_loaded_pk3s();
+auto bridge_get_gametypes_from_log() -> std::unordered_map<int, std::string> {
+    std::unordered_map<int, std::string> gametypes;
+    std::string log_path = dir_srb2_str() + "/latest-log.txt";
+    std::ifstream log(log_path);
+    if (!log.is_open()) return gametypes;
 
-    for (const auto& pk3_path : pk3s) {
-        std::string lua_data;
-        {
-            int pipefd[2];
-            if (pipe(pipefd) == -1) continue;
-            pid_t pid = fork();
-            if (pid == -1) { close(pipefd[0]); close(pipefd[1]); continue; }
-            if (pid == 0) {
-                close(pipefd[0]);
-                dup2(pipefd[1], STDOUT_FILENO);
-                close(pipefd[1]);
-                int devnull = open("/dev/null", O_WRONLY);
-                if (devnull != -1) { dup2(devnull, STDERR_FILENO); close(devnull); }
-                execlp("unzip", "unzip", "-p", pk3_path.c_str(), "*.lua", (char*)nullptr);
-                _exit(EXIT_FAILURE);
+    // Match "Registered gametype %d: %s" and "Added gametype [%s]"
+    std::string line;
+    while (std::getline(log, line)) {
+        // Pattern 1: "Registered gametype N: Name"
+        auto pos = line.find("Registered gametype ");
+        if (pos != std::string::npos) {
+            pos += 19;
+            auto colon = line.find(':', pos);
+            if (colon != std::string::npos) {
+                try {
+                    int gt = std::stoi(line.substr(pos, colon - pos));
+                    std::string name = line.substr(colon + 2);
+                    if (!name.empty() && gt > 0) gametypes[gt] = name;
+                } catch (...) {}
             }
-            close(pipefd[1]);
-            char buf[8192];
-            ssize_t n;
-            while ((n = read(pipefd[0], buf, sizeof(buf))) > 0)
-                lua_data.append(buf, n);
-            close(pipefd[0]);
-            int status;
-            waitpid(pid, &status, 0);
-        }
-
-        // Parse for G_AddGametype({ ... name = "..." ... identifier = "..." ... })
-        std::string marker = "G_AddGametype({";
-        size_t pos = 0;
-        while ((pos = lua_data.find(marker, pos)) != std::string::npos) {
-            pos += marker.size();
-            // Look for name = "..." within next 200 chars
-            auto name_pos = lua_data.find("name = \"", pos);
-            std::string name, identifier;
-            if (name_pos != std::string::npos && name_pos - pos < 200) {
-                name_pos += 8; // skip 'name = "'
-                auto end_quote = lua_data.find('"', name_pos);
-                if (end_quote != std::string::npos && end_quote - name_pos < 100)
-                    name = lua_data.substr(name_pos, end_quote - name_pos);
-            }
-            // Look for identifier = "..." within next 200 chars
-            auto id_pos = lua_data.find("identifier = \"", pos);
-            if (id_pos != std::string::npos && id_pos - pos < 200) {
-                id_pos += 14; // skip 'identifier = "'
-                auto end_quote = lua_data.find('"', id_pos);
-                if (end_quote != std::string::npos && end_quote - id_pos < 100)
-                    identifier = lua_data.substr(id_pos, end_quote - id_pos);
-            }
-            if (!name.empty() && !identifier.empty())
-                result[identifier] = name;
+            continue;
         }
     }
-    return result;
+    return gametypes;
 }

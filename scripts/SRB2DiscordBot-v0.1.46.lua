@@ -41,8 +41,7 @@ if G_AddGametype then
 	end
 end
 
--- Load gametype names from gametypes.lua (written by C++ bot from PK3 scanning).
--- This runs after the C++ bot has written the file (bot connects after init).
+-- Load gametype names from gametypes.lua (written by C++ bot from latest-log.txt).
 do
 	local f = io.openlocal("client/DiscordBot/gametypes.lua", "r")
 	if f then
@@ -52,11 +51,9 @@ do
 		if chunk then
 			local ok, names = pcall(chunk)
 			if ok and type(names) == "table" then
-				for identifier, display_name in pairs(names) do
-					local gt = _G["GT_" .. identifier:upper()]
-					if gt and not _DBOT_GT.names[gt] then
+				for gt, display_name in pairs(names) do
+					if type(gt) == "number" and not _DBOT_GT.names[gt] then
 						_DBOT_GT.names[gt] = display_name
-						_DBOT_GT.rules[gt] = nil
 					end
 				end
 			end
