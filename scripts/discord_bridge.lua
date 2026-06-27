@@ -129,7 +129,7 @@ addHook("PlayerMsg", function(player, type, target, msg)
 		local is_team = false
 		local rules = _DBOT_GT.rules[gametype]
 		if rules then
-			is_team = (math.floor(rules / 1024) % 2) == 1
+			is_team = (rules % 2048) >= 1024
 		else
 			is_team = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
 		end

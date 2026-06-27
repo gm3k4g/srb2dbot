@@ -617,7 +617,7 @@ local function emit_round_end(prev_map, prev_maptitle)
 	-- Check gametype rules for GTR_TEAMS flag (bit 10 = 1024)
 	local rules = _DBOT_GT.rules[gametype]
 	if rules then
-		has_teams = (math.floor(rules / 1024) % 2) == 1
+		has_teams = (rules % 2048) >= 1024
 	else
 		-- Fallback: known team gametypes
 		has_teams = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
