@@ -73,7 +73,7 @@ addHook("ThinkFrame", function()
 		local rules_list = ""
 		for k, v in pairs(_DBOT_GT.rules) do
 			if _DBOT_GT.names[k] then
-				local has_teams = (v % 2048) >= 1024
+				local has_teams = GTR_TEAMS and (v & GTR_TEAMS) ~= 0
 				rules_list = rules_list .. _DBOT_GT.names[k] .. "=" .. v .. "(team=" .. tostring(has_teams) .. ") "
 			end
 		end
