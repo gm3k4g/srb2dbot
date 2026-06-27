@@ -22,6 +22,7 @@ DiscordBot.Data.server_started = os.time()
 DiscordBot.Data.current_map = nil
 DiscordBot.Data.debug = false
 DiscordBot.Data._discord_seek_pos = 0
+DiscordBot.Data._discord_gametypes = nil
 
 DiscordBot.Functions = {}
 DiscordBot.Commands = {}
@@ -491,6 +492,16 @@ local function get_gametype_name(gt)
 	if G_GetGametypeName then
 		local name = G_GetGametypeName(gt)
 		if name and name ~= "" then return name end
+	end
+	-- Auto-discover custom gametypes from WAD Lua globals
+	if type(gt) == "number" then
+		for k, v in pairs(_G) do
+			if type(k) == "string" and k:sub(1, 3) == "GT_" and v == gt then
+				local name = k:sub(4):gsub("_", " "):lower()
+				name = name:gsub("(%a)([%a]*)", function(f, r) return f:upper()..r end)
+				return name
+			end
+		end
 	end
 	local names = {
 		[GT_COOP] = "Co-op",
