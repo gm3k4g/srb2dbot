@@ -295,11 +295,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 				if d_clear then d_clear:write("") d_clear:close() end
 			end
 			if d_msgread ~= "" then
-				-- NetVar-synced: clients pick this up and chatprint() locally.
-				-- Seq counter prevents duplicate displays from repeated syncs.
-				local seq = (DiscordBot.Data._discord_seq or 0) + 1
 				DiscordBot.Data._discord_msg = d_msgread
-				DiscordBot.Data._discord_seq = seq
 			else
 				DiscordBot.Data._discord_msg = ''
 			end
@@ -446,14 +442,10 @@ addHook("ThinkFrame", bot_function)
 -- Client-side: display NetVar-synced Discord messages in local chat HUD
 addHook("ThinkFrame", function()
 	if isdedicatedserver then return end
-	local last_seq = DiscordBot._discord_local_seq or 0
-	local seq = DiscordBot.Data._discord_seq or 0
-	if seq > last_seq then
-		local msg = DiscordBot.Data._discord_msg or ""
-		if msg ~= '' then
-			chatprint("\x89[Discord]\x80 " .. msg, false)
-		end
-		DiscordBot._discord_local_seq = seq
+	local msg = DiscordBot.Data._discord_msg
+	if msg and msg ~= '' then
+		chatprint("\x89[Discord]\x80 " .. msg, false)
+		DiscordBot.Data._discord_msg = ''
 	end
 end)
 
