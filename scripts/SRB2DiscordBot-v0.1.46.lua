@@ -41,25 +41,7 @@ if G_AddGametype then
 	end
 end
 
--- Load gametype names from gametypes.lua (written by C++ bot from latest-log.txt).
-do
-	local f = io.openlocal("client/DiscordBot/gametypes.lua", "r")
-	if f then
-		local data = f:read("*a")
-		f:close()
-		local chunk, err = load(data, "gametypes.lua")
-		if chunk then
-			local ok, names = pcall(chunk)
-			if ok and type(names) == "table" then
-				for gt, display_name in pairs(names) do
-					if type(gt) == "number" and not _DBOT_GT.names[gt] then
-						_DBOT_GT.names[gt] = display_name
-					end
-				end
-			end
-		end
-	end
-end
+
 
 -- On first ThinkFrame (after all WAD scripts loaded), scan GT_ globals to
 -- capture gametype names that the wrapper may have missed due to load order.
