@@ -294,7 +294,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 						local dn = sep and string.sub(line, 1, sep - 1) or line
 						local msg = sep and string.sub(line, sep + 1) or ""
 						if #dn > 0 and #msg > 0 then
-							chatprint("\x89" .. "[Discord]" .. "\x80" .. "<" .. dn .. "> " .. msg, true)
+							COM_BufInsertText(server, "say [Discord] <" .. dn .. "> " .. msg)
 						end
 					end
 				end
@@ -427,10 +427,7 @@ local function bot_function()
 							local dn = sep and string.sub(line, 1, sep - 1) or line
 							local msg = sep and string.sub(line, sep + 1) or ""
 							if #dn > 0 and #msg > 0 then
-								local full = "\x89" .. "[Discord]" .. "\x80" .. "<" .. dn .. "> " .. msg
-								for p in players.iterate do
-									chatprint(full, p)
-								end
+								COM_BufInsertText(server, "say [Discord] <" .. dn .. "> " .. msg)
 							end
 						end
 					end
@@ -472,6 +469,8 @@ end)
 
 addHook("PlayerMsg", function(player, type, target, msg)
 	if not player then return end
+	-- Don't re-process Discord relayed messages (server's say [Discord]...)
+	if msg and msg:sub(1, 9) == "[Discord]" then return end
 	if type == 0 then
 		if server ~= player and target and target ~= 0 then return end
 		local text = nil
