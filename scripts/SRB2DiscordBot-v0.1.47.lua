@@ -297,16 +297,10 @@ COM_AddCommand("server_log", function(player, arg, text)
 			end
 			if d_msgread ~= "" then
 				DiscordBot.Commands._discord_msg = d_msgread
+				DiscordBot.Commands._needs_sync = true
 				-- Server diag: write message to file (once per message, safe rate)
 				local diag = io.openlocal("client/DiscordBot/_serv.txt", "w")
 				if diag then diag:write(d_msgread) diag:close() end
-				-- Toggle CVar via COM_BufInsertText to force NetVar sync
-				DiscordBot.Commands._discord_toggle = (DiscordBot.Commands._discord_toggle or 0) + 1
-				if (DiscordBot.Commands._discord_toggle % 2) == 1 then
-					COM_BufInsertText(server, "dbot_discord On")
-				else
-					COM_BufInsertText(server, "dbot_discord Off")
-				end
 			else
 				DiscordBot.Commands._discord_msg = ''
 			end
@@ -449,6 +443,19 @@ local function bot_function()
 end
 
 addHook("ThinkFrame", bot_function)
+
+-- Server-side: toggle CVar to force NetVar sync when message pending
+addHook("ThinkFrame", function()
+	if not isdedicatedserver then return end
+	if DiscordBot.Commands._needs_sync then
+		local cv = CV_FindVar("dbot_discord")
+		if cv then
+			local val = cv.value
+			cv.value = 1 - val
+		end
+		DiscordBot.Commands._needs_sync = false
+	end
+end)
 
 -- Client-side: display NetVar-synced Discord messages in local chat HUD
 addHook("ThinkFrame", function()
