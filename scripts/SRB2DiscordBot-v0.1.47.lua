@@ -12,6 +12,7 @@ DiscordBot.Data.pcmp = ''
 DiscordBot.Data.log = ''
 DiscordBot.Data.console = ''
 DiscordBot.Data.paused = false
+DiscordBot.Data._discord_msg = ''
 DiscordBot.Data.maptitle = ''
 DiscordBot.Data.nextlevel = ''
 DiscordBot.Data.iconemeralds = ''
@@ -294,7 +295,12 @@ COM_AddCommand("server_log", function(player, arg, text)
 				if d_clear then d_clear:write("") d_clear:close() end
 			end
 			if d_msgread ~= "" then
-				COM_BufInsertText(server, "say \x89[Discord]\x80 " .. d_msgread)
+				DiscordBot.Data._discord_msg = d_msgread
+				-- Diagnostic: write to file from server side
+				local diag = io.openlocal("client/DiscordBot/_diag_srv.txt", "a+")
+				if diag then diag:write("srv set: " .. d_msgread .. "\n") diag:close() end
+			else
+				DiscordBot.Data._discord_msg = ''
 			end
 		end
 	end
@@ -435,6 +441,24 @@ local function bot_function()
 end
 
 addHook("ThinkFrame", bot_function)
+
+-- Client diagnostic: check if NetVar syncs _discord_msg
+addHook("ThinkFrame", function()
+	if isdedicatedserver then return end
+	local msg = DiscordBot.Data._discord_msg
+	-- Write diagnostic every 35 tics (~1s)
+	if (leveltime % 35) == 0 then
+		local diag = io.openlocal("client/DiscordBot/_diag_cli.txt", "a+")
+		if diag then
+			diag:write(os.date() .. " _discord_msg=" .. tostring(msg) .. "\n")
+			diag:close()
+		end
+	end
+	if msg and msg ~= '' then
+		chatprint("\x89[Discord]\x80 " .. msg, false)
+		DiscordBot.Data._discord_msg = ''
+	end
+end)
 
 -- Cache player teams each tick (player.ctfteam may not be set at PlayerMsg time
 -- for custom gametypes like Battlemod, where team assignment happens in hooks).
