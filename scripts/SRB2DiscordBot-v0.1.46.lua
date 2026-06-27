@@ -53,12 +53,13 @@ end
 addHook("ThinkFrame", function()
 	if DiscordBot._gametypes_scanned then return end
 	DiscordBot._gametypes_scanned = true
-	-- Diagnostic: report captured vs uncaptured gametypes
-	local captured, uncaptured, gt_list = 0, 0, ""
+	-- Diagnostic: report captured gametypes
+	local captured, uncaptured, gt_list, cap_list = 0, 0, "", ""
 	for k, v in pairs(_G) do
 		if type(k) == "string" and k:sub(1, 3) == "GT_" and type(v) == "number" then
 			if _DBOT_GT.names[v] then
 				captured = captured + 1
+				cap_list = cap_list .. k .. "=" .. _DBOT_GT.names[v] .. " "
 			else
 				uncaptured = uncaptured + 1
 				gt_list = gt_list .. k .. "=" .. v .. " "
@@ -66,21 +67,11 @@ addHook("ThinkFrame", function()
 		end
 	end
 	print("[DISCORDBOT] GT scan: " .. captured .. " captured, " .. uncaptured .. " uncaptured")
+	if captured > 0 then
+		print("[DISCORDBOT] Captured: " .. cap_list)
+	end
 	if uncaptured > 0 then
 		print("[DISCORDBOT] Uncaptured: " .. gt_list)
-		print("[DISCORDBOT] G_GetGametypeName available: " .. tostring(G_GetGametypeName ~= nil))
-	end
-	-- Try G_GetGametypeName for uncaptured gametypes
-	for k, v in pairs(_G) do
-		if type(k) == "string" and k:sub(1, 3) == "GT_" and type(v) == "number" then
-			if not _DBOT_GT.names[v] and G_GetGametypeName then
-				local name = G_GetGametypeName(v)
-				if name and name ~= "" then
-					_DBOT_GT.names[v] = name
-					print("[DISCORDBOT] G_GetGametypeName(" .. v .. ") = \"" .. name .. "\"")
-				end
-			end
-		end
 	end
 end)
 
