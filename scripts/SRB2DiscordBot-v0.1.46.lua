@@ -30,15 +30,17 @@ DiscordBot.Data.debug = false
 DiscordBot.Data._discord_seek_pos = 0
 DiscordBot.Data._discord_gametypes = nil
 DiscordBot.Data.custom_gametype_names = {}
+DiscordBot.Data.custom_gametype_rules = {}
 
--- Wrap G_AddGametype to capture custom gametype names at registration time.
+-- Wrap G_AddGametype to capture custom gametype names and rules at registration time.
 -- This handles any WAD that registers gametypes via Lua (e.g. Battlemod).
 if G_AddGametype then
 	local orig_G_AddGametype = G_AddGametype
 	_G["G_AddGametype"] = function(tabl)
 		local gt = orig_G_AddGametype(tabl)
-		if tabl and tabl.name and type(gt) == "number" then
-			DiscordBot.Data.custom_gametype_names[gt] = tabl.name
+		if tabl and type(gt) == "number" then
+			if tabl.name then DiscordBot.Data.custom_gametype_names[gt] = tabl.name end
+			if tabl.rules then DiscordBot.Data.custom_gametype_rules[gt] = tabl.rules end
 		end
 		return gt
 	end
@@ -575,7 +577,15 @@ local function emit_round_end(prev_map, prev_maptitle)
 	local players_red = 0
 	local players_blue = 0
 	local players_spec = 0
-	local has_teams = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
+	local has_teams = false
+	-- Check gametype rules for GTR_TEAMS flag (bit 10 = 1024)
+	local rules = DiscordBot.Data.custom_gametype_rules[gametype]
+	if rules then
+		has_teams = (math.floor(rules / 1024) % 2) == 1
+	else
+		-- Fallback: known team gametypes
+		has_teams = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
+	end
 	for p in players.iterate do
 		players_total = $ + 1
 		if p.spectator then

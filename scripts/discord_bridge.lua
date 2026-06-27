@@ -16,15 +16,17 @@ local current_map = nil
 local join_emitted = {}
 
 -- Auto-capture custom gametypes from G_AddGametype calls
-if not rawget(_G, "DiscordBot") then rawset(_G, "DiscordBot", { Data = { custom_gametype_names = {} } }) end
+if not rawget(_G, "DiscordBot") then rawset(_G, "DiscordBot", { Data = { custom_gametype_names = {}, custom_gametype_rules = {} } }) end
 if not DiscordBot.Data then DiscordBot.Data = {} end
 if not DiscordBot.Data.custom_gametype_names then DiscordBot.Data.custom_gametype_names = {} end
+if not DiscordBot.Data.custom_gametype_rules then DiscordBot.Data.custom_gametype_rules = {} end
 if G_AddGametype then
 	local orig_G_AddGametype = G_AddGametype
 	_G["G_AddGametype"] = function(tabl)
 		local gt = orig_G_AddGametype(tabl)
-		if tabl and tabl.name and type(gt) == "number" then
-			DiscordBot.Data.custom_gametype_names[gt] = tabl.name
+		if tabl and type(gt) == "number" then
+			if tabl.name then DiscordBot.Data.custom_gametype_names[gt] = tabl.name end
+			if tabl.rules then DiscordBot.Data.custom_gametype_rules[gt] = tabl.rules end
 		end
 		return gt
 	end
@@ -118,7 +120,14 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	local flag = (player.gotflag and player.gotflag > 0) and "1" or "0"
 	local team = "none"
 	if not player.spectator then
-		if gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE then
+		local is_team = false
+		local rules = DiscordBot.Data.custom_gametype_rules[gametype]
+		if rules then
+			is_team = (math.floor(rules / 1024) % 2) == 1
+		else
+			is_team = (gametype == GT_CTF or gametype == GT_TEAMMATCH or gametype == GT_TEAMBATTLE)
+		end
+		if is_team then
 			team = tostring(player.ctfteam or 0)
 		end
 	end
