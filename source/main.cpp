@@ -232,27 +232,38 @@ int main() {
                 std::cout << "[ready] Failed to fetch guild: " << cb.get_error().human_readable << std::endl;
                 return;
             }
-            auto guild = std::get<dpp::guild>(cb.value);
-            std::cout << "[ready] Guild fetched: " << guild.name << " (" << guild.id << "), "
-                      << guild.emojis.size() << " emojis" << std::endl;
-            for (const auto& emoji_id : guild.emojis) {
-                auto emoji = dpp::find_emoji(emoji_id);
-                if (emoji) {
-                    guild_emojis[emoji->name] = std::to_string(emoji_id);
+            try {
+                auto guild = std::get<dpp::guild>(cb.value);
+                std::cout << "[ready] Guild fetched: " << guild.name << " (" << guild.id << "), "
+                          << guild.emojis.size() << " emoji IDs" << std::endl;
+                size_t found = 0, not_found = 0;
+                for (const auto& emoji_id : guild.emojis) {
+                    auto emoji = dpp::find_emoji(emoji_id);
+                    if (emoji) {
+                        guild_emojis[emoji->name] = std::to_string(emoji_id);
+                        ++found;
+                    } else {
+                        ++not_found;
+                    }
                 }
-            }
-            std::cout << "[ready] Guild emojis loaded: " << guild_emojis.size();
-            if (!guild_emojis.empty()) {
-                std::cout << " (";
-                bool first = true;
-                for (const auto& [name, id] : guild_emojis) {
-                    if (!first) std::cout << ", ";
-                    std::cout << name << "=" << id;
-                    first = false;
+                if (not_found > 0)
+                    std::cout << "[ready]   " << found << " found in cache, "
+                              << not_found << " NOT in cache" << std::endl;
+                std::cout << "[ready] Guild emojis loaded: " << guild_emojis.size();
+                if (!guild_emojis.empty()) {
+                    std::cout << " (";
+                    bool first = true;
+                    for (const auto& [name, id] : guild_emojis) {
+                        if (!first) std::cout << ", ";
+                        std::cout << name << "=" << id;
+                        first = false;
+                    }
+                    std::cout << ")";
                 }
-                std::cout << ")";
+                std::cout << std::endl;
+            } catch (const std::bad_variant_access& e) {
+                std::cout << "[ready] ERROR: guild_get returned unexpected type: " << e.what() << std::endl;
             }
-            std::cout << std::endl;
         });
         if (dpp::run_once<struct notify_modules_ready>()) {
             dpp::snowflake ch = bridge_channel_id != "0" ? std::stoull(bridge_channel_id) : 0;
