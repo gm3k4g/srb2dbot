@@ -40,6 +40,23 @@ if G_AddGametype then
 	end
 end
 
+-- On first ThinkFrame (after all WAD scripts loaded), scan GT_ globals to
+-- capture gametype names that the wrapper may have missed due to load order.
+addHook("ThinkFrame", function()
+	if DiscordBot._gametypes_scanned then return end
+	DiscordBot._gametypes_scanned = true
+	for k, v in pairs(_G) do
+		if type(k) == "string" and k:sub(1, 3) == "GT_" and type(v) == "number" then
+			if not DiscordBot.Data.custom_gametype_names[v] and G_GetGametypeName then
+				local name = G_GetGametypeName(v)
+				if name and name ~= "" then
+					DiscordBot.Data.custom_gametype_names[v] = name
+				end
+			end
+		end
+	end
+end)
+
 DiscordBot.Functions = {}
 DiscordBot.Commands = {}
 DiscordBot.Commands.cv_joinquit = CV_RegisterVar({name = "dbot_joinquit", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
