@@ -226,33 +226,34 @@ int main() {
     // ── Guild emoji loader + module on_ready notification ──
     std::unordered_map<std::string, std::string> guild_emojis;
     bot.on_ready([&bot, guild_id, &guild_emojis, &registry, bridge_channel_id](const dpp::ready_t&) {
-        auto guild = dpp::find_guild(guild_id);
-        if (guild) {
-            std::cout << "[ready] Guild found: " << guild->name << " (" << guild->id << "), "
-                      << guild->emojis.size() << " emoji IDs in guild data" << std::endl;
-            for (const auto& emoji_id : guild->emojis) {
+        // Fetch guild via REST API (cache may not be populated at on_ready time)
+        bot.guild_get(guild_id, [&guild_emojis](const dpp::confirmation_callback_t& cb) {
+            if (cb.is_error()) {
+                std::cout << "[ready] Failed to fetch guild: " << cb.get_error().human_readable << std::endl;
+                return;
+            }
+            auto guild = std::get<dpp::guild>(cb.value);
+            std::cout << "[ready] Guild fetched: " << guild.name << " (" << guild.id << "), "
+                      << guild.emojis.size() << " emojis" << std::endl;
+            for (const auto& emoji_id : guild.emojis) {
                 auto emoji = dpp::find_emoji(emoji_id);
                 if (emoji) {
                     guild_emojis[emoji->name] = std::to_string(emoji_id);
-                } else {
-                    std::cout << "[ready]   emoji " << emoji_id << " not in cache (missing intent?)" << std::endl;
                 }
             }
-        } else {
-            std::cout << "[ready] WARNING: Guild " << guild_id << " not found in cache" << std::endl;
-        }
-        std::cout << "[ready] Guild emojis loaded: " << guild_emojis.size();
-        if (!guild_emojis.empty()) {
-            std::cout << " (";
-            bool first = true;
-            for (const auto& [name, id] : guild_emojis) {
-                if (!first) std::cout << ", ";
-                std::cout << name << "=" << id;
-                first = false;
+            std::cout << "[ready] Guild emojis loaded: " << guild_emojis.size();
+            if (!guild_emojis.empty()) {
+                std::cout << " (";
+                bool first = true;
+                for (const auto& [name, id] : guild_emojis) {
+                    if (!first) std::cout << ", ";
+                    std::cout << name << "=" << id;
+                    first = false;
+                }
+                std::cout << ")";
             }
-            std::cout << ")";
-        }
-        std::cout << std::endl;
+            std::cout << std::endl;
+        });
         if (dpp::run_once<struct notify_modules_ready>()) {
             dpp::snowflake ch = bridge_channel_id != "0" ? std::stoull(bridge_channel_id) : 0;
             if (ch != 0) registry.on_ready(bot, ch);
