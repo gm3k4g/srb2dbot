@@ -12,6 +12,7 @@ DiscordBot.Data.pcmp = ''
 DiscordBot.Data.log = ''
 DiscordBot.Data.console = ''
 DiscordBot.Data.paused = false
+DiscordBot.Data._discord_msg = ''
 DiscordBot.Data.maptitle = ''
 DiscordBot.Data.nextlevel = ''
 DiscordBot.Data.iconemeralds = ''
@@ -294,7 +295,8 @@ COM_AddCommand("server_log", function(player, arg, text)
 				if d_clear then d_clear:write("") d_clear:close() end
 			end
 			if d_msgread ~= "" then
-				COM_BufInsertText(server, "discord_message " .. d_msgread)
+				-- NetVar-synced: clients pick this up and chatprint() locally
+				DiscordBot.Data._discord_msg = d_msgread
 			end
 		end
 	end
@@ -435,6 +437,16 @@ local function bot_function()
 end
 
 addHook("ThinkFrame", bot_function)
+
+-- Client-side: display NetVar-synced Discord messages in local chat HUD
+addHook("ThinkFrame", function()
+	if isdedicatedserver then return end
+	local msg = DiscordBot.Data._discord_msg
+	if msg and msg ~= '' then
+		chatprint("\x89[Discord]\x80 " .. msg, false)
+		DiscordBot.Data._discord_msg = ''
+	end
+end)
 
 -- Cache player teams each tick (player.ctfteam may not be set at PlayerMsg time
 -- for custom gametypes like Battlemod, where team assignment happens in hooks).
