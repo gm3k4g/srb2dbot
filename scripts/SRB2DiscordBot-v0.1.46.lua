@@ -31,19 +31,19 @@ if not rawget(_G, "_DBOT_GT") then rawset(_G, "_DBOT_GT", { names = {}, rules = 
 -- Wrap G_AddGametype to capture custom gametype names and rules at registration time.
 if G_AddGametype then
 	local orig = G_AddGametype
-	local cap_count = 0
 	_G["G_AddGametype"] = function(tabl, ...)
 		local gt = orig(tabl, ...)
-		if tabl and type(gt) == "number" then
-			if tabl.name then
-				_DBOT_GT.names[gt] = tabl.name
-				cap_count = cap_count + 1
-			end
+		-- Old SRB2 may return nil instead of the GT value; look it up from globals
+		if not tonumber(gt) and tabl and tabl.identifier then
+			gt = _G["GT_" .. tabl.identifier:upper()]
+		end
+		gt = tonumber(gt)
+		if gt and tabl then
+			if tabl.name then _DBOT_GT.names[gt] = tabl.name end
 			if tabl.rules then _DBOT_GT.rules[gt] = tabl.rules end
 		end
 		return gt
 	end
-	print("[DISCORDBOT] G_AddGametype wrapper installed (will capture names at registration)")
 end
 
 
