@@ -226,43 +226,36 @@ int main() {
     // ── Guild emoji loader + module on_ready notification ──
     std::unordered_map<std::string, std::string> guild_emojis;
     bot.on_ready([&bot, guild_id, &guild_emojis, &registry, bridge_channel_id](const dpp::ready_t&) {
-        // Fetch guild via REST API (cache may not be populated at on_ready time)
+        // Fetch guild via REST API and parse emoji names from raw JSON
         bot.guild_get(guild_id, [&guild_emojis](const dpp::confirmation_callback_t& cb) {
             if (cb.is_error()) {
                 std::cout << "[ready] Failed to fetch guild: " << cb.get_error().human_readable << std::endl;
                 return;
             }
             try {
-                auto guild = std::get<dpp::guild>(cb.value);
-                std::cout << "[ready] Guild fetched: " << guild.name << " (" << guild.id << "), "
-                          << guild.emojis.size() << " emoji IDs" << std::endl;
-                size_t found = 0, not_found = 0;
-                for (const auto& emoji_id : guild.emojis) {
-                    auto emoji = dpp::find_emoji(emoji_id);
-                    if (emoji) {
-                        guild_emojis[emoji->name] = std::to_string(emoji_id);
-                        ++found;
-                    } else {
-                        ++not_found;
+                auto json = nlohmann::json::parse(cb.http_info.body);
+                auto& emojis = json["emojis"];
+                if (emojis.is_array()) {
+                    for (const auto& em : emojis) {
+                        std::string name = em["name"].get<std::string>();
+                        auto id = em["id"].get<uint64_t>();
+                        guild_emojis[name] = std::to_string(id);
                     }
                 }
-                if (not_found > 0)
-                    std::cout << "[ready]   " << found << " found in cache, "
-                              << not_found << " NOT in cache" << std::endl;
                 std::cout << "[ready] Guild emojis loaded: " << guild_emojis.size();
                 if (!guild_emojis.empty()) {
                     std::cout << " (";
                     bool first = true;
                     for (const auto& [name, id] : guild_emojis) {
                         if (!first) std::cout << ", ";
-                        std::cout << name << "=" << id;
+                        std::cout << ":" << name << ":=" << id;
                         first = false;
                     }
                     std::cout << ")";
                 }
                 std::cout << std::endl;
-            } catch (const std::bad_variant_access& e) {
-                std::cout << "[ready] ERROR: guild_get returned unexpected type: " << e.what() << std::endl;
+            } catch (const std::exception& e) {
+                std::cout << "[ready] Failed to parse emoji JSON: " << e.what() << std::endl;
             }
         });
         if (dpp::run_once<struct notify_modules_ready>()) {
