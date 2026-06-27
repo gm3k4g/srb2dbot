@@ -72,9 +72,8 @@ public:
         std::string players_json = unescape_pipe(f[13]);
         std::string spec_json    = f.size() >= 15 ? unescape_pipe(f[14]) : "[]";
 
-        if (map_name.empty() || players_json == "[]") {
-            if (map_name.empty()) std::cout << "[round_end_card] map_name empty" << std::endl;
-            if (players_json == "[]") std::cout << "[round_end_card] no players" << std::endl;
+        if (map_name.empty()) {
+            std::cout << "[round_end_card] map_name empty" << std::endl;
             return std::nullopt;
         }
 
