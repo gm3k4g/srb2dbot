@@ -69,6 +69,17 @@ addHook("ThinkFrame", function()
 	print("[DISCORDBOT] GT scan: " .. captured .. " captured, " .. uncaptured .. " uncaptured")
 	if captured > 0 then
 		print("[DISCORDBOT] Captured: " .. cap_list)
+		-- Also show rules for each captured gametype
+		local rules_list = ""
+		for k, v in pairs(_DBOT_GT.rules) do
+			if _DBOT_GT.names[k] then
+				local has_teams = (v % 2048) >= 1024
+				rules_list = rules_list .. _DBOT_GT.names[k] .. "=" .. v .. "(team=" .. tostring(has_teams) .. ") "
+			end
+		end
+		if rules_list ~= "" then
+			print("[DISCORDBOT] Rules: " .. rules_list)
+		end
 	end
 	if uncaptured > 0 then
 		print("[DISCORDBOT] Uncaptured: " .. gt_list)
