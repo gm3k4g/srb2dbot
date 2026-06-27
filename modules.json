@@ -13,17 +13,17 @@
             "_note": "Chat modules  -  relay messages between Discord and SRB2",
             "chat_relay": true,
             "chat_card": {
-                "_note": "Available fields: {name}, {node}, {skin}",
+                "_note": "Available fields: {name}, {node}, {skin}, {skin_emoji}. Custom emoji :name: shortcodes work directly in format string.",
                 "enabled": true,
-                "format": ":{skin}: {name}"
+                "format": ":unknownaa: {name}"
             },
             "server_chat_card": {
-                "_note": "Available fields: none (format only)",
+                "_note": "Available fields: none (format only). Custom emoji :name: shortcodes work directly.",
                 "enabled": true,
                 "format": ":speaking_head: Server"
             },
             "csay_card": {
-                "_note": "Available fields: none (format only)",
+                "_note": "Available fields: none (format only). Custom emoji :name: shortcodes work directly.",
                 "enabled": true,
                 "format": "Message"
             },
@@ -61,12 +61,12 @@
             "player_join_card": {
                 "_note": "Available fields: {player}, {node}",
                 "enabled": true,
-                "message":":heavy_plus_sign: {player} has joined the game. (player {node})"
+                "message":":heavy_plus_sign: {player} has joined the game (player {node})"
             },
             "player_quit_card": {
                 "_note": "Available fields: {player}, {node}, {reason}",
                 "enabled": true,
-                "message": ":heavy_minus_sign: {player} has left the game. (player {node}) {reason}"
+                "message": ":door: {player} has left the game (player {node}) {reason}"
             },
             "kick_player_card": {
                 "_note": "Available fields: {player}, {node}, {reason}",
