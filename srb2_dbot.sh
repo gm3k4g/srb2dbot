@@ -98,5 +98,6 @@ HOME="$SRB2_SERVER_HOME" exec srb2 \
     -warp MAPF0 \
     -gametype 7 \
     -file "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.45.lua" \
+    "ZBa_Battlemod-v10BETA-2.1.8.pk3" \
     +rejointimeout 0
     #</dev/null
