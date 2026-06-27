@@ -73,6 +73,7 @@ DiscordBot.Commands.cv_joinquit = CV_RegisterVar({name = "dbot_joinquit", defaul
 DiscordBot.Commands.cv_autopause = CV_RegisterVar({name = "dbot_autopause", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_nospamchat = CV_RegisterVar({name = "dbot_nospamchat", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_messagedelay = CV_RegisterVar({name = "dbot_messagedelay", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
+DiscordBot.Commands.cv_discord = CV_RegisterVar({name = "dbot_discord", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 
 -- Read auto_pause from console.txt (written by C++ bot from modules.json)
 DiscordBot.Config = { auto_pause = true }
@@ -296,9 +297,14 @@ COM_AddCommand("server_log", function(player, arg, text)
 			end
 			if d_msgread ~= "" then
 				DiscordBot.Data._discord_msg = d_msgread
-				-- Diagnostic: write to file from server side
-				local diag = io.openlocal("client/DiscordBot/_diag_srv.txt", "a+")
-				if diag then diag:write("srv set: " .. d_msgread .. "\n") diag:close() end
+				-- Toggle CVar via COM_BufInsertText to force NetVar sync
+				-- (direct .value access crashes on NetVar-synced CVars)
+				DiscordBot.Data._discord_toggle = (DiscordBot.Data._discord_toggle or 0) + 1
+				if (DiscordBot.Data._discord_toggle % 2) == 1 then
+					COM_BufInsertText(server, "dbot_discord On")
+				else
+					COM_BufInsertText(server, "dbot_discord Off")
+				end
 			else
 				DiscordBot.Data._discord_msg = ''
 			end
