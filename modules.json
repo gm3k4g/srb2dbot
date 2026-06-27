@@ -15,7 +15,7 @@
             "chat_card": {
                 "_note": "Available fields: {name}, {node}, {skin}. Custom emoji :name: shortcodes work directly in format string.",
                 "enabled": true,
-                "format": ":skin: {name}"
+                "format": ":{skin}: {name}"
             },
             "server_chat_card": {
                 "_note": "Available fields: none (format only). Custom emoji :name: shortcodes work directly.",
