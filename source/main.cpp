@@ -101,15 +101,6 @@ int main() {
     std::cout << "[init] SRB2 data dir: " << srb2_dir << std::endl;
     std::cout << "[init] Bot data dir:  " << bot_dir << std::endl;
 
-    // Parse SRB2's latest-log for custom gametype names
-    auto log_gametypes = bridge_get_gametypes_from_log();
-    if (!log_gametypes.empty()) {
-        std::cout << "[init] Gametypes from latest-log.txt: " << log_gametypes.size() << std::endl;
-        for (const auto& [gt, name] : log_gametypes) {
-            std::cout << "[init]   GT_" << gt << " = \"" << name << "\"" << std::endl;
-        }
-    }
-
     std::string guild_id_str = data["guild_id"].get<std::string>();
     dpp::snowflake guild_id = 0;
     try {

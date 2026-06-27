@@ -15,6 +15,21 @@ rawset(_G, "DiscordBotMini", true)
 local current_map = nil
 local join_emitted = {}
 
+-- Auto-capture custom gametypes from G_AddGametype calls
+if not rawget(_G, "DiscordBot") then rawset(_G, "DiscordBot", { Data = { custom_gametype_names = {} } }) end
+if not DiscordBot.Data then DiscordBot.Data = {} end
+if not DiscordBot.Data.custom_gametype_names then DiscordBot.Data.custom_gametype_names = {} end
+if G_AddGametype then
+	local orig_G_AddGametype = G_AddGametype
+	_G["G_AddGametype"] = function(tabl)
+		local gt = orig_G_AddGametype(tabl)
+		if tabl and tabl.name and type(gt) == "number" then
+			DiscordBot.Data.custom_gametype_names[gt] = tabl.name
+		end
+		return gt
+	end
+end
+
 local function write_event(line)
 	local f = io.openlocal("client/DiscordBot/Messages.txt", "a+")
 	if f then
@@ -39,20 +54,15 @@ local function get_gametype_name(gt)
 		local name = G_GetGametypeName(gt)
 		if name and name ~= "" then return name end
 	end
+	-- Check auto-captured names from G_AddGametype wrapper
+	if DiscordBot and DiscordBot.Data and DiscordBot.Data.custom_gametype_names then
+		local name = DiscordBot.Data.custom_gametype_names[gt]
+		if name then return name end
+	end
 	-- Check user-configured name overrides
 	if DiscordBot and DiscordBot.Data and DiscordBot.Data.gametype_names then
 		local name = DiscordBot.Data.gametype_names[gt]
 		if name then return name end
-	end
-	-- Auto-discover custom gametypes from WAD Lua globals
-	if type(gt) == "number" then
-		for k, v in pairs(_G) do
-			if type(k) == "string" and k:sub(1, 3) == "GT_" and v == gt then
-				local name = k:sub(4):gsub("_", " "):lower()
-				name = name:gsub("(%a)([%a]*)", function(f, r) return f:upper()..r end)
-				return name
-			end
-		end
 	end
 	local names = {
 		[GT_COOP] = "Co-op",
