@@ -294,7 +294,9 @@ COM_AddCommand("server_log", function(player, arg, text)
 						local dn = sep and string.sub(line, 1, sep - 1) or line
 						local msg = sep and string.sub(line, sep + 1) or ""
 						if #dn > 0 and #msg > 0 then
-							COM_BufInsertText(server, "say [Discord] <" .. dn .. "> " .. msg)
+							for p in players.iterate do
+								pcall(function() chatprintf(p, "[Discord] <%s> %s", dn, msg) end)
+							end
 						end
 					end
 				end
