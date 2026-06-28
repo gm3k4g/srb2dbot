@@ -349,20 +349,26 @@ static auto get_loaded_pk3s_impl() -> std::vector<std::string> {
     return pk3s;
 }
 
-auto bridge_get_loaded_pk3s() -> const std::vector<std::string>& {
-    static std::vector<std::string> cached;
-    static time_t last_mtime = 0;
+// Global cache state for loaded PK3s (shared across all bridge functions)
+static std::vector<std::string> g_pk3_cache;
+static time_t g_pk3_cache_mtime = 0;
 
+auto bridge_get_loaded_pk3s() -> const std::vector<std::string>& {
     std::string log_path = dir_srb2_str() + "/latest-log.txt";
     struct stat st;
-    if (stat(log_path.c_str(), &st) != 0) return cached;
+    if (stat(log_path.c_str(), &st) != 0) return g_pk3_cache;
 
     // Refresh cache if log file was modified
-    if (st.st_mtime > last_mtime || cached.empty()) {
-        cached = get_loaded_pk3s_impl();
-        last_mtime = st.st_mtime;
+    if (st.st_mtime > g_pk3_cache_mtime || g_pk3_cache.empty()) {
+        g_pk3_cache = get_loaded_pk3s_impl();
+        g_pk3_cache_mtime = st.st_mtime;
     }
-    return cached;
+    return g_pk3_cache;
+}
+
+void bridge_invalidate_pk3_cache() {
+    g_pk3_cache.clear();
+    g_pk3_cache_mtime = 0;
 }
 
 auto bridge_find_pk3_for_lump(const std::string& lump_name) -> std::string {
