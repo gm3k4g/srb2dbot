@@ -679,30 +679,16 @@ local function emit_round_end(prev_map, prev_maptitle, event_type)
 	DiscordBot.Data.round_end_emitted = true
 end
 
--- Emit ROUND_END on the first frame of intermission.
--- Uses IntermissionThinker (SRB2 2.2.12+) or falls back to ThinkFrame.
-pcall(function() addHook("IntermissionThinker", function()
-	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted then
-		local title = DiscordBot.Data.maptitle
-		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title)
-	end
-end) end)
-
--- Fallback: detect intermission via ThinkFrame (for older SRB2 without IntermissionThinker).
+-- Emit ROUND_END/ROUND_EXITLEVEL on the first frame of intermission or exit.
+-- Single ThinkFrame handles both cases: GS_INTERMISSION → ROUND_END, GS_NULL → ROUND_EXITLEVEL.
 addHook("ThinkFrame", function()
-	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted
-	   and gamestate == GS_INTERMISSION then
+	if not DiscordBot.Data.current_map then return end
+	if DiscordBot.Data.round_end_emitted then return end
+	if gamestate == GS_INTERMISSION then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
 		emit_round_end(DiscordBot.Data.current_map, title)
-	end
-end)
-
-addHook("MapChange", function(map)
-	-- GS_NULL = exitlevel/skipstats (no intermission). Emit ROUND_EXITLEVEL.
-	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted
-	   and gamestate == GS_NULL then
+	elseif gamestate == GS_NULL then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
 		emit_round_end(DiscordBot.Data.current_map, title, "ROUND_EXITLEVEL")
@@ -710,14 +696,6 @@ addHook("MapChange", function(map)
 end)
 
 addHook("MapChange", function(map)
-	-- Emit ROUND_EXITLEVEL if IntermissionThinker didn't fire (skipstats path, GS_NULL).
-	-- NOT on `map` command (gamestate is GS_LEVEL).
-	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted
-	   and gamestate == GS_NULL then
-		local title = DiscordBot.Data.maptitle
-		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title, "ROUND_EXITLEVEL")
-	end
 	DiscordBot.Data.round_end_emitted = false
 	DiscordBot.Data.current_map = nil
 
