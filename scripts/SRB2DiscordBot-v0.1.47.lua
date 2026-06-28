@@ -695,7 +695,17 @@ addHook("ThinkFrame", function()
 	   and (gamestate == GS_INTERMISSION or gamestate == GS_NULL) then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title, gamestate == GS_NULL and "ROUND_EXITLEVEL")
+		emit_round_end(DiscordBot.Data.current_map, title)
+	end
+end)
+
+-- Emit ROUND_EXITLEVEL before the built-in exitlevel runs.
+COM_AddCommand("exitlevel", function(player)
+	if player ~= server then return end
+	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted then
+		local title = DiscordBot.Data.maptitle
+		if title == nil or title == "" then title = "Unknown" end
+		emit_round_end(DiscordBot.Data.current_map, title, "ROUND_EXITLEVEL")
 	end
 end)
 
@@ -706,7 +716,7 @@ addHook("MapChange", function(map)
 	   and gamestate == GS_NULL then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title, "ROUND_EXITLEVEL")
+		emit_round_end(DiscordBot.Data.current_map, title)
 	end
 	DiscordBot.Data.round_end_emitted = false
 	DiscordBot.Data.current_map = nil
