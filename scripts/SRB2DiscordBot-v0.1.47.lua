@@ -313,9 +313,12 @@ COM_AddCommand("dbot_sync", function(player)
 COM_AddCommand("discord_message", function(player, ...)
 	if player ~= server then return end
 	if not ... then return end
-	local args = {...}
-	local msg = table.concat(args, " ")
-	chatprint("\x89" .. "[Discord]" .. "\x80" .. " " .. msg, false)
+	local msg = table.concat({...}, " ")
+	-- Parse display_name|message format
+	local sep = string.find(msg, "|", 1, true)
+	local dn = sep and string.sub(msg, 1, sep - 1) or "Discord"
+	local text = sep and string.sub(msg, sep + 1) or msg
+	chatprint("\x89" .. "[Discord]" .. "\x80" .. " <" .. dn .. "> " .. text, false)
 end)
 
 COM_AddCommand("dbot_debug", function(player, arg)
