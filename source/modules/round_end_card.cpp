@@ -88,6 +88,7 @@ public:
         std::string script_path;
         std::vector<std::string> search_paths = {
             bot_dir_ + "/generate_intermission.sh",
+            bot_dir_ + "/../generate_intermission.sh",
             srb2_dir_ + "/luafiles/client/DiscordBot/generate_intermission.sh",
         };
         for (auto& p : search_paths) {
