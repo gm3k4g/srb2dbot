@@ -692,17 +692,17 @@ end) end)
 -- Fallback: detect intermission via ThinkFrame (for older SRB2 without IntermissionThinker).
 addHook("ThinkFrame", function()
 	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted
-	   and (gamestate == GS_INTERMISSION or gamestate == GS_NULL) then
+	   and gamestate == GS_INTERMISSION then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
 		emit_round_end(DiscordBot.Data.current_map, title)
 	end
 end)
 
--- Emit ROUND_EXITLEVEL before the built-in exitlevel runs.
-COM_AddCommand("exitlevel", function(player)
-	if player ~= server then return end
-	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted then
+addHook("MapChange", function(map)
+	-- GS_NULL = exitlevel/skipstats (no intermission). Emit ROUND_EXITLEVEL.
+	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted
+	   and gamestate == GS_NULL then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
 		emit_round_end(DiscordBot.Data.current_map, title, "ROUND_EXITLEVEL")
@@ -710,13 +710,13 @@ COM_AddCommand("exitlevel", function(player)
 end)
 
 addHook("MapChange", function(map)
-	-- Emit ROUND_END if IntermissionThinker didn't fire (skipstats path, GS_NULL).
+	-- Emit ROUND_EXITLEVEL if IntermissionThinker didn't fire (skipstats path, GS_NULL).
 	-- NOT on `map` command (gamestate is GS_LEVEL).
 	if DiscordBot.Data.current_map ~= nil and not DiscordBot.Data.round_end_emitted
 	   and gamestate == GS_NULL then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title)
+		emit_round_end(DiscordBot.Data.current_map, title, "ROUND_EXITLEVEL")
 	end
 	DiscordBot.Data.round_end_emitted = false
 	DiscordBot.Data.current_map = nil
