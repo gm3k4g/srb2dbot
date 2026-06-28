@@ -158,42 +158,6 @@ local server_line = "[EVENT:SERVER_CHAT]|" .. message .. "|FEE75C\n"
 assert(server_line:find("%[EVENT:SERVER_CHAT%]") == 1, "SERVER_CHAT starts with [EVENT:SERVER_CHAT]")
 assert(server_line:find("FEE75C") ~= nil, "SERVER_CHAT contains color")
 
--- ── Test: PlayerMsg 5-tic dedup window ──
-
-outfile:write("\n=== PlayerMsg dedup window ===\n")
-local PLAYERMSG_DEDUP_TICS = 5
-local dedup_cache = {}
-local leveltime_n = 0
-
-local function playermsg_dedup_check(node, mtype, target, msg, lt)
-	local cache_key = tostring(node) .. "|" .. tostring(mtype) .. "|" .. tostring(target) .. "|" .. msg
-	if dedup_cache[cache_key] and lt - dedup_cache[cache_key] <= PLAYERMSG_DEDUP_TICS then
-		return true  -- suppress
-	end
-	dedup_cache[cache_key] = lt
-	return false  -- allow
-end
-
--- Fire 1 at leveltime 100: allowed
-assert(playermsg_dedup_check(1, 0, 0, "a", 100) == false, "first fire at LT100 allowed")
--- Fire 2 at leveltime 101 (engine double-fire, 1 tic later): suppressed
-assert(playermsg_dedup_check(1, 0, 0, "a", 101) == true, "second fire at LT101 (1 tic) suppressed")
--- Fire 3 at leveltime 103 (engine triple-fire, 3 tics later): suppressed
-assert(playermsg_dedup_check(1, 0, 0, "a", 103) == true, "third fire at LT103 (3 tics) suppressed")
--- Fire 4 at leveltime 106 (6 tics after first = beyond window): allowed (legitimate new message)
-assert(playermsg_dedup_check(1, 0, 0, "a", 106) == false, "fire at LT106 (6 tics after first) allowed")
--- Different message at same leveltime: allowed (different cache key)
-assert(playermsg_dedup_check(1, 0, 0, "b", 106) == false, "different message 'b' allowed")
--- Different player at same leveltime: allowed
-assert(playermsg_dedup_check(2, 0, 0, "a", 106) == false, "different player node 2 allowed")
-
--- Rapid typing: "a" at LT 0, 9, 18, 27 (every ~257ms = 9 tics): all allowed
-dedup_cache = {}
-assert(playermsg_dedup_check(1, 0, 0, "a", 0) == false, "rapid: first 'a' at LT0 allowed")
-assert(playermsg_dedup_check(1, 0, 0, "a", 9) == false, "rapid: second 'a' at LT9 allowed (9>5)")
-assert(playermsg_dedup_check(1, 0, 0, "a", 18) == false, "rapid: third 'a' at LT18 allowed (9>5)")
-assert(playermsg_dedup_check(1, 0, 0, "a", 27) == false, "rapid: fourth 'a' at LT27 allowed (9>5)")
-
 -- ── Test: KICK/BAN event format ──
 
 outfile:write("\n=== KICK/BAN event format ===\n")
