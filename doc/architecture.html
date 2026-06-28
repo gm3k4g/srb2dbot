@@ -91,7 +91,7 @@
     <li><strong>Discord → SRB2:</strong> Messages from the configured bridge channel are sanitized (ASCII filter, newline escaping, link replacement) and written to <code>discordmessage.txt</code> for a companion Lua script to forward to SRB2.</li>
     <li><strong>SRB2 → Discord:</strong> A D++ timer polls <code>Messages.txt</code> every 2 seconds for new lines, converts <code>:emoji:</code> references to Discord format using cached guild emojis, suppresses all mentions, and posts to the bridge channel.</li>
 </ul>
-<p>Gametype names in events are resolved through SRB2's <code>G_GetGametypeName</code> Lua API (<code>scripts/SRB2DiscordBot-v0.1.47.lua:451</code>), ensuring 1-to-1 accuracy with in-game names and automatic support for custom WAD gametypes (e.g. "Survival" from battle mod).</p>
+<p>Gametype names in events are resolved through SRB2's <code>G_GetGametypeName</code> Lua API (<code>scripts/SRB2DiscordBot-v0.1.48.lua:451</code>), ensuring 1-to-1 accuracy with in-game names and automatic support for custom WAD gametypes (e.g. "Survival" from battle mod).</p>
 <p>Events are flushed to <code>Messages.txt</code> immediately via <code>flush_msgsrb2()</code> rather than waiting for the periodic 70-tic cycle. Three flush paths exist:</p>
 <ul>
     <li><strong>Immediate (primary)</strong>  -  called after every event emission (SERVER_START, ROUND_START/END, PLAYER_JOIN/QUIT)</li>
@@ -124,7 +124,7 @@
     <tr><td><code>source/script.cpp</code></td><td>Script manipulation logic operating on string content rather than files. Includes <code>script_inspect_str()</code>, <code>script_find_str()</code>, <code>script_move_line_str()</code>, <code>script_add_line_str()</code>, <code>script_remove_line_str()</code>, and <code>script_change_line_str()</code>.</td></tr>
     <tr><td><code>source/bridge.cpp</code></td><td>Chat bridge logic: message sanitization for Discord→SRB2 (<code>sanitize_message_for_srb2()</code>, ASCII filter, link replacement), file polling helpers (<code>bridge_get_lines()</code>, <code>bridge_read_range()</code>), and emoji conversion (<code>bridge_replace_emojis()</code>).</td></tr>
     <tr><td><code>secret.json.default</code></td><td>Configuration template  -  copy to <code>secret.json</code> and fill in bot token, bot ID, guild ID, channel ID, and service name.</td></tr>
-    <tr><td><code>scripts/SRB2DiscordBot-v0.1.47.lua</code></td><td>SRB2-side companion script that runs in-game. Handles chat forwarding, event emission (ROUND_START, ROUND_END, CTF_CAPTURE, etc.), immediate flush via <code>flush_msgsrb2()</code>, startup sync via <code>dbot_sync</code> command, and gametype name resolution via <code>G_GetGametypeName()</code> with fallback table.</td></tr>
+    <tr><td><code>scripts/SRB2DiscordBot-v0.1.48.lua</code></td><td>SRB2-side companion script that runs in-game. Handles chat forwarding, event emission (ROUND_START, ROUND_END, CTF_CAPTURE, etc.), immediate flush via <code>flush_msgsrb2()</code>, startup sync via <code>dbot_sync</code> command, and gametype name resolution via <code>G_GetGametypeName()</code> with fallback table.</td></tr>
     <tr><td><code>source/version.h.cmake</code></td><td>CMake template that generates <code>version.h</code> with project metadata and command name strings.</td></tr>
 </table>
 

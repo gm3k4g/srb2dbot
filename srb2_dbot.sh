@@ -42,9 +42,9 @@ kill_pid_file() {
 kill_pid_file "$BOT_PID_FILE" "srb2dbot"
 kill_pid_file "$SRB2_PID_FILE" "SRB2"
 
-LUA_WAD="$SCRIPT_DIR/scripts/SRB2DiscordBot-v0.1.47.lua"
+LUA_WAD="$SCRIPT_DIR/scripts/SRB2DiscordBot-v0.1.48.lua"
 if [[ ! -f "$LUA_WAD" ]]; then
-    echo "ERROR: SRB2DiscordBot-v0.1.47.lua not found at $LUA_WAD" >&2
+    echo "ERROR: SRB2DiscordBot-v0.1.48.lua not found at $LUA_WAD" >&2
     exit 1
 fi
 
@@ -55,7 +55,7 @@ mkdir -p "$SRB2_DATA_DIR/luafiles/client/DiscordBot"
 mkdir -p "$SRB2_DATA_DIR/DOWNLOAD"
 
 # Deploy script to DOWNLOAD/
-cp "$LUA_WAD" "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.47.lua"
+cp "$LUA_WAD" "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.48.lua"
 
 echo "=== srb2_dbot ==="
 [[ -n "$BUILD_ARGS" ]] && echo "Mode:   Release"
@@ -88,7 +88,7 @@ exec srb2 \
     -servername "$SERVERNAME" \
     -warp MAPF0 \
     -gametype 7 \
-    -file "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.47.lua" \
+    -file "$SRB2_DATA_DIR/DOWNLOAD/SRB2DiscordBot-v0.1.48.lua" \
     "ZBa_Battlemod-v10BETA-2.1.8.pk3" \
     +rejointimeout 0
     #</dev/null
