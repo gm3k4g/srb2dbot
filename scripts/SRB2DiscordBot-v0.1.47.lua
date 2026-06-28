@@ -318,7 +318,7 @@ COM_AddCommand("discord_message", function(player, ...)
 	local sep = string.find(msg, "|", 1, true)
 	local dn = sep and string.sub(msg, 1, sep - 1) or "Discord"
 	local text = sep and string.sub(msg, sep + 1) or msg
-	chatprint("\x89" .. "[Discord]" .. "\x80" .. " <" .. dn .. "> " .. text, false)
+	chatprint("\x89" .. "[Discord]" .. "\x80" .. " <" .. dn .. "> " .. text, true)
 end)
 
 COM_AddCommand("dbot_debug", function(player, arg)
@@ -603,7 +603,7 @@ local function map_num_to_mapstr(n)
 	return "MAP" .. first .. second
 end
 
-local function emit_round_end(prev_map, prev_maptitle)
+local function emit_round_end(prev_map, prev_maptitle, is_exitlevel)
 	local gtname = get_gametype_name(gametype)
 	local mapstr = map_num_to_mapstr(prev_map)
 
@@ -672,7 +672,7 @@ local function emit_round_end(prev_map, prev_maptitle)
 		.. "|" .. players_blue .. "|" .. players_spec .. "|" .. mode
 		.. "|" .. (redscore or 0) .. "|" .. (bluescore or 0)
 		.. "|" .. round_time_str .. "|" .. json_escape(prev_maptitle)
-		.. "|" .. players_safe .. "|" .. spec_safe .. "|" .. pointlimit .. "|" .. gametype .. "\n"
+		.. "|" .. players_safe .. "|" .. spec_safe .. "|" .. pointlimit .. "|" .. gametype .. "|" .. (is_exitlevel and 1 or 0) .. "\n"
 	DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. end_line
 	DiscordBot.Functions.flush_msgsrb2()
 	DiscordBot.Data.round_end_emitted = true
@@ -684,7 +684,7 @@ pcall(function() addHook("IntermissionThinker", function()
 	if DiscordBot.Data.current_map and not DiscordBot.Data.round_end_emitted then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title)
+		emit_round_end(DiscordBot.Data.current_map, title, false)
 	end
 end) end)
 
@@ -694,7 +694,7 @@ addHook("ThinkFrame", function()
 	   and (gamestate == GS_INTERMISSION or gamestate == GS_NULL) then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title)
+		emit_round_end(DiscordBot.Data.current_map, title, gamestate == GS_NULL)
 	end
 end)
 
@@ -705,7 +705,7 @@ addHook("MapChange", function(map)
 	   and gamestate == GS_NULL then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title)
+		emit_round_end(DiscordBot.Data.current_map, title, true)
 	end
 	DiscordBot.Data.round_end_emitted = false
 	DiscordBot.Data.current_map = nil

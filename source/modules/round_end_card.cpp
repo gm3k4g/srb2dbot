@@ -34,7 +34,8 @@ public:
         std::string spec_pl   = event.fields.size() >= 8 ? event.fields[7] : "0";
 
         dpp::embed embed;
-        embed.set_title("Exiting...");
+        bool exitlevel = event.fields.size() >= 18 && event.fields[17] == "1";
+        embed.set_title(exitlevel ? "Exiting..." : "The round has ended.");
         embed.set_color(0xE74C3C);
         embed.set_timestamp(std::time(nullptr));
 
