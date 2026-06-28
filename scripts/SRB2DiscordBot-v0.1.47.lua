@@ -12,7 +12,6 @@ DiscordBot.Data.pcmp = ''
 DiscordBot.Data.log = ''
 DiscordBot.Data.console = ''
 DiscordBot.Data.paused = false
-DiscordBot.Data._discord_msg = ''
 DiscordBot.Data.maptitle = ''
 DiscordBot.Data.nextlevel = ''
 DiscordBot.Data.iconemeralds = ''
@@ -73,7 +72,6 @@ DiscordBot.Commands.cv_joinquit = CV_RegisterVar({name = "dbot_joinquit", defaul
 DiscordBot.Commands.cv_autopause = CV_RegisterVar({name = "dbot_autopause", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_nospamchat = CV_RegisterVar({name = "dbot_nospamchat", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_messagedelay = CV_RegisterVar({name = "dbot_messagedelay", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
-DiscordBot.Commands.cv_discord = CV_RegisterVar({name = "dbot_discord", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 
 -- Read auto_pause from console.txt (written by C++ bot from modules.json)
 DiscordBot.Config = { auto_pause = true }
@@ -296,13 +294,7 @@ COM_AddCommand("server_log", function(player, arg, text)
 				if d_clear then d_clear:write("") d_clear:close() end
 			end
 			if d_msgread ~= "" then
-				DiscordBot.Commands._discord_msg = d_msgread
-				DiscordBot.Commands._needs_sync = true
-				-- Server diag: write message to file (once per message, safe rate)
-				local diag = io.openlocal("client/DiscordBot/_serv.txt", "w")
-				if diag then diag:write(d_msgread) diag:close() end
-			else
-				DiscordBot.Commands._discord_msg = ''
+				COM_BufInsertText(server, "discord_message " .. d_msgread)
 			end
 		end
 	end
@@ -324,7 +316,7 @@ COM_AddCommand("discord_message", function(player, ...)
 	local args = {...}
 	local msg = table.concat(args, " ")
 	chatprint("\x89" .. "[Discord]" .. "\x80" .. " " .. msg, false)
-end, COM_LOCAL)
+end)
 
 COM_AddCommand("dbot_debug", function(player, arg)
 	if player ~= server then return end
@@ -443,33 +435,6 @@ local function bot_function()
 end
 
 addHook("ThinkFrame", bot_function)
-
--- Server-side: toggle CVar to force NetVar sync when message pending
-addHook("ThinkFrame", function()
-	if not isdedicatedserver then return end
-	if DiscordBot.Commands._needs_sync then
-		local cv = CV_FindVar("dbot_discord")
-		if cv then
-			local val = cv.value
-			cv.value = 1 - val
-		end
-		DiscordBot.Commands._needs_sync = false
-	end
-end)
-
--- Client-side: display NetVar-synced Discord messages in local chat HUD
-addHook("ThinkFrame", function()
-	if isdedicatedserver then return end
-	if (leveltime % 70) ~= 35 then return end
-	local msg = DiscordBot.Commands._discord_msg
-	if msg and msg ~= '' then
-		-- Client diag: write to file when message received (once per message)
-		local diag = io.openlocal("client/DiscordBot/_cli.txt", "w")
-		if diag then diag:write(msg) diag:close() end
-		chatprint("\x89[Discord]\x80 " .. msg, false)
-		DiscordBot.Commands._discord_msg = ''
-	end
-end)
 
 -- Cache player teams each tick (player.ctfteam may not be set at PlayerMsg time
 -- for custom gametypes like Battlemod, where team assignment happens in hooks).
