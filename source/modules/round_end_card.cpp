@@ -21,7 +21,7 @@ public:
     }
 
     auto handle_bridge_event(const BridgeEvent& event) -> std::optional<dpp::embed> override {
-        if (event.type != "ROUND_END" && event.type != "ROUND_EXITLEVEL") return std::nullopt;
+        if (event.type != "ROUND_END") return std::nullopt;
         if (event.fields.size() < 4) return std::nullopt;
 
         std::string gt        = event.fields[0];
@@ -34,7 +34,7 @@ public:
         std::string spec_pl   = event.fields.size() >= 8 ? event.fields[7] : "0";
 
         dpp::embed embed;
-        embed.set_title(event.type == "ROUND_EXITLEVEL" ? "Exiting..." : "The round has ended.");
+        embed.set_title("The round has ended.");
         embed.set_color(0xE74C3C);
         embed.set_timestamp(std::time(nullptr));
 
@@ -55,7 +55,7 @@ public:
     }
 
     auto get_bridge_attachment(const BridgeEvent& event) -> std::optional<std::pair<std::string, std::string>> override {
-        if (event.type != "ROUND_END" && event.type != "ROUND_EXITLEVEL") return std::nullopt;
+        if (event.type != "ROUND_END") return std::nullopt;
         if (event.fields.size() < 15) return std::nullopt;
 
         auto& f = event.fields;

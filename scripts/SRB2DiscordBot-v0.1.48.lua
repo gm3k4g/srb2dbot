@@ -603,8 +603,7 @@ local function map_num_to_mapstr(n)
 	return "MAP" .. first .. second
 end
 
-local function emit_round_end(prev_map, prev_maptitle, event_type)
-	event_type = event_type or "ROUND_END"
+local function emit_round_end(prev_map, prev_maptitle)
 	local gtname = get_gametype_name(gametype)
 	local mapstr = map_num_to_mapstr(prev_map)
 
@@ -668,7 +667,7 @@ local function emit_round_end(prev_map, prev_maptitle, event_type)
 		end
 	end)
 
-	local end_line = "[EVENT:" .. event_type .. "]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime
+	local end_line = "[EVENT:ROUND_END]|" .. gtname .. "|" .. mapstr .. "|" .. leveltime
 		.. "|" .. server_up_tics .. "|" .. players_total .. "|" .. players_red
 		.. "|" .. players_blue .. "|" .. players_spec .. "|" .. mode
 		.. "|" .. (redscore or 0) .. "|" .. (bluescore or 0)
@@ -705,7 +704,7 @@ addHook("MapChange", function(map)
 	   and gamestate == GS_NULL then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title, "ROUND_EXITLEVEL")
+		emit_round_end(DiscordBot.Data.current_map, title)
 	end
 end)
 
@@ -716,7 +715,7 @@ addHook("MapChange", function(map)
 	   and gamestate == GS_NULL then
 		local title = DiscordBot.Data.maptitle
 		if title == nil or title == "" then title = "Unknown" end
-		emit_round_end(DiscordBot.Data.current_map, title, "ROUND_EXITLEVEL")
+		emit_round_end(DiscordBot.Data.current_map, title)
 	end
 	DiscordBot.Data.round_end_emitted = false
 	DiscordBot.Data.current_map = nil
