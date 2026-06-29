@@ -128,10 +128,6 @@ addHook("PlayerMsg", function(player, type, target, msg)
 	if not player.spectator and (player.ctfteam == 1 or player.ctfteam == 2) then
 		team = tostring(player.ctfteam)
 	end
-		if is_team then
-			team = tostring(player.ctfteam or 0)
-		end
-	end
 	local prefix = ""
 	if IsPlayerAdmin(player) then prefix = "@" end
 

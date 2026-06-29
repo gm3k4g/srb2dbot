@@ -35,10 +35,6 @@
         },
         "auto": {
             "_note": "Auto modules  -  run automatically from game events",
-            "auto_pause": {
-                "_note": "Auto-pause the server when no players are connected",
-                "enabled": false
-            },
             "server_start_card": {
                 "enabled": true,
                 "message": ":green_circle: :robot: srb2dbot is up"

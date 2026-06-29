@@ -73,24 +73,6 @@ DiscordBot.Commands.cv_autopause = CV_RegisterVar({name = "dbot_autopause", defa
 DiscordBot.Commands.cv_nospamchat = CV_RegisterVar({name = "dbot_nospamchat", defaultvalue = "Off", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 DiscordBot.Commands.cv_messagedelay = CV_RegisterVar({name = "dbot_messagedelay", defaultvalue = "On", flags = CV_NETVAR, PossibleValue = CV_OnOff})
 
--- Read auto_pause from console.txt (written by C++ bot from modules.json)
-DiscordBot.Config = { auto_pause = true }
-do
-	local f = io.openlocal("client/DiscordBot/console.txt", "r")
-	if f then
-		for line in f:lines() do
-			if line:find("^dbot_autopause ") then
-				local val = line:match("^dbot_autopause ([01])$")
-				if val then DiscordBot.Config.auto_pause = (val == "1") end
-			end
-		end
-		f:close()
-	end
-	-- Clear so server_log console doesn't re-process stale commands
-	local f = io.openlocal("client/DiscordBot/console.txt", "w")
-	if f then f:write("") f:close() end
-end
-
 DiscordBot.Messages = {}
 
 DiscordBot.Functions.flush_msgsrb2 = function()
@@ -423,7 +405,7 @@ local function bot_function()
 			DiscordBot.Data.log = ''
 		end
 		COM_BufInsertText(server, "server_log players")
-		if DiscordBot.Config.auto_pause then
+		if DiscordBot.Commands.cv_autopause.value == 1 then
 			local count = DiscordBot.Functions.playerontheserver()
 			if count == 0 then
 				if paused == false then
@@ -507,7 +489,7 @@ addHook("ThinkFrame", function()
 				DiscordBot.Data.msgsrb2 = DiscordBot.Data.msgsrb2 .. "[EVENT:PLAYER_JOIN]|" .. player.name .. "|" .. #player .. "\n"
 				DiscordBot.Functions.flush_msgsrb2()
 			end
-			if DiscordBot.Config.auto_pause and paused == true then
+			if DiscordBot.Commands.cv_autopause.value == 1 and paused == true then
 				DiscordBot.Data.paused = false
 				COM_BufInsertText(server, "pause")
 			end

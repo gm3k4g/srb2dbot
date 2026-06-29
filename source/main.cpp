@@ -307,27 +307,6 @@ int main() {
         }
     }
 
-    // Read auto_pause from modules.json and write to console.txt for the Lua script
-    {
-        std::ifstream mod_config("modules.json");
-        if (mod_config.is_open()) {
-            try {
-                auto mod_data = json::parse(mod_config);
-                bool auto_pause = true;
-                auto& mods = mod_data["modules"]["auto"];
-                if (mods.contains("auto_pause")) {
-                    auto& entry = mods["auto_pause"];
-                    if (entry.is_object())
-                        auto_pause = entry.value("enabled", true);
-                    else
-                        auto_pause = entry.get<bool>();
-                }
-                std::ofstream con_file(bridge_dir + "/console.txt", std::ios::app);
-                if (con_file.is_open())
-                    con_file << "dbot_autopause " << (auto_pause ? "1" : "0") << "\n";
-            } catch (const json::parse_error&) {}
-        }
-    }
 
 #ifndef NDEBUG
     std::cout << "[bridge] FIFO pipe support: " << (fifo_available ? "yes" : "no (vanilla SRB2)")

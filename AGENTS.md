@@ -174,6 +174,15 @@ Debug prints (`[DEBUG]`) in the C++ code are guarded by `#ifndef NDEBUG` and onl
 
 Line 44 of `SRB2DiscordBot-v0.1.48.lua` previously compared `cv_messagedelay == 0`  -  comparing the CVar *table* to 0, which is always false. Fixed to `cv_messagedelay.value == 0`. This restores the immediate message-triggered flush path for users who disable messagedelay.
 
+## Auto-Pause System
+
+Auto-pause is controlled entirely by the `dbot_autopause` CVar (`CV_NETVAR`, default `On`) registered at `scripts/SRB2DiscordBot-v0.1.48.lua:72`:
+
+- **No `modules.json` config**  -  the auto_pause JSON field was removed in favor of the CVar only
+- **Admin toggle**  -  admins can change `dbot_autopause` in-game via SRB2 console or remotely via the FIFO pipe, and the setting syncs across the network via `CV_NETVAR`
+- **Auto-pause**: When `dbot_autopause` is `On` and player count drops to 0, the server is automatically paused after ~2s
+- **Auto-unpause**: When a player joins while the server is paused, the game automatically unpauses
+
 ## Known Issues
 
 From the previous audit:
