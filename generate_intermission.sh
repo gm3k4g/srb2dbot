@@ -298,6 +298,13 @@ sort_desc() {
 }
 
 # ── Generate MVG (writes to a file, returns path) ──────────────────────────
+# Escape single quotes for MVG text commands
+mvg_escape() {
+    local s="$1"
+    s="${s//'/'\\''}"
+    echo "$s"
+}
+
 gen_mvg() {
     local f
     f=$(mktemp /tmp/intermission_XXXXXX.mvg)
@@ -330,23 +337,23 @@ gen_mvg() {
     echo "  fill '$C_TITLE'" >> "$f"
     echo "  font-size $FONT_SZ_TITLE" >> "$f"
     echo "  text-anchor middle" >> "$f"
-    echo "  text $((WIDTH/2)),22 '$gt_display'" >> "$f"
+    echo "  text $((WIDTH/2)),22 '$(mvg_escape "$gt_display")'" >> "$f"
     if [[ -n "$ROUND_TIME" ]]; then
         echo "  text-anchor end" >> "$f"
         echo "  font-size 14" >> "$f"
         echo "  fill '$C_SCORE'" >> "$f"
-        echo "  text $((WIDTH-14)),22 'Time: $ROUND_TIME'" >> "$f"
+        echo "  text $((WIDTH-14)),22 'Time: $(mvg_escape "$ROUND_TIME")'" >> "$f"
     fi
     # Line 2: map name + number (bottom, smaller font)
     echo "  font-size 16" >> "$f"
     echo "  fill '$C_PLAYER'" >> "$f"
     echo "  text-anchor middle" >> "$f"
-    echo "  text $((WIDTH/2)),44 '$map_line'" >> "$f"
+    echo "  text $((WIDTH/2)),44 '$(mvg_escape "$map_line")'" >> "$f"
     if [[ -n "$POINT_LIMIT" ]]; then
         echo "  text-anchor end" >> "$f"
         echo "  font-size 13" >> "$f"
         echo "  fill '$C_TITLE'" >> "$f"
-        echo "  text $((WIDTH-14)),44 'Point limit: $POINT_LIMIT'" >> "$f"
+        echo "  text $((WIDTH-14)),44 'Point limit: $(mvg_escape "$POINT_LIMIT")'" >> "$f"
     fi
     echo "  text-anchor start" >> "$f"
 
@@ -471,7 +478,7 @@ _render_rows() {
         local name_x=$(( x + 34 ))
         [[ "$GAMETYPE" == "ffa" ]] && name_x=$(( x + 40 ))
         echo "  fill '$C_PLAYER'" >> "$f"
-        echo "  text $name_x,$tb '$name'" >> "$f"
+        echo "  text $name_x,$tb '$(mvg_escape "$name")'" >> "$f"
         echo "  fill '$C_SCORE'" >> "$f"
         echo "  font-size $FONT_SZ_SCORE" >> "$f"
         echo "  text-anchor end" >> "$f"
@@ -496,7 +503,7 @@ _render_spectators() {
     [[ -n "$FONT_MONO" ]] && echo "  font '$FONT_MONO'" >> "$f"
     echo "  fill 'rgba(255,255,255,0.45)'" >> "$f"
     echo "  font-size 11" >> "$f"
-    echo "  text $((cl+12)),$spec_y 'Spectators: $names'" >> "$f"
+    echo "  text $((cl+12)),$spec_y 'Spectators: $(mvg_escape "$names")'" >> "$f"
 }
 
 # ── FFA mode ────────────────────────────────────────────────────────────────
