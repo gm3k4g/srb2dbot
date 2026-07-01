@@ -230,31 +230,6 @@ COM_AddCommand("server_log", function(player, arg, text)
 				logmsg:close()
 			end
 		end
-	elseif arg == "console" then
-		if DiscordBot.Data.console then
-			local d_console = io.openlocal("client/DiscordBot/console.txt", "r")
-			if d_console then
-				local clear = false
-				while true do
-					local line = d_console:read("*l") or ""
-					if line == "" then break end
-					line = string.sub(line, 1, 220)
-					if string.find(string.sub(string.lower(line), 1, 5), string.lower("quit")) == nil
-						and string.find(string.sub(string.lower(line), 1, 9), string.lower("exitgame")) == nil then
-						COM_BufInsertText(server, line)
-					end
-					clear = true
-				end
-				d_console:close()
-				if clear == true then
-					local c_clear = io.openlocal("client/DiscordBot/console.txt", "w")
-					if c_clear then
-						c_clear:write("")
-						c_clear:close()
-					end
-				end
-			end
-		end
 	elseif arg == "discord" then
 		if DiscordBot.Data.debug then COM_BufInsertText(server, "echo [DBOT] server_log discord running") end
 		local d_msg = io.openlocal("client/DiscordBot/discordmessage.txt", "r")
@@ -276,7 +251,11 @@ COM_AddCommand("server_log", function(player, arg, text)
 				if d_clear then d_clear:write("") d_clear:close() end
 			end
 			if d_msgread ~= "" then
-				COM_BufInsertText(server, "discord_message " .. d_msgread)
+				for line in string.gmatch(d_msgread, "[^\n]+") do
+					if line ~= "" then
+						COM_BufInsertText(server, "discord_message " .. line)
+					end
+				end
 			end
 		end
 	end
