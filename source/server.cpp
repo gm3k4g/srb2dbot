@@ -68,12 +68,14 @@ auto pipe_write(const std::string& data) -> bool {
 }
 
 auto pipe_srb2_server_do(const std::string& data) -> bool {
-    for (unsigned char c : data) {
+    std::string cmd = data;
+    if (!cmd.empty() && cmd[0] == '/') cmd = cmd.substr(1);
+    for (unsigned char c : cmd) {
         if (c == '\n' || c == '\r' || c == ';' || (c < 0x20 && c != '\t') || c > 0x7E) {
             return false;
         }
     }
-    return pipe_write(data);
+    return pipe_write(cmd);
 }
 
 auto pipe_srb2_server_say(const std::string& msg) -> bool {
