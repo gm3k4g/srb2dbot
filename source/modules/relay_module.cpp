@@ -45,9 +45,13 @@ public:
             if (c == '<' || c == '>' || c == '|' || c == '\\' || c == '"' || c == '\'' || c == ';' || c == '^' || static_cast<unsigned char>(c) > 0x7E) c = '_';
         }
 
-        // Message written raw — semicolons and other chars are preserved.
-        // Lua reads this file and calls chatprint() directly, bypassing the
-        // SRB2 console command parser entirely, so no command injection is possible.
+        // Written as display_name|message\n per message. Each \n-separated line
+        // is wrapped with "discord_message " by the Lua server_log discord handler
+        // and sent via COM_BufInsertText — the data passes through SRB2's console
+        // command parser. Individual message content is pre-sanitized (newlines
+        // escaped to \\n, control chars stripped), but the \n line separator
+        // between messages must NOT reach the parser raw — the Lua handler splits
+        // lines and wraps each one individually with the discord_message prefix.
         std::string home = dir_srb2_str();
         std::string bridge_path = home + "/luafiles/client/DiscordBot";
         std::filesystem::create_directories(bridge_path);
